@@ -1,32 +1,24 @@
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.backends import default_backend
-from cryptography import x509
-import argparse
-
-"""
-pem_file = './csr/1.p10'
-der_file = './csr/1.der'
-pem_csr_to_der(pem_file, der_file)
-"""
-def pem_csr_to_der(pem_file_path, der_file_path):
-    # Чтение PEM-файла
-    with open(pem_file_path, 'rb') as pem_file:
-        pem_data = pem_file.read()
-
-    # Загрузка CSR (PKCS#10)
-    csr = x509.load_pem_x509_csr(pem_data, default_backend())
-    
-    # Конвертация в DER
-    der_data = csr.public_bytes(serialization.Encoding.DER)
-    
-    # Сохранение DER-файла
-    with open(der_file_path, 'wb') as der_file:
-        der_file.write(der_data)
-    
-    print(f"CSR успешно конвертирован в DER: {der_file_path}")
-
-
+import base64
 import asn1
+from datetime import datetime, timezone
+import os
+
+def bytes_to_pem(der_bytes: bytes, pem_type: str = "CERTIFICATE") -> str:
+    b64_data = base64.b64encode(der_bytes).decode('ascii')
+    
+    # Разбиваем на строки по 64 символа (стандарт PEM)
+    b64_lines = [b64_data[i:i+64] for i in range(0, len(b64_data), 64)]
+    b64_body = '\n'.join(b64_lines)
+
+    pem = f"-----BEGIN {pem_type}-----\n{b64_body}\n-----END {pem_type}-----\n"
+    return pem
+
+# Пример использования:
+# der_data = b'...'  # ваши DER-данные
+# pem_data = bytes_to_pem(der_data, "CERTIFICATE")
+# with open('output.pem', 'w') as f:
+#     f.write(pem_data)
+
 
 def encode_tag(tag: asn1.Tag, length: int):
     encoder = asn1.Encoder()
@@ -52,3 +44,46 @@ def block_to_raw_bytes(data_block: bytes) -> bytes:
 
     raw_bytes = data_block[start_pos:start_pos + length + len_hex_tag]
     return raw_bytes
+
+
+def cert_encode(version: int, rdn_bytes: bytes, algid_bytes: bytes, 
+                beg_date: datetime, end_date: datetime,
+                subjectPKinfo_der: bytes) -> bytes:
+    encode = asn1.Encoder()
+    # version
+    encode.start()
+    encode.enter(asn1.Numbers.Sequence)  # Certificate SEQUENCE
+    encode.enter(asn1.Numbers.Sequence)  # tbsCertificate SEQUENCE
+    encode.enter(nr=0, cls=asn1.Classes.Context) 
+    encode.write(version, asn1.Numbers.Integer)  # version INTEGER
+    encode.leave()
+
+    # serialNumber INTEGER
+    serial_num = int.from_bytes(os.urandom(8), 'big') & 0x7FFFFFFFFFFFFFFF
+    encode.write(serial_num, asn1.Numbers.Integer)
+
+    # signature AlgorithmIdentifier SEQUENCE
+    encode.enter(asn1.Numbers.Sequence)
+    encode._emit(algid_bytes) # encode.write(algid_bytes, asn1.Numbers.OctetString)
+    encode.leave()
+
+    # rdnSequence Name SEQUENCE
+    encode._emit(rdn_bytes) # encode.write(rdn_bytes, asn1.Numbers.OctetString)
+
+    # Validity SEQUENCE
+    encode.enter(asn1.Numbers.Sequence)
+    encode.write(beg_date.strftime("%y%m%d%H%M%SZ"), asn1.Numbers.UTCTime)
+    encode.write(end_date.strftime("%y%m%d%H%M%SZ"), asn1.Numbers.UTCTime)
+    encode.leave()
+
+    # rdnSequence Name SEQUENCE
+    encode._emit(rdn_bytes) # encode.write(rdn_bytes, asn1.Numbers.OctetString)
+
+    # SubjectPublicKeyInfo SEQUENCE
+    encode._emit(subjectPKinfo_der) # encode.write(subjectPKinfo_der, asn1.Numbers.OctetString)
+
+    encode.leave()  # out tbsCertificate
+    encode.leave()  # out Certificate
+
+    cert_bytes = encode.output()
+    return cert_bytes
