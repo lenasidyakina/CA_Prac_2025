@@ -13,7 +13,7 @@ pem_lines = [line.strip() for line in pem_csr.split('\n') if line.strip()]
 pem_body = ''.join(pem_lines[1:-1])  # Убираем BEGIN/END строки
 der_csr = base64.b64decode(pem_body)
 # subjectPKinfo_bytes
-def cert_encode(version: int, rdn_bytes: bytes, algid_bytes: bytes, 
+def _tbsCertificate_encode(version: int, rdn_bytes: bytes, algid_bytes: bytes, 
                 beg_date: datetime, end_date: datetime,
                 subjectPKinfo_der: bytes) -> bytes:
     encode = Encoder()
@@ -63,14 +63,14 @@ decoder.enter()     # certificationRequestInfo
 version = decoder.read()
 # print(f"Version: {version}")
 
-rdn_der = block_to_raw_bytes(der_csr[decoder._get_current_position():])
+rdn_der = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
 decoder.read()
 
 # SubjectPublicKeyInfo
-subjectPKinfo_der = block_to_raw_bytes(der_csr[decoder._get_current_position():])
+subjectPKinfo_der = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
 decoder.enter() # SubjectPublicKeyInfo
 decoder.enter() # AlgorithmIdentifier
-AlgorithmId_der = block_to_raw_bytes(der_csr[decoder._get_current_position():])
+AlgorithmId_der = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
 t, v = decoder.read()  # algorithm
 # print(t, v)
 decoder.read()  # parametrs
@@ -81,7 +81,7 @@ decoder.leave() # out SubjectPublicKeyInfo
 # t, v = decoder.read()
 # print(t, v)
 
-raw_bytes = cert_encode(version[1], rdn_der, AlgorithmId_der, 
+raw_bytes = _tbsCertificate_encode(version[1], rdn_der, AlgorithmId_der, 
                         datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc), datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc), 
                         subjectPKinfo_der)
 with open('tmp.der', 'wb') as f:
