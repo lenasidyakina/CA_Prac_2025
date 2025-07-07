@@ -1,0 +1,18 @@
+[Unit]
+Description=Number Logger Service
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/myapp/app
+Environment="PATH=/opt/myapp/venv/bin"
+ExecStart=/opt/myapp/venv/bin/python3 /opt/myapp/app/number_logger.py
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=number_logger
+
+[Install]
+WantedBy=multi-user.target

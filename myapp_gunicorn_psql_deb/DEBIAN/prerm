@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Остановка сервисов перед удалением
+echo "Stopping and disabling services..."
+systemctl stop myapp.service number_logger.service || true
+systemctl disable myapp.service number_logger.service || true
+
+# Дополнительная остановка логгера через Python (на случай если сервис не ответил)
+echo "Stopping number logger directly..."
+/opt/myapp/venv/bin/python -c "from number_logger import logger; logger.stop()" || true
+
+# Очистка правил фаервола
+echo "Removing firewall rules..."
+firewall-cmd --permanent --remove-service=http || true
+firewall-cmd --permanent --remove-service=https || true
+firewall-cmd --reload || true
+
+# Удаление сокета (если существует)
+echo "Cleaning up socket file..."
+rm -f /opt/myapp/myapp.sock || true
+
+# Проверка что процессы завершились
+echo "Checking for remaining processes..."
+pkill -f "/opt/myapp/venv/bin/python3 /opt/myapp/app/number_logger.py" || true
+pkill -f "gunicorn.*wsgi:app" || true
+
+echo "Cleanup complete"

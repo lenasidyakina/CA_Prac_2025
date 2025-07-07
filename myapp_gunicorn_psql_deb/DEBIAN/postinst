@@ -1,0 +1,229 @@
+#!/bin/bash
+# Полный скрипт установки MyApp с PostgreSQL и Number Logger Daemon
+
+# 0. Установка системных зависимостей
+echo "=== Установка системных зависимостей ==="
+apt-get update -q
+DEBIAN_FRONTEND=noninteractive apt-get install -yq \
+    nginx \
+    python3-pip \
+    python3-venv \
+    python3-psycopg2 \
+    postgresql \
+    postgresql-client \
+    postgresql-contrib \
+    libpq-dev \
+    gunicorn \
+    python3-sqlalchemy \
+    firewalld \
+    python3-dev \
+    python3-psutil
+
+# 1. Проверка и создание необходимых директорий
+echo "=== Настройка файловой структуры ==="
+mkdir -p /opt/myapp/{venv,app,logs}
+mkdir -p /var/log/myapp/
+chown -R www-data:www-data /opt/myapp /var/log/myapp
+chmod 755 /opt/myapp
+chmod 644 /var/log/myapp/*.log 2>/dev/null || true
+
+# 2. Настройка Python окружения
+echo "=== Настройка Python окружения ==="
+python3 -m venv /opt/myapp/venv
+source /opt/myapp/venv/bin/activate
+pip install -U pip wheel >/dev/null
+pip install gunicorn flask psycopg2-binary >/dev/null
+
+# Установка дополнительных зависимостей, если есть requirements.txt
+if [ -f "/opt/myapp/app/requirements.txt" ]; then
+    pip install -r /opt/myapp/app/requirements.txt >/dev/null
+fi
+deactivate
+
+# 4. Настройка PostgreSQL
+echo "Настройка PostgreSQL..."
+echo "Введите параметры подключения к БД:"
+
+# Запрос параметров с значениями по умолчанию
+read -p "Имя пользователя PostgreSQL [myapp_user]: " db_user
+db_user=${db_user:-myapp_user}
+
+read -s -p "Пароль пользователя PostgreSQL: " db_pass
+echo
+read -p "Имя базы данных [flower_db]: " db_name
+db_name=${db_name:-flower_db}
+
+# Создание пользователя и БД с проверкой существования
+sudo -u postgres psql -c "DO \$$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '$db_user') THEN
+        CREATE ROLE $db_user WITH LOGIN PASSWORD '$db_pass';
+        RAISE NOTICE 'Пользователь $db_user создан';
+    ELSE
+        ALTER ROLE $db_user WITH PASSWORD '$db_pass';
+        RAISE NOTICE 'Пароль пользователя $db_user обновлён';
+    END IF;
+END
+\$$;"
+
+# Создание БД, если не существует
+if ! sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "$db_name"; then
+    sudo -u postgres psql -c "CREATE DATABASE $db_name OWNER $db_user;"
+else
+    echo "База данных $db_name уже существует, пропускаем создание"
+fi
+
+# 5. Создание конфигурационного файла БД
+echo "Создание конфигурации БД..."
+mkdir -p /etc/myapp
+DB_CONFIG="/etc/myapp/db.env"
+
+cat > "$DB_CONFIG" <<EOL
+[postgresql]
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=$db_name
+DB_USER=$db_user
+DB_PASS=$db_pass
+EOL
+
+# Настройка прав доступа к конфигу
+chown www-data:www-data "$DB_CONFIG"
+chmod 640 "$DB_CONFIG"
+
+# 6. Настройка прав доступа к БД
+echo "Настройка прав доступа к БД..."
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $db_name TO $db_user;"
+sudo -u postgres psql -d $db_name -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $db_user;"
+sudo -u postgres psql -d $db_name -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $db_user;"
+
+# 7. Инициализация таблиц БД
+echo "Инициализация таблиц БД..."
+init_log="/tmp/myapp_db_init.log"
+if [ -f "/opt/myapp/app/init_db.py" ]; then
+    sudo -u www-data /opt/myapp/venv/bin/python /opt/myapp/app/init_db.py 2>&1 | tee "$init_log"
+
+    # Проверка успешности создания таблиц
+    if sudo -u postgres psql -d $db_name -c "\dt" | grep -q "flowers"; then
+        echo "✓ Таблицы успешно созданы"
+    else
+        echo "✗ Ошибка при создании таблиц!"
+        echo "Подробности в логе: $init_log"
+    fi
+else
+    echo "Файл init_db.py не найден, пропускаем инициализацию БД"
+fi
+
+
+
+# 6. Настройка Nginx
+echo "=== Настройка Nginx ==="
+if [ -f "/etc/nginx/sites-available/myapp.conf" ]; then
+    ln -sf /etc/nginx/sites-available/myapp.conf /etc/nginx/sites-enabled/
+    rm -f /etc/nginx/sites-enabled/default
+    nginx -t && systemctl restart nginx
+fi
+
+# 7. Настройка firewall
+if command -v firewall-cmd &>/dev/null; then
+    echo "=== Настройка firewall ==="
+    firewall-cmd --permanent --add-service=http
+    firewall-cmd --permanent --add-service=https
+    firewall-cmd --reload
+fi
+
+# 8. Настройка systemd сервисов
+echo "=== Настройка сервисов ==="
+
+# Основной сервис приложения
+cat > /etc/systemd/system/myapp.service <<'EOL'
+[Unit]
+Description=MyApp Service
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/myapp/app
+Environment="PATH=/opt/myapp/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PYTHONPATH=/opt/myapp/app"
+ExecStart=/opt/myapp/venv/bin/gunicorn \
+    --workers 1 \
+    --bind unix:/opt/myapp/myapp.sock \
+    --log-level info \
+    --timeout 120 \
+    --preload \
+    wsgi:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# Сервис логгера
+cat > /etc/systemd/system/number_logger.service <<'EOL'
+[Unit]
+Description=Number Logger Service
+After=myapp.service
+Requires=myapp.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/myapp/app
+Environment="PATH=/opt/myapp/venv/bin"
+ExecStart=/opt/myapp/venv/bin/python3 /opt/myapp/app/number_logger.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# 9. Запуск сервисов
+echo "=== Запуск сервисов ==="
+systemctl daemon-reload
+systemctl enable myapp.service
+systemctl enable number_logger.service
+
+systemctl restart postgresql
+systemctl start myapp
+sleep 3  # Даем время основному приложению запуститься
+systemctl start number_logger
+systemctl restart nginx
+
+# 10. Проверка установки
+echo "=== Проверка установки ==="
+
+check_service() {
+    if systemctl is-active --quiet "$1"; then
+        echo "✓ $1: работает нормально"
+        return 0
+    else
+        echo "⚠️ $1: не запущен!"
+        journalctl -u "$1" -n 10 --no-pager
+        return 1
+    fi
+}
+
+check_service postgresql
+check_service myapp
+check_service number_logger
+check_service nginx
+
+# Проверка доступности приложения
+echo "=== Проверка приложения ==="
+if curl -sSf http://localhost >/dev/null 2>&1; then
+    echo "✓ Приложение доступно по http://localhost"
+else
+    echo "⚠️ Не удалось подключиться к приложению"
+    exit 1
+fi
+
+echo "=== Установка успешно завершена ==="
+echo "Данные для подключения к БД:"
+echo "============================"
+cat "$DB_CONFIG" | sed 's/DB_PASS=.*/DB_PASS=********/'
+echo "============================"
