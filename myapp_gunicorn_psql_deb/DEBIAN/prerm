@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Остановка сервисов перед удалением
+systemctl stop myapp.service
+systemctl disable myapp.service
+firewall-cmd --permanent --remove-service=http
+firewall-cmd --permanent --remove-service=https
+firewall-cmd --reload

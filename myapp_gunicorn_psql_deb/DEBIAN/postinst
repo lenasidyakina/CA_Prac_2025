@@ -1,0 +1,213 @@
+#!/bin/bash
+# Полный скрипт установки MyApp с PostgreSQL
+
+# 0. Установка системных зависимостей
+echo "Установка системных зависимостей..."
+apt-get update
+#apt-get install -y python3-pip python3-venv nginx gunicorn firewalld postgresql postgresql-contrib libpq-dev python3-dev
+apt-get install -y \
+    nginx \
+    python3-pip \
+    python3-venv \
+    python3-psycopg2 \
+    postgresql \
+    postgresql-client \
+    postgresql-contrib \
+    libpq-dev \
+    gunicorn \
+    python3-sqlalchemy \
+    firewalld \
+    python3-dev
+
+# Проверка и исправление возможных проблем
+if [ $? -ne 0 ]; then
+    echo "Попытка исправить broken packages..."
+    apt --fix-broken install -y
+    #apt-get install -y python3-pip python3-venv nginx gunicorn firewalld postgresql postgresql-contrib libpq-dev python3-dev
+    apt-get install -y \
+    nginx \
+    python3-pip \
+    python3-venv \
+    python3-psycopg2 \
+    postgresql \
+    postgresql-client \
+    postgresql-contrib \
+    libpq-dev \
+    gunicorn \
+    python3-sqlalchemy \
+    firewalld \
+    python3-dev
+fi
+
+# Проверка занятости порта 80
+echo "Проверка порта 80..."
+if ss -tulnp | grep -q ':80'; then
+    echo "Обнаружены сервисы, использующие порт 80:"
+    ss -tulnp | grep ':80'
+    echo "Остановка Apache (если установлен)..."
+    systemctl stop apache2 2>/dev/null
+    systemctl disable apache2 2>/dev/null
+
+    echo "Перезапуск Nginx..."
+    systemctl restart nginx
+    if systemctl is-active --quiet nginx; then
+        echo "Nginx успешно запущен"
+    else
+        echo "Ошибка запуска Nginx"
+        journalctl -u nginx -n 10 --no-pager
+    fi
+fi
+
+# 1. Проверка и создание необходимых директорий
+echo "Проверка и создание директорий..."
+mkdir -p /opt/myapp/venv
+chown -R www-data:www-data /opt/myapp
+chmod 755 /opt/myapp
+
+# 2. Установка виртуального окружения и зависимостей
+echo "Установка Python окружения..."
+python3 -m venv /opt/myapp/venv
+# Установка прав для виртуального окружения
+chown -R www-data:www-data /opt/myapp/venv
+chmod -R 755 /opt/myapp/venv
+
+# Активация venv и установка зависимостей
+source /opt/myapp/venv/bin/activate
+# Обновление pip внутри venv
+/opt/myapp/venv/bin/python -m pip install --upgrade pip
+# Установка основных зависимостей
+/opt/myapp/venv/bin/pip install wheel
+/opt/myapp/venv/bin/pip install sqlalchemy psycopg2-binary gunicorn
+if [ -f "/opt/myapp/app/requirements.txt" ]; then
+    /opt/myapp/venv/bin/pip install -r /opt/myapp/app/requirements.txt
+fi
+deactivate
+
+# 3. Настройка прав доступа
+echo "Настройка прав..."
+chown -R www-data:www-data /opt/myapp
+find /opt/myapp -type d -exec chmod 750 {} \;
+find /opt/myapp -type f -exec chmod 640 {} \;
+# Особые права для venv
+chmod -R 755 /opt/myapp/venv
+
+# 4. Настройка PostgreSQL
+echo "Настройка PostgreSQL..."
+echo "Введите параметры подключения к БД:"
+
+# Запрос параметров с значениями по умолчанию
+read -p "Имя пользователя PostgreSQL [myapp_user]: " db_user
+db_user=${db_user:-myapp_user}
+
+read -s -p "Пароль пользователя PostgreSQL: " db_pass
+echo
+read -p "Имя базы данных [ca_db]: " db_name
+db_name=${db_name:-ca_db}
+
+# Создание пользователя и БД с проверкой существования
+sudo -u postgres psql -c "DO \$$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '$db_user') THEN
+        CREATE ROLE $db_user WITH LOGIN PASSWORD '$db_pass';
+        RAISE NOTICE 'Пользователь $db_user создан';
+    ELSE
+        ALTER ROLE $db_user WITH PASSWORD '$db_pass';
+        RAISE NOTICE 'Пароль пользователя $db_user обновлён';
+    END IF;
+END
+\$$;"
+
+# Создание БД, если не существует
+if ! sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "$db_name"; then
+    sudo -u postgres psql -c "CREATE DATABASE $db_name OWNER $db_user;"
+else
+    echo "База данных $db_name уже существует, пропускаем создание"
+fi
+
+# 5. Создание конфигурационного файла БД
+echo "Создание конфигурации БД..."
+mkdir -p /etc/myapp
+DB_CONFIG="/etc/myapp/db.env"
+
+cat > "$DB_CONFIG" <<EOL
+[postgresql]
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=$db_name
+DB_USER=$db_user
+DB_PASS=$db_pass
+EOL
+
+# Настройка прав доступа к конфигу
+chown www-data:www-data "$DB_CONFIG"
+chmod 640 "$DB_CONFIG"
+
+# 6. Настройка прав доступа к БД
+echo "Настройка прав доступа к БД..."
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $db_name TO $db_user;"
+sudo -u postgres psql -d $db_name -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $db_user;"
+sudo -u postgres psql -d $db_name -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $db_user;"
+
+# 7. Инициализация таблиц БД
+echo "Инициализация таблиц БД..."
+init_log="/tmp/myapp_db_init.log"
+if [ -f "/opt/myapp/app/init_db.py" ]; then
+    sudo -u www-data /opt/myapp/venv/bin/python /opt/myapp/app/init_db.py 2>&1 | tee "$init_log"
+
+    # Проверка успешности создания таблиц
+    if sudo -u postgres psql -d $db_name -c "\dt" | grep -q "flowers"; then
+        echo "✓ Таблицы успешно созданы"
+    else
+        echo "✗ Ошибка при создании таблиц!"
+        echo "Подробности в логе: $init_log"
+    fi
+else
+    echo "Файл init_db.py не найден, пропускаем инициализацию БД"
+fi
+
+# 8. Настройка Nginx
+echo "Настройка Nginx..."
+if [ -f "/etc/nginx/sites-available/myapp.conf" ]; then
+    ln -sf /etc/nginx/sites-available/myapp.conf /etc/nginx/sites-enabled/
+    rm -f /etc/nginx/sites-enabled/default
+    if nginx -t; then
+        systemctl restart nginx
+    else
+        echo "Ошибка в конфигурации Nginx"
+        nginx -t
+    fi
+else
+    echo "Внимание: конфиг Nginx не найден!"
+fi
+
+# 9. Настройка firewall
+if command -v firewall-cmd &>/dev/null; then
+    echo "Настройка firewall..."
+    firewall-cmd --permanent --add-service=http || echo "Не удалось добавить правило для HTTP"
+    firewall-cmd --permanent --add-service=https || echo "Не удалось добавить правило для HTTPS"
+    firewall-cmd --reload || echo "Не удалось перезагрузить firewall"
+fi
+
+# 10. Запуск сервисов
+echo "Запуск сервисов..."
+systemctl daemon-reload
+systemctl enable myapp.service || echo "Не удалось включить сервис myapp"
+systemctl restart postgresql
+systemctl restart myapp.service
+systemctl restart nginx
+
+# 11. Проверка статуса
+echo "Проверка статуса приложения..."
+if systemctl is-active --quiet myapp.service; then
+    echo -e "\nУстановка завершена успешно!\n"
+    echo "Данные для подключения к БД:"
+    echo "============================"
+    cat "$DB_CONFIG" | sed 's/DB_PASS=.*/DB_PASS=********/'
+    echo "============================"
+    echo "Файл конфигурации: $DB_CONFIG"
+    echo "Проверка работы: curl http://localhost"
+else
+    echo "Предупреждение: сервис myapp не запущен!"
+    journalctl -u myapp.service -n 20 --no-pager
+    exit 0
+fi
