@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Отзыв сертификатов</title>
+    <style>
+        body {
+            font-size: 18px;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .revoked {
+            color: red;
+            font-weight: bold;
+        }
+        
+        .not-revoked {
+            color: green;
+            font-weight: bold;
+        }
+        
+        .button {
+            padding: 14px 28px;
+            font-size: 20px;
+            background-color: #3b3832;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: background-color 0.3s;
+        }
+        
+        .button:hover {
+            background-color: #5a5650;
+        }
+        
+        .home-link {
+            display: inline-block;
+            margin-top: 20px; 
+            color: #8a2be2;
+            text-decoration: underline;
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.3s;
+            background: none;
+            border: none;
+            padding: 0;
+            text-align: center; 
+        }
+        
+        .home-link:hover {
+            color: #6a1b9a;
+        }
+        
+        
+        input[type="checkbox"] {
+            transform: scale(1.5);
+            margin: 0 10px 0 5px;
+        }
+        
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; 
+        }
+    </style>
+</head>
+<body>
+    <h1>Управление статусом сертификатов</h1>
+    
+    <form id="revokeForm" action="/api/revoke-certificate" method="POST">
+        <table>
+            <thead>
+                <tr>
+                    <th>Выбрать</th>
+                    <th>Серийный номер</th>
+                    <th>Статус</th>
+                    <th>Причина</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cert in certificates %}
+                <tr>
+                    <td>
+                        {% if cert.status == "Не отозван" %}
+                        <input type="checkbox" name="revoke_cert" value="{{ cert.serial_number }}">
+                        {% endif %}
+                    </td>
+                    <td>{{ cert.serial_number }}</td>
+                    <td class="{% if cert.status == 'Отозван' %}revoked{% else %}not-revoked{% endif %}">
+                        {{ cert.status }}
+                    </td>
+                    <td>{{ cert.reason }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="buttons-container">
+            <button type="submit" class="button">Сделать отозванными</button>
+            <a href="/" class="home-link">На главную страницу</a>
+        </div>
+    </form>
+
+    <script>
+        document.getElementById('revokeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            try {
+                const formData = new FormData(e.target);
+                const response = await fetch(e.target.action, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(result.message);
+                    window.location.reload();
+                } else {
+                    alert(`Ошибка: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`Произошла ошибка: ${error}`);
+            }
+        });
+    </script>
+</body>
+</html>
