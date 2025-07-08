@@ -108,6 +108,11 @@ init_log="/tmp/myapp_db_init.log"
 if [ -f "/opt/myapp/app/init_db.py" ]; then
     sudo -u www-data /opt/myapp/venv/bin/python /opt/myapp/app/init_db.py 2>&1 | tee "$init_log"
 
+    # Выдать права на ВСЕ существующие таблицы (включая старые)
+    sudo -u postgres psql -d $db_name -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO $db_user;"
+    sudo -u postgres psql -d $db_name -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO $db_user;"
+    sudo -u postgres psql -d $db_name -c "GRANT USAGE ON SCHEMA public TO $db_user;"
+
     # Проверка успешности создания таблиц
     if sudo -u postgres psql -d $db_name -c "\dt" | grep -q "certificates"; then
         echo "✓ Таблицы успешно созданы"
@@ -118,7 +123,6 @@ if [ -f "/opt/myapp/app/init_db.py" ]; then
 else
     echo "Файл init_db.py не найден, пропускаем инициализацию БД"
 fi
-
 
 
 # 6. Настройка Nginx
