@@ -2,6 +2,8 @@ import base64
 import asn1
 from datetime import datetime, timezone
 import os
+from paramsSelfSignedCert import ParamsSelfSignedCert
+from typing import List
 
 '''
 Пример использования:
@@ -58,7 +60,7 @@ def _block_to_raw_bytes(data_block: bytes) -> bytes:
 def _tbsCertificate_encode(version: int, rdn_bytes: bytes, algid_bytes: bytes, 
                 beg_date: datetime, end_date: datetime,
                 subjectPKinfo_der: bytes,
-                attr_bytes_list: list[bytes]) -> bytes:
+                attr_bytes_list: List[bytes]) -> bytes:
     encode = asn1.Encoder()
     encode.start()
     # version
@@ -108,12 +110,12 @@ def _tbsCertificate_encode(version: int, rdn_bytes: bytes, algid_bytes: bytes,
     return tbs_bytes
 
 def _certificate_encode(tbsCert_bytes: bytes):
-    encode = asn1.Encoder()
-    encode.start()
-    encode.enter(asn1.Numbers.Sequence)  # Certificate SEQUENCE
-    encode._emit(tbsCert_bytes)
-    encode.leave()  # out Certificate
-    cert_bytes = encode.output()
+    encoder = asn1.Encoder()
+    encoder.start()
+    encoder.enter(asn1.Numbers.Sequence)  # Certificate SEQUENCE
+    encoder._emit(tbsCert_bytes)
+    encoder.leave()  # out Certificate
+    cert_bytes = encoder.output()
     return cert_bytes
 
 ''' Создает сертификат на основе запроса на сертификат
@@ -179,8 +181,12 @@ def create_cert(pem_csr: str) -> bytes:
                             datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc), datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc), 
                             subjectPKinfo_der,
                             attr_bytes_list)
-    
+    with open('tbs.der', 'wb') as f:
+        f.write(tbsCertificate_bytes)
     # TODO передавть на подпись tbsCertificate_bytes
     cert_bytes = _certificate_encode(tbsCertificate_bytes)
     
     return cert_bytes
+
+
+
