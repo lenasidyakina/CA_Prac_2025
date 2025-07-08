@@ -7,6 +7,10 @@ from psycopg2.extras import DictCursor
 from configparser import ConfigParser
 import logging
 from paramsSelfSignedCert import ParamsSelfSignedCert
+import base64
+import asn1
+from asn1_parse import bytes_to_pem, create_cert
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -219,15 +223,33 @@ def create_certificate_p10():
         filename = secure_filename(file.filename)
         file_path = os.path.join(UPLOAD_FOLDER, filename)
         file.save(file_path)
-        
-        return jsonify({
-            "status": "success",
-            "message": "File uploaded successfully",
-            "filename": filename
-        })
+
+        with open(file_path, 'r') as pem_file:
+            pem_csr = pem_file.read()
+        cert_bytes = create_cert(pem_csr)
+        # with open('res.der', 'wb') as f:
+        #     f.write(cert_bytes)
+        res_filename='./created_files/res.pem'
+        with open(res_filename, 'w') as f:
+            f.write(bytes_to_pem(cert_bytes, "CERTIFICATE"))
+
+        return send_file(
+        res_filename,
+        as_attachment=True,
+        download_name='certificate.pem', 
+        mimetype='application/x-pem-file'
+    )
     
     except Exception as e:
-        return jsonify({"error": f"Upload failed: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to send PEM: {str(e)}"}), 500
+        # return jsonify({
+        #     "status": "success",
+        #     "message": "File uploaded successfully",
+        #     "filename": filename
+        # })
+    
+        # except Exception as e:
+        #     return jsonify({"error": f"Upload failed: {str(e)}"}), 500
 
 # # отправка .pem файла (ЧИСТО ЭКСПЕРИМЕНТ ОТПРАВКИ ФАЙЛА ;) )
 # @app.route('/api/get_pem/<filename>', methods=['GET'])
