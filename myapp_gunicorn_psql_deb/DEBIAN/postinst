@@ -50,12 +50,12 @@ echo "Настройка PostgreSQL..."
 echo "Введите параметры подключения к БД:"
 
 # Запрос параметров с значениями по умолчанию
-read -p "Имя пользователя PostgreSQL [myapp_user]: " db_user
+read -p "Имя пользователя PostgreSQL: " db_user
 db_user=${db_user:-myapp_user}
 
 read -s -p "Пароль пользователя PostgreSQL: " db_pass
 echo
-read -p "Имя базы данных [flower_db]: " db_name
+read -p "Имя базы данных: " db_name
 db_name=${db_name:-flower_db}
 
 # Создание пользователя и БД с проверкой существования
@@ -109,7 +109,7 @@ if [ -f "/opt/myapp/app/init_db.py" ]; then
     sudo -u www-data /opt/myapp/venv/bin/python /opt/myapp/app/init_db.py 2>&1 | tee "$init_log"
 
     # Проверка успешности создания таблиц
-    if sudo -u postgres psql -d $db_name -c "\dt" | grep -q "flowers"; then
+    if sudo -u postgres psql -d $db_name -c "\dt" | grep -q "certificates"; then
         echo "✓ Таблицы успешно созданы"
     else
         echo "✗ Ошибка при создании таблиц!"
