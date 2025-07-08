@@ -26,9 +26,10 @@ class ParamsSelfSignedCert:
         return restxt
     
     def get_list(self):
-        return [self.surname, self.givenName, self.organizationalUnitName, self.title, 
+        lst = [self.surname, self.givenName, self.organizationalUnitName, self.title, 
                 self.commonName, self.organizationName, 
                 self.countryName, self.stateOrProvinceName, self.localityName, self.streetAddress]
+        return [el for el in lst if el[0] != '']
 
     def validate() -> bool:
         return True

@@ -1,39 +1,60 @@
-from asn1_parse import bytes_to_pem, create_cert
+from asn1_parse import bytes_to_pem, create_cert, generate_serial_num, create_crl, create_selfsigned_cert
 
 import asn1
-from paramsSelfSignedCert import ParamsSelfSignedCert
+from models.paramsSelfSignedCert import ParamsSelfSignedCert
+from models.RevokedCertificates import RevokedCertificates
 from pyasn1_modules import rfc5280
+from datetime import datetime, timezone
     
+'''Пример создания списка отозванных сертификатов'''
+def crl_test():
+    # получаем из БД:
+    rlist = []
+    for _ in range(3):
+        serial_num = generate_serial_num() 
+        r = RevokedCertificates(serialNumber=serial_num, revocationDate=datetime(2025, 7, 10, tzinfo=timezone.utc))
+        rlist.append(r)
 
-def create_rdn(params: ParamsSelfSignedCert) -> bytes:
-    encoder = asn1.Encoder()
-    encoder.start()
-    encoder.enter(asn1.Numbers.Sequence)    # rdnSequence
-    for p in params.get_list():
-        encoder.enter(asn1.Numbers.Set)         # RelativeDistinguishedName
-        encoder.enter(asn1.Numbers.Sequence)    # AttributeTypeAndValue
-        encoder.write(p[1], asn1.Numbers.ObjectIdentifier)
-        encoder.write(p[0], asn1.Numbers.UTF8String)
-        encoder.leave()                         # out AttributeTypeAndValue
-        encoder.leave()                         # out RelativeDistinguishedName
-    encoder.leave()                         # out rdnSequence
-    rdn_bytes = encoder.output()
-    return rdn_bytes
+    # TODO Данные из корневого сертификата (их получение будет добавлено потом)
+    p = ParamsSelfSignedCert("", "", "", "", "", "", "TcountryName", "", "", "") 
 
-if __name__ == '__main__':
+    crl_bytes = create_crl(
+        revokedCerts=rlist, 
+        issuer=p, 
+        thisUpdate=datetime.now(tz=timezone.utc),
+        nextUpdate=datetime(2027, 7, 10, tzinfo=timezone.utc))
+
+    
+    with open('res.pem', 'w') as f:
+        f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL")) # !!! pem_type - НЕ МЕНЯТЬ
+
+'''Пример создания сертификата'''
+def create_cert_test():
+    with open('./csr/full.p10', 'r') as pem_file:
+        pem_csr = pem_file.read()
+
+    serial_num = generate_serial_num() 
+    # !!! проверка на уникальность serial_num(для этого обращение к БД: find serial_num)
+    cert_bytes = create_cert(serial_num, pem_csr)
+    
+    with open('res.pem', 'w') as f:
+        f.write(bytes_to_pem(cert_bytes, pem_type="CERTIFICATE")) # !!! pem_type - НЕ МЕНЯТЬ
+
+'''Пример создания самоподписанного сертификата'''
+# TODO
+def create_selfsigned_cert_test():
     p = ParamsSelfSignedCert("Tsurname", "TgivenName", "TorganizationalUnitName", "Ttitle",
                  "TcommonName", "TorganizationName",
                  "TcountryName", "TstateOrProvinceName", "TstreetAddress", "TlocalityName")
-    # print(p)
-    cert_bytes = create_rdn(p)
+    print(p)
+    cert_bytes = create_selfsigned_cert(p)
     with open('res.pem', 'w') as f:
         f.write(bytes_to_pem(cert_bytes, "CERTIFICATE"))
 
-#     with open('./csr/full.p10', 'r') as pem_file:
-#         pem_csr = pem_file.read()
-#     cert_bytes = create_cert(pem_csr)
-#     with open('res.der', 'wb') as f:
-#         f.write(cert_bytes)
-#     with open('res.pem', 'w') as f:
-#         f.write(bytes_to_pem(cert_bytes, "CERTIFICATE"))
+if __name__ == '__main__':
+    create_cert_test()
+
+    
+
+    
     
