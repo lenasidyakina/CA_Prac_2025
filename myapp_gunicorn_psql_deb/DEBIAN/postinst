@@ -17,7 +17,10 @@ DEBIAN_FRONTEND=noninteractive apt-get install -yq \
     python3-sqlalchemy \
     firewalld \
     python3-dev \
-    python3-psutil
+    python3-psutil \
+    python3-pyasn1
+
+
 
 # 1. Проверка и создание необходимых директорий
 echo "=== Настройка файловой структуры ==="
@@ -33,6 +36,8 @@ python3 -m venv /opt/myapp/venv
 source /opt/myapp/venv/bin/activate
 pip install -U pip wheel >/dev/null
 pip install gunicorn flask psycopg2-binary >/dev/null
+pip install asn1
+pip install pyasn1_modules
 
 # Установка дополнительных зависимостей, если есть requirements.txt
 if [ -f "/opt/myapp/app/requirements.txt" ]; then

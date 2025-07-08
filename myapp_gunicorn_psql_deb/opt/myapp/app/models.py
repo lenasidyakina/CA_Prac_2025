@@ -1,17 +1,63 @@
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, Text, text , CheckConstraint, Date
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import validates
 from configparser import ConfigParser
 import os
+from datetime import datetime
 
 Base = declarative_base()
 
-class Flower(Base):
-    __tablename__ = 'flowers'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    color = Column(String(50), nullable=False)
 
+class Certificate(Base):
+    __tablename__ = 'certificates'
+    serial_number = Column(
+        String(20),  
+        primary_key=True,
+    )
+    
+    is_revoked = Column(
+        Boolean,
+        server_default="false",
+        nullable=False
+    )
+    
+    revoke_date = Column(Date)
+
+    send_to_ocsp = Column(
+        Boolean,
+        server_default="false",
+        nullable=False
+    )
+    # reason = Column(Text)
+    
+    # Валидация на уровне Python
+    @validates('serial_number')
+    def validate_serial_number(self, key, value):
+        if not value.isdigit():
+            raise ValueError("Серийный номер должен содержать только цифры")
+        if len(value) > 20:
+            raise ValueError("Серийный номер не может быть длиннее 20 символов")
+        return value
+    
+    @validates('revoke_date')
+    def validate_revoke_date(self, key, value):
+        if value and value > datetime.now().date():
+            raise ValueError("Дата отзыва не может быть в будущем")
+        return value
+    
+    # Ограничения уровня БД
+    __table_args__ = (
+        CheckConstraint(
+            "serial_number ~ '^[0-9]+$'",
+            name="ck_certificates_serial_number_digits"
+        ),
+        CheckConstraint(
+            "revoke_date <= CURRENT_DATE",
+            name="ck_certificates_revoke_date_not_future"
+        ),
+    )
 
 def get_engine():
     config = ConfigParser()

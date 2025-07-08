@@ -11,7 +11,12 @@ Depends: nginx (>= 1.26.0-3),
          postgresql-contrib,
          libpq-dev (>= 1:11.22-astra.se5.1+ci3),
          gunicorn (>= 19.9.0-1+deb10u1+b1),
-         python3-sqlalchemy
+         python3-sqlalchemy,
+         python3-pyasn1 (>= 0.4.2-3+b2),
+         python3-pyasn1-modules (>= 0.2.1-0.2),
+         python3-asn1crypto (>= 0.24.0-1+b2),
+         python3-cryptography (>= 2.6.1),
+         python3-openssl,
+         python3-dateutil
 Maintainer: Admin <admin@astra-linux.org>
 Description: Flask-приложение с Gunicorn, Nginx и PostgreSQL для Astra Linux SE
-
