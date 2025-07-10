@@ -10,6 +10,7 @@ from paramsSelfSignedCert import ParamsSelfSignedCert
 from asn1_parse import bytes_to_pem, create_cert
 import asn1
 from pyasn1_modules import rfc5280
+from RevokedCertificates import RevokedCertificates
     
 
 def create_rdn(params: ParamsSelfSignedCert) -> bytes:
@@ -214,10 +215,20 @@ def revoke_certificate():
 def get_revoked_certificates():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM certificates WHERE is_revoked = TRUE")
-    revoked_certificates = cursor.fetchall()
+    cursor.execute("SELECT serial_number, revoke_date FROM certificates WHERE is_revoked = TRUE")
+    revoked_certificates = [
+        RevokedCertificates(
+            serialNumber=int(row[0]),  
+            revocationDate=row[1]     
+        )
+        for row in cursor.fetchall()
+    ]
     conn.close()
-    print(revoked_certificates)
+
+    print("Revoked certificates:")
+    for cert in revoked_certificates:
+        print(f"Serial: {cert.serialNumber}, Revocation Date: {cert.revocationDate}")
+    
     return revoked_certificates
 
 # прием запроса на создание сертификата (файла .p10)
@@ -311,5 +322,5 @@ if __name__ == '__main__':
     #     logger.info("Database connection test successful")
     # except Exception as e:
     #     logger.error(f"Database connection test failed: {str(e)}")
-    
+    get_revoked_certificates()
     app.run(host='0.0.0.0', port=5000, debug=True)

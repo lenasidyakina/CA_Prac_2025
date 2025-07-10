@@ -74,6 +74,7 @@ class NumberLogger:
                 array_of_revoked_certificate = get_revoked_certificates()
                 current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 # для тестирования
+
                 for _ in range(3):
                     serial_num = generate_serial_num()
                     r = RevokedCertificates(serialNumber=serial_num,
