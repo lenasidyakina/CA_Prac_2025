@@ -38,6 +38,7 @@ pip install -U pip wheel >/dev/null
 pip install gunicorn flask psycopg2-binary >/dev/null
 pip install asn1
 pip install pyasn1_modules
+pip install sqlalchemy
 
 # Установка дополнительных зависимостей, если есть requirements.txt
 if [ -f "/opt/myapp/app/requirements.txt" ]; then
