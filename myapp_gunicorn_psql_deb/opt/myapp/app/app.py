@@ -7,26 +7,48 @@ from psycopg2.extras import DictCursor
 from configparser import ConfigParser
 import logging
 from paramsSelfSignedCert import ParamsSelfSignedCert
-from asn1_parse import bytes_to_pem, create_cert
+from asn1_parse import bytes_to_pem, create_cert, generate_serial_num, create_crl, create_selfsigned_cert
 import asn1
 from pyasn1_modules import rfc5280
 from RevokedCertificates import RevokedCertificates
     
+# def create_rdn(params: ParamsSelfSignedCert) -> bytes:
+#     encoder = asn1.Encoder()
+#     encoder.start()
+#     encoder.enter(asn1.Numbers.Sequence)    # rdnSequence
+#     for p in params.get_list():
+#         encoder.enter(asn1.Numbers.Set)         # RelativeDistinguishedName
+#         encoder.enter(asn1.Numbers.Sequence)    # AttributeTypeAndValue
+#         encoder.write(p[1], asn1.Numbers.ObjectIdentifier)
+#         encoder.write(p[0], asn1.Numbers.UTF8String)
+#         encoder.leave()                         # out AttributeTypeAndValue
+#         encoder.leave()                         # out RelativeDistinguishedName
+#     encoder.leave()                         # out rdnSequence
+#     rdn_bytes = encoder.output()
+#     return rdn_bytes
 
-def create_rdn(params: ParamsSelfSignedCert) -> bytes:
-    encoder = asn1.Encoder()
-    encoder.start()
-    encoder.enter(asn1.Numbers.Sequence)    # rdnSequence
-    for p in params.get_list():
-        encoder.enter(asn1.Numbers.Set)         # RelativeDistinguishedName
-        encoder.enter(asn1.Numbers.Sequence)    # AttributeTypeAndValue
-        encoder.write(p[1], asn1.Numbers.ObjectIdentifier)
-        encoder.write(p[0], asn1.Numbers.UTF8String)
-        encoder.leave()                         # out AttributeTypeAndValue
-        encoder.leave()                         # out RelativeDistinguishedName
-    encoder.leave()                         # out rdnSequence
-    rdn_bytes = encoder.output()
-    return rdn_bytes
+
+def find_serial_number(number):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    number_str = str(number)
+    
+    while True:
+        cursor.execute(
+            "SELECT 1 FROM certificates WHERE serial_number = %s",
+            (number_str,)
+        )
+        
+        if not cursor.fetchone():
+            conn.close()
+            return number
+        
+        number = generate_serial_num()
+        number_str = str(number)
+    
+    conn.close()
+    return number
 
 
 logging.basicConfig(level=logging.INFO)
@@ -120,16 +142,9 @@ def create_certificate():
                  "TcommonName", "TorganizationName",
                  "TcountryName", "TstateOrProvinceName", "TstreetAddress", "TlocalityName")
         print(p)
-        # отладная печать
-        # print(f"""
-        # Данные формы:
-        # - Общее имя: {cert.commonName}
-        # - Организация: {cert.organizationName}
-        # - Юридический адрес: {cert.countryName}, {cert.stateOrProvinceName}, {cert.localityName}, {cert.streetAddress}
-        # - Сотрудник: {cert.surname} {cert.givenName}
-        # - Подразделение: {cert.organizationalUnitName}
-        # - Должность: {cert.title}
-        # """)
+        cert_bytes = create_selfsigned_cert(p)
+        with open('res.pem', 'w') as f:
+            f.write(bytes_to_pem(cert_bytes, "CERTIFICATE"))
 
         logger.info("Создание самоподписного сертификата")
 
@@ -246,67 +261,37 @@ def create_certificate_p10():
         return jsonify({"error": "Only .p10 files allowed"}), 400 # неподдерживаемое расширение файла
     
     try:
-        # создание папки, если ее нет
         if not os.path.exists(UPLOAD_FOLDER):
             os.makedirs(UPLOAD_FOLDER)
         
-        # сохранение полученного файл
+        # сохранение полученного файла p10
         filename = secure_filename(file.filename)
         file_path = os.path.join(UPLOAD_FOLDER, filename)
         file.save(file_path)
-        
-        ''' new '''
+
         with open(file_path, 'r') as pem_file:
             pem_csr = pem_file.read()
-        cert_bytes = create_cert(pem_csr)
-        # with open('res.der', 'wb') as f:
-        #     f.write(cert_bytes)
-        res_filename='./created_files/res.pem'
+
+        serial_num = generate_serial_num() 
+        # !!! проверка на уникальность serial_num(для этого обращение к БД: find serial_num)
+        serial_num = find_serial_number(serial_num)
+
+        cert_bytes = create_cert(serial_num, pem_csr)
+        res_filename =  f"./created_files/res{serial_num}.pem"
         with open(res_filename, 'w') as f:
-            f.write(bytes_to_pem(cert_bytes, "CERTIFICATE"))
+            f.write(bytes_to_pem(cert_bytes, pem_type="CERTIFICATE")) # !!! pem_type - НЕ МЕНЯТЬ
 
         return send_file(
         res_filename,
         as_attachment=True,
-        download_name='certificate.pem', 
+        download_name=res_filename , 
         mimetype='application/x-pem-file'
     )
     
     except Exception as e:
         return jsonify({"error": f"Failed to send PEM: {str(e)}"}), 500 
     
-    '''old'''
-    # return jsonify({
-    #         "status": "success",
-    #         "message": "File uploaded successfully",
-    #         "filename": filename
-    #     })
-    
-    # except Exception as e:
-    #     return jsonify({"error": f"Upload failed: {str(e)}"}), 500
 
-
-# # отправка .pem файла (ЧИСТО ЭКСПЕРИМЕНТ ОТПРАВКИ ФАЙЛА ;) )
-# @app.route('/api/get_pem/<filename>', methods=['GET'])
-# def get_pem(filename):
-#     try:
-#         # проверка существования файла
-#         base_name = os.path.splitext(filename)[0]  # убираем расширение .p10
-#         pem_file = f"{base_name}.pem"
-#         pem_path = os.path.join(UPLOAD_FOLDER, pem_file)
-        
-#         if not os.path.exists(pem_path):
-#             return jsonify({"error": ".pem file not found"}), 404
-        
-#         return send_file(
-#             pem_path,
-#             as_attachment=True,
-#             download_name=pem_file,
-#             mimetype='application/x-pem-file'
-#         )
-    
-#     except Exception as e:
-#         return jsonify({"error": f"Failed to send PEM: {str(e)}"}), 500
 
 if __name__ == '__main__':
     os.makedirs('templates', exist_ok=True)
