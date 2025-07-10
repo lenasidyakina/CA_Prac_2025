@@ -30,15 +30,19 @@ class Certificate(Base):
         server_default="false",
         nullable=False
     )
+
+    source_serial_number = Column(
+        String(20), nullable=False
+    )
     # reason = Column(Text)
     
     # Валидация на уровне Python
     @validates('serial_number')
     def validate_serial_number(self, key, value):
         if not value.isdigit():
-            raise ValueError("Серийный номер должен содержать только цифры")
+            raise ValueError("Серийный номер сертификата должен содержать только цифры")
         if len(value) > 20:
-            raise ValueError("Серийный номер не может быть длиннее 20 символов")
+            raise ValueError("Серийный номер сертификата не может быть длиннее 20 символов")
         return value
     
     @validates('revoke_date')
@@ -47,17 +51,39 @@ class Certificate(Base):
             raise ValueError("Дата отзыва не может быть в будущем")
         return value
     
+    @validates('source_serial_number')
+    def validate_source_serial_number(self, key, value):
+        if not value.isdigit():
+            raise ValueError("Серийный номер самоподписанного сертификата должен содержать только цифры")
+        if len(value) > 20:
+            raise ValueError("Серийный номер самоподписанного сертификата не может быть длиннее 20 символов")
+        return value
+
+    @validates('is_revoked')
+    def validate_is_revoked(self, key, value):
+        if value and not self.revoke_date:
+            raise ValueError("Дата отзыва обязательна при отзыве сертификата")
+        return value
+
     # Ограничения уровня БД
     __table_args__ = (
-        CheckConstraint(
-            "serial_number ~ '^[0-9]+$'",
-            name="ck_certificates_serial_number_digits"
-        ),
-        CheckConstraint(
-            "revoke_date <= CURRENT_DATE",
-            name="ck_certificates_revoke_date_not_future"
-        ),
-    )
+    CheckConstraint(
+        "serial_number ~ '^[0-9]+$'",
+        name="ck_certificates_serial_number_digits"
+    ),
+    CheckConstraint(
+        "revoke_date <= CURRENT_DATE",
+        name="ck_certificates_revoke_date_not_future"
+    ),
+    CheckConstraint(
+        "source_serial_number ~ '^[0-9]+$'",
+        name="ck_certificates_source_serial_number_digits"
+    ),
+    CheckConstraint(
+        "(is_revoked = false) OR (is_revoked = true AND revoke_date IS NOT NULL)",
+        name="ck_certificates_revoke_date_required_when_revoked"
+    ),
+)
 
 def get_engine():
     config = ConfigParser()

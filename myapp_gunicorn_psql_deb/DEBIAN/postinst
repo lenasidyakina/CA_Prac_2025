@@ -46,6 +46,11 @@ fi
 deactivate
 
 # 4. Настройка PostgreSQL
+# Функция для проверки существования БД
+check_db_exists() {
+    sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "$1"
+}
+
 echo "Настройка PostgreSQL..."
 echo "Введите параметры подключения к БД:"
 
@@ -55,7 +60,23 @@ db_user=${db_user:-myapp_user}
 
 read -s -p "Пароль пользователя PostgreSQL: " db_pass
 echo
-read -p "Имя базы данных: " db_name
+
+# Запрос имени БД с проверкой существования
+while true; do
+    read -p "Имя базы данных: " db_name
+    db_name=${db_name:-flower_db}
+
+    if check_db_exists "$db_name"; then
+        echo "Ошибка: База данных '$db_name' уже существует!" >&2
+        read -p "Хотите ввести другое имя? (y/n) " choice
+        case "$choice" in
+            [yY]|[yY][eE][sS]) continue ;;
+            *) echo "Отмена операции"; exit 1 ;;
+        esac
+    else
+        break
+    fi
+done
 db_name=${db_name:-flower_db}
 
 # Создание пользователя и БД с проверкой существования
@@ -108,11 +129,6 @@ init_log="/tmp/myapp_db_init.log"
 if [ -f "/opt/myapp/app/init_db.py" ]; then
     sudo -u www-data /opt/myapp/venv/bin/python /opt/myapp/app/init_db.py 2>&1 | tee "$init_log"
 
-    # Выдать права на ВСЕ существующие таблицы (включая старые)
-    sudo -u postgres psql -d $db_name -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO $db_user;"
-    sudo -u postgres psql -d $db_name -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO $db_user;"
-    sudo -u postgres psql -d $db_name -c "GRANT USAGE ON SCHEMA public TO $db_user;"
-
     # Проверка успешности создания таблиц
     if sudo -u postgres psql -d $db_name -c "\dt" | grep -q "certificates"; then
         echo "✓ Таблицы успешно созданы"
@@ -123,6 +139,7 @@ if [ -f "/opt/myapp/app/init_db.py" ]; then
 else
     echo "Файл init_db.py не найден, пропускаем инициализацию БД"
 fi
+
 
 
 # 6. Настройка Nginx

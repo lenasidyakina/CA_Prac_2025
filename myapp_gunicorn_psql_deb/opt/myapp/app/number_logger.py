@@ -39,6 +39,7 @@ class NumberLogger:
         try:
             with open(self.log_file, 'w') as f:
                 f.write(f"Log started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+
             os.chmod(self.log_file, 0o644)
             os.chmod(self.error_file, 0o644)
         except Exception as e:
@@ -73,13 +74,14 @@ class NumberLogger:
             try:
                 array_of_revoked_certificate = get_revoked_certificates()
                 current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                
                 # для тестирования
 
-                for _ in range(3):
-                    serial_num = generate_serial_num()
-                    r = RevokedCertificates(serialNumber=serial_num,
-                                            revocationDate=datetime(2025, 7, 10, tzinfo=timezone.utc))
-                    array_of_revoked_certificate.append(r)
+                # for _ in range(3):
+                #     serial_num = generate_serial_num()
+                #     r = RevokedCertificates(serialNumber=serial_num,
+                #                             revocationDate=datetime(2025, 7, 10, tzinfo=timezone.utc))
+                #     array_of_revoked_certificate.append(r)
 
                 # TODO Данные из корневого сертификата (их получение будет добавлено потом)
                 p = ParamsSelfSignedCert("", "", "", "", "", "", "TcountryName", "", "", "")
@@ -89,7 +91,8 @@ class NumberLogger:
                     issuer=p,
                     thisUpdate=datetime.now(tz=timezone.utc),
                     nextUpdate=datetime.now(tz=timezone.utc) + timedelta(seconds=self.interval))
-
+                with open(self.log_file, 'w') as f:
+                    f.write(f"{array_of_revoked_certificate}\n")
                 with open('res.pem', 'w') as f:
                     f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL"))  # !!! pem_type - НЕ МЕНЯТЬ
 
