@@ -20,6 +20,7 @@ deb https://download.astralinux.ru/astra/stable/1.7_x86-64/repository-extended/ 
 #deb cdrom:[OS Astra Linux 1.7.5 1.7_x86-64 DVD ]/ 1.7_x86-64 contrib main non-free
 ```
 > Примечание 1: Пути могут отличатся в зависимости от версии Astra, которую Вы используете.
+> 
 > Примечание 2: В случае если это не так - отредактируйте файл и зажмите Ctrl+O, затем Enter и Ctrl+X.
 ## 2. Обновите пакеты
 
