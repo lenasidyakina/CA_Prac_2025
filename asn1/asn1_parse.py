@@ -43,17 +43,137 @@ class CertsAsn1:
         with open('./signature.bin', 'rb') as f:
             signature_bytes = f.read()
         # ЭТО ПИЗДЕЦ -----
-        cert_bytes = self._certificate_encode(
-            tbsCert_bytes=tbsCertificate_bytes, 
+        cert_bytes = self._signature_encode(
+            tbs_bytes=tbsCertificate_bytes, 
             signature_bytes=signature_bytes)
         
         return cert_bytes
     
-    def _certificate_encode(self, tbsCert_bytes: bytes, signature_bytes: bytes):
+    ''' Создает сертификат на основе запроса на сертификат'''
+    def create_cert(self, serial_num: int, pem_csr: str) -> bytes:
+        # Удаляем лишние символы и декодируем Base64
+        pem_lines = [line.strip() for line in pem_csr.split('\n') if line.strip()]
+        pem_body = ''.join(pem_lines[1:-1])  # Убираем BEGIN/END строки
+        der_csr = base64.b64decode(pem_body)
+
+        decoder = asn1.Decoder()
+        decoder.start(der_csr)
+        decoder.enter()     # CertificationRequest
+        decoder.enter()     # certificationRequestInfo
+
+        # version
+        decoder.read()
+        # when extensions are used, as expected in this profile (rfc5280), version MUST be 3 (value is 2)
+        version = 2
+
+        rdn_der = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
+        decoder.read()
+
+        # SubjectPublicKeyInfo
+        # subjectPKinfo_der = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
+        decoder.enter() # SubjectPublicKeyInfo
+        algSubjectPK_der = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
+        decoder.enter() # AlgorithmIdentifier
+        AlgorithmId_der = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
+        decoder.read()  # algorithm
+        decoder.read()  # parametrs
+        decoder.leave() # out AlgorithmIdentifier
+        # subjectPK_der = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
+        _, v = decoder.read()  # subjectPublicKey
+        subjectPK_der = v
+        decoder.leave() # out SubjectPublicKeyInfo
+
+        # AttributeValue  SEQUENCE
+        attr_bytes_list = [] # список блококов байт из которых состоял AttributeValue  SEQUENCE
+        decoder.enter() # Attributes [?]
+        decoder.enter() # Attributes SEQUENCE
+        t, v = decoder.read()   # AttributeType
+        assert v == '1.2.840.113549.1.9.14' # стандарт поддерживаемых атрибутов
+        decoder.enter() # values SET
+        len_attrValue = _block_length(der_csr[decoder._get_current_position():])
+        decoder.enter() # AttributeValue  SEQUENCE
+        start_pos = decoder._get_current_position()
+        while decoder._get_current_position() - start_pos < len_attrValue:
+            attr_bytes = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
+            attr_bytes_list.append(attr_bytes)
+            t, v = decoder.read()
+
+        # TODO Получить данные о ЦС и вставить из в extentoins: добавить в attr_bytes_list
+        decoder.leave() # out AttributeValue  SEQUENCE
+        decoder.leave() # out values SET
+        decoder.leave() # out Attributes SEQUENCE
+        decoder.leave() # out Attributes [?]
+
+        decoder.leave() # out certificationRequestInfo
+
+        tbsCertificate_bytes = _tbsCertificate_encode(
+            serial_num=serial_num,
+            version=version, issuer_rdn_bytes=rdn_der, subject_rdn_bytes=rdn_der,
+            algid_bytes=AlgorithmId_der,
+            beg_date=datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
+            end_date=datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
+            # subjectPKinfo_der=subjectPKinfo_der,
+            algSubjectPK_der=algSubjectPK_der, subjectPK_der=subjectPK_der,
+            attr_bytes_list=attr_bytes_list
+        )
+        # ЭТО ПИЗДЕЦ ----
+        with open('./bicry/tbs.der', 'wb') as f:
+            f.write(tbsCertificate_bytes)
+        self.bicrypt.electronic_signature()
+        with open('./signature.bin', 'rb') as f:
+            signature_bytes = f.read()
+        # ЭТО ПИЗДЕЦ -----
+        cert_bytes = self._signature_encode(
+            tbs_bytes=tbsCertificate_bytes, 
+            signature_bytes=signature_bytes)
+        
+        return cert_bytes
+
+    '''Создает подписанный список отозванных сертификатов'''
+    def create_crl(self, revokedCerts: List[RevokedCertificates], 
+                issuer: ParamsSelfSignedCert, 
+                thisUpdate: datetime, nextUpdate: datetime) -> bytes:
+        encoder = asn1.Encoder()
+        encoder.start()
+        encoder.enter(asn1.Numbers.Sequence)    # CertificateList  
+        encoder.enter(asn1.Numbers.Sequence)    # TBSCertList 
+
+        version = 1
+        encoder.write(version, asn1.Numbers.Integer) 
+
+        encoder.enter(asn1.Numbers.Sequence)    # AlgorithmIdentifier
+        # AlgorithmIdentifier is defined in Section 4.1.1.2
+        encoder.leave()                         # out AlgorithmIdentifier   
+
+        issuer_rdn_bytes = _create_rdn(issuer)
+        encoder._emit(issuer_rdn_bytes)
+
+        encoder.write(thisUpdate.strftime(DATETIME_FORMAT), asn1.Numbers.UTCTime)
+        encoder.write(nextUpdate.strftime(DATETIME_FORMAT), asn1.Numbers.UTCTime)
+
+        # revokedCertificates
+        encoder.enter(asn1.Numbers.Sequence)    # revokedCertificates
+        for rcert in revokedCerts:
+            encoder.enter(asn1.Numbers.Sequence)
+            encoder.write(rcert.serialNumber, asn1.Numbers.Integer)
+            encoder.write(rcert.revocationDate.strftime(DATETIME_FORMAT), asn1.Numbers.UTCTime)
+            # TODO crlEntryExtensions
+            encoder.leave() 
+        encoder.leave()                         # out revokedCertificates  
+        # TODO crlExtensions           
+        
+        encoder.leave()                         # out TBSCertList   
+        encoder.leave()                         # out CertificateList  
+
+        crl_bytes = encoder.output()
+        return crl_bytes
+
+
+    def _signature_encode(self, tbs_bytes: bytes, signature_bytes: bytes):
         encoder = asn1.Encoder()
         encoder.start()
         encoder.enter(asn1.Numbers.Sequence)    # Certificate SEQUENCE
-        encoder._emit(tbsCert_bytes)
+        encoder._emit(tbs_bytes)
         encoder._emit(self._signAlgId_encode())
         encoder.write(signature_bytes, asn1.Numbers.BitString)
         # encoder._emit(signature_bytes)
@@ -198,86 +318,7 @@ def _tbsCertificate_encode(serial_num: int, version: int, issuer_rdn_bytes: byte
 
 
 
-''' Создает сертификат на основе запроса на сертификат
-Example:
-with open('./csr/full.p10', 'r') as pem_file:
-    pem_csr = pem_file.read()
-cert_bytes = create_cert(pem_csr)
-with open('res.pem', 'w') as f:
-    f.write(bytes_to_pem(cert_bytes, "CERTIFICATE"))
-'''
-def create_cert(serial_num: int, pem_csr: str) -> bytes:
-    # Удаляем лишние символы и декодируем Base64
-    pem_lines = [line.strip() for line in pem_csr.split('\n') if line.strip()]
-    pem_body = ''.join(pem_lines[1:-1])  # Убираем BEGIN/END строки
-    der_csr = base64.b64decode(pem_body)
 
-    decoder = asn1.Decoder()
-    decoder.start(der_csr)
-    decoder.enter()     # CertificationRequest
-    decoder.enter()     # certificationRequestInfo
-
-    # version
-    decoder.read()
-    # when extensions are used, as expected in this profile (rfc5280), version MUST be 3 (value is 2)
-    version = 2
-
-    rdn_der = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
-    decoder.read()
-
-    # SubjectPublicKeyInfo
-    # subjectPKinfo_der = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
-    decoder.enter() # SubjectPublicKeyInfo
-    algSubjectPK_der = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
-    decoder.enter() # AlgorithmIdentifier
-    AlgorithmId_der = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
-    decoder.read()  # algorithm
-    decoder.read()  # parametrs
-    decoder.leave() # out AlgorithmIdentifier
-    # subjectPK_der = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
-    _, v = decoder.read()  # subjectPublicKey
-    subjectPK_der = v
-    decoder.leave() # out SubjectPublicKeyInfo
-
-    # AttributeValue  SEQUENCE
-    attr_bytes_list = [] # список блококов байт из которых состоял AttributeValue  SEQUENCE
-    decoder.enter() # Attributes [?]
-    decoder.enter() # Attributes SEQUENCE
-    t, v = decoder.read()   # AttributeType
-    assert v == '1.2.840.113549.1.9.14' # стандарт поддерживаемых атрибутов
-    decoder.enter() # values SET
-    len_attrValue = _block_length(der_csr[decoder._get_current_position():])
-    decoder.enter() # AttributeValue  SEQUENCE
-    start_pos = decoder._get_current_position()
-    while decoder._get_current_position() - start_pos < len_attrValue:
-        attr_bytes = _block_to_raw_bytes(der_csr[decoder._get_current_position():])
-        attr_bytes_list.append(attr_bytes)
-        t, v = decoder.read()
-
-    # TODO Получить данные о ЦС и вставить из в extentoins: добавить в attr_bytes_list
-    decoder.leave() # out AttributeValue  SEQUENCE
-    decoder.leave() # out values SET
-    decoder.leave() # out Attributes SEQUENCE
-    decoder.leave() # out Attributes [?]
-
-    decoder.leave() # out certificationRequestInfo
-
-    tbsCertificate_bytes = _tbsCertificate_encode(
-        serial_num=serial_num,
-        version=version, issuer_rdn_bytes=rdn_der, subject_rdn_bytes=rdn_der,
-        algid_bytes=AlgorithmId_der,
-        beg_date=datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
-        end_date=datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
-        # subjectPKinfo_der=subjectPKinfo_der,
-        algSubjectPK_der=algSubjectPK_der, subjectPK_der=subjectPK_der,
-        attr_bytes_list=attr_bytes_list
-    )
-    with open('tbs.der', 'wb') as f:
-        f.write(tbsCertificate_bytes)
-    # TODO передавть на подпись tbsCertificate_bytes
-    cert_bytes = _certificate_encode(tbsCertificate_bytes)
-    
-    return cert_bytes
 
 '''Создает rdnSequence Name SEQUENCE на основе ParamsSelfSignedCert.get_list()'''
 def _create_rdn(params: ParamsSelfSignedCert) -> bytes:
@@ -295,43 +336,5 @@ def _create_rdn(params: ParamsSelfSignedCert) -> bytes:
     rdn_bytes = encoder.output()
     return rdn_bytes
 
-'''Создает подписанный список отозванных сертификатов'''
-def create_crl(revokedCerts: List[RevokedCertificates], 
-               issuer: ParamsSelfSignedCert, 
-               thisUpdate: datetime, nextUpdate: datetime) -> bytes:
-    encoder = asn1.Encoder()
-    encoder.start()
-    encoder.enter(asn1.Numbers.Sequence)    # CertificateList  
-    encoder.enter(asn1.Numbers.Sequence)    # TBSCertList 
-
-    version = 1
-    encoder.write(version, asn1.Numbers.Integer) 
-
-    encoder.enter(asn1.Numbers.Sequence)    # AlgorithmIdentifier
-    # AlgorithmIdentifier is defined in Section 4.1.1.2
-    encoder.leave()                         # out AlgorithmIdentifier   
-
-    issuer_rdn_bytes = _create_rdn(issuer)
-    encoder._emit(issuer_rdn_bytes)
-
-    encoder.write(thisUpdate.strftime(DATETIME_FORMAT), asn1.Numbers.UTCTime)
-    encoder.write(nextUpdate.strftime(DATETIME_FORMAT), asn1.Numbers.UTCTime)
-
-    # revokedCertificates
-    encoder.enter(asn1.Numbers.Sequence)    # revokedCertificates
-    for rcert in revokedCerts:
-        encoder.enter(asn1.Numbers.Sequence)
-        encoder.write(rcert.serialNumber, asn1.Numbers.Integer)
-        encoder.write(rcert.revocationDate.strftime(DATETIME_FORMAT), asn1.Numbers.UTCTime)
-        # TODO crlEntryExtensions
-        encoder.leave() 
-    encoder.leave()                         # out revokedCertificates  
-    # TODO crlExtensions           
-    
-    encoder.leave()                         # out TBSCertList   
-    encoder.leave()                         # out CertificateList  
-
-    crl_bytes = encoder.output()
-    return crl_bytes
 
 

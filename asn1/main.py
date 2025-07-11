@@ -1,12 +1,15 @@
 from datetime import datetime, timezone
 
-from asn1_parse import CertsAsn1, bytes_to_pem, create_cert, generate_serial_num
+from asn1_parse import CertsAsn1, bytes_to_pem, generate_serial_num
 from models.paramsSelfSignedCert import ParamsSelfSignedCert
 from models.RevokedCertificates import RevokedCertificates
 
     
 '''Пример создания списка отозванных сертификатов'''
 def crl_test():
+    create_selfsigned_cert_test() # TODO когда никита усовершенствует свой код это надо будет убрать
+    certsAsn1 = CertsAsn1()
+
     # получаем из БД:
     rlist = []
     for _ in range(3):
@@ -17,7 +20,7 @@ def crl_test():
     # TODO Данные из корневого сертификата (их получение будет добавлено потом)
     p = ParamsSelfSignedCert("", "", "", "", "", "", "TcountryName", "", "", "") 
 
-    crl_bytes = create_crl(
+    crl_bytes = certsAsn1.create_crl(
         revokedCerts=rlist, 
         issuer=p, 
         thisUpdate=datetime.now(tz=timezone.utc),
@@ -29,12 +32,14 @@ def crl_test():
 
 '''Пример создания сертификата'''
 def create_cert_test():
+    create_selfsigned_cert_test() # TODO когда никита усовершенствует свой код это надо будет убрать
+    certsAsn1 = CertsAsn1()
     with open('./csr/full.p10', 'r') as pem_file:
         pem_csr = pem_file.read()
 
     serial_num = generate_serial_num() 
     # !!! проверка на уникальность serial_num(для этого обращение к БД: find serial_num)
-    cert_bytes = create_cert(serial_num, pem_csr)
+    cert_bytes = certsAsn1.create_cert(serial_num, pem_csr)
     
     with open('res.pem', 'w') as f:
         f.write(bytes_to_pem(cert_bytes, pem_type="CERTIFICATE")) # !!! pem_type - НЕ МЕНЯТЬ
@@ -60,22 +65,7 @@ def create_selfsigned_cert_test():
 if __name__ == '__main__':
     create_selfsigned_cert_test()
     # create_cert_test()
-
-    # try:
-    #     wrapper = BicryWrapper()
-        
-    #     # Экспортируем ключ для пользователя
-    #     public_key = wrapper.export_public_key("Ivanov")
-
-    #     # Выводим результаты
-    #     print(f"Successfully exported public key ({len(public_key)} bytes):")
-    #     print(public_key.hex())
-
-    #     #Подписываем буфер ЭП
-    #     wrapper.electronic_signature()
-        
-    # except Exception as e:
-    #     print(f"Error: {e}")
+    # crl_test()
 
     
 
