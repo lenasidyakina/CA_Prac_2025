@@ -63,8 +63,8 @@ def create_selfsigned_cert_test():
         f.write(bytes_to_pem(cert_bytes, "CERTIFICATE"))
 
 if __name__ == '__main__':
-    create_selfsigned_cert_test()
-    # create_cert_test()
+    # create_selfsigned_cert_test()
+    create_cert_test()
     # crl_test()
 
     
