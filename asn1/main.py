@@ -1,10 +1,9 @@
-from asn1_parse import bytes_to_pem, create_cert, generate_serial_num, create_crl, create_selfsigned_cert
+from datetime import datetime, timezone
 
-import asn1
+from asn1_parse import CertsAsn1, bytes_to_pem, create_cert, generate_serial_num
 from models.paramsSelfSignedCert import ParamsSelfSignedCert
 from models.RevokedCertificates import RevokedCertificates
-from pyasn1_modules import rfc5280
-from datetime import datetime, timezone
+
     
 '''Пример создания списка отозванных сертификатов'''
 def crl_test():
@@ -43,16 +42,40 @@ def create_cert_test():
 '''Пример создания самоподписанного сертификата'''
 # TODO
 def create_selfsigned_cert_test():
+    certsAsn1 = CertsAsn1()
+
     p = ParamsSelfSignedCert("Tsurname", "TgivenName", "TorganizationalUnitName", "Ttitle",
                  "TcommonName", "TorganizationName",
                  "TcountryName", "TstateOrProvinceName", "TstreetAddress", "TlocalityName")
-    print(p)
-    cert_bytes = create_selfsigned_cert(p)
-    with open('res.pem', 'w') as f:
+    # print(p)
+
+    serial_num = generate_serial_num() 
+    # !!! проверка на уникальность serial_num(для этого обращение к БД: find serial_num)
+    cert_bytes = certsAsn1.create_selfsigned_cert(params=p, serial_num=serial_num)
+    with open('cert.der', 'wb') as f:
+        f.write(cert_bytes)
+    with open('cert.pem', 'w') as f:
         f.write(bytes_to_pem(cert_bytes, "CERTIFICATE"))
 
 if __name__ == '__main__':
-    create_cert_test()
+    create_selfsigned_cert_test()
+    # create_cert_test()
+
+    # try:
+    #     wrapper = BicryWrapper()
+        
+    #     # Экспортируем ключ для пользователя
+    #     public_key = wrapper.export_public_key("Ivanov")
+
+    #     # Выводим результаты
+    #     print(f"Successfully exported public key ({len(public_key)} bytes):")
+    #     print(public_key.hex())
+
+    #     #Подписываем буфер ЭП
+    #     wrapper.electronic_signature()
+        
+    # except Exception as e:
+    #     print(f"Error: {e}")
 
     
 

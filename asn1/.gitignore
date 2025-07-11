@@ -1,2 +1,10 @@
 __pycache__
 tmp*
+*:Zone.Identifier
+*.der
+*.cer
+*.bin
+*.pem
+password.txt
+prnd.key
+private.key
