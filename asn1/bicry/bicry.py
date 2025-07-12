@@ -38,6 +38,12 @@ class BicryWrapper:
             ctypes.c_size_t
         ]
 
+        self.lib.get_elgkey_with_password.restype = ctypes.c_int  # Код возврата
+        self.lib.get_elgkey_with_password.argtypes = [
+            ctypes.POINTER(ctypes.c_char), # Буфер для пароля
+            ctypes.POINTER(ctypes.c_ubyte) # Буфер для кдючевой информации
+        ]
+
         # Инициализация библиотеки
         result = self.lib.init_bicr(param)
         if result != 0:
@@ -124,15 +130,43 @@ class BicryWrapper:
         # Преобразуем буфер в байты
         return bytes(es_buffer)
         
+    def get_private_key_with_password(self) -> str:
+        """
+        Получение пароля из внутреннего буфера библиотеки
+        :return: пароль для закрытого ключа (6 символов)
+        :raises RuntimeError: если произошла ошибка
+        """
+        # Создаем буфер для пароля (6 байт + 1 для нуль-терминатора)
+        pw_buffer = (ctypes.c_char * 7)()  # 6 символов + '\0'
+
+        # Создаем буфер для ключевой инфорамации
+        private_key_buffer = (ctypes.c_ubyte * 69)() 
+        
+        # Вызываем C-функцию
+        result = self.lib.get_elgkey_with_password(pw_buffer, private_key_buffer)
+        
+        if result != 0:
+            raise RuntimeError(f"Failed to get password, error code: {result}")
+        
+        # Преобразуем в строку (автоматически остановится на нуль-терминаторе)
+        return pw_buffer.value.decode('ascii'), bytes(private_key_buffer)
+
 
 # Пример использования
 if __name__ == "__main__":
     wrapper = None
     try:
-        wrapper = BicryWrapper(lib_path='./libbicry_openkey.so')
-        
+        wrapper = BicryWrapper(param=98, lib_path='libbicry_openkey.so')
+
         public_key = wrapper.generate_keypair("Ivanov")
         #print(f"Public key: {public_key.hex()}")
+
+        password, private_key = wrapper.get_private_key_with_password()
+        #print(f"Password: {password}")
+
+        wrapper.close()
+     
+        wrapper = BicryWrapper(param=98, lib_path='./libbicry_openkey.so')
         
         # Пример чтения сертификата из файла (для примера)
         with open('tbs.der', 'rb') as f:

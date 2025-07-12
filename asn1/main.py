@@ -75,7 +75,7 @@ def create_selfsigned_cert_test():
 
     serial_num = generate_serial_num() 
     # !!! проверка на уникальность serial_num(для этого обращение к БД: find serial_num)
-    cert_bytes = certsAsn1.create_selfsigned_cert(params=p, serial_num=serial_num)
+    cert_bytes, private_key, password = certsAsn1.create_selfsigned_cert(params=p, serial_num=serial_num)
     print(certsAsn1.rootCert)
     with open(ROOT_CERT_PATH, 'wb') as f:
         f.write(cert_bytes)

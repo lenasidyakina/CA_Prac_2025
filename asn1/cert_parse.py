@@ -1,6 +1,6 @@
 import asn1
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 
 from asn1_parse import pem_to_bytes, tbsCertificate_encode, create_rdn, \
     block_to_raw_bytes, block_length, DATETIME_FORMAT
@@ -23,8 +23,9 @@ class CertsAsn1:
         self.bicrypt = BicryWrapper(param=ord(alg_type), lib_path='libbicry_openkey.so')
         self.algParams = ALL_ALG_PARAMS[alg_type]
 
-    '''Создает самопоодписанный сертификат  на основе ParamsSelfSignedCert.get_list()'''
-    def create_selfsigned_cert(self, params: ParamsSelfSignedCert, serial_num: int) -> bytes:
+    '''Создает самопоодписанный сертификат  на основе ParamsSelfSignedCert.get_list()
+    return самоподписанный сертификат, открытый ключ, пароль'''
+    def create_selfsigned_cert(self, params: ParamsSelfSignedCert, serial_num: int) -> Tuple[bytes, bytes, str]:
         version = 2
         rdn_bytes = create_rdn(params)
         public_key = self.bicrypt.generate_keypair("Ivanov")   
@@ -43,13 +44,15 @@ class CertsAsn1:
             tbs_bytes=tbsCertificate_bytes, 
             signature_bytes=signature_bytes)
         
+        password, private_key = self.bicrypt.get_private_key_with_password()
+        
         self.rootCert = RootCert(serial_num=serial_num,
                                  issuer_rdn_bytes=rdn_bytes,
                                  alg_type=params.alg_type,
                                  beg_validity_date=params.beg_validity_date, 
                                  end_validity_date=params.end_validity_date,
                                  public_key=public_key)
-        return cert_bytes
+        return cert_bytes, private_key, password
     
     ''' Создает сертификат на основе запроса на сертификат'''
     def create_cert(self, serial_num: int, 

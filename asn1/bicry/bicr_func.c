@@ -51,6 +51,14 @@ int init_bicr(int param) {
         return result;
     }
 
+    FILE* file = fopen("password.txt", "r");
+    if (file) {
+        if (fgets(password, sizeof(password), file) == NULL) {
+            memset(password, 0, sizeof(password));
+        }
+        fclose(file);
+    }    
+
     return result;
 }
 
@@ -135,7 +143,6 @@ int electronic_signature(unsigned char* es, unsigned char* cert_data, size_t cer
     char userid[33];
     int userid_blen = 33;
 
-    // 2. Загрузка из файла закрытого ключа ЭП с паролем
     H_USER user_handle;
     int result = cr_read_skey(
         init_handle, password, pass_blen, "private.key", userid, &userid_blen, &user_handle
@@ -177,3 +184,29 @@ int electronic_signature(unsigned char* es, unsigned char* cert_data, size_t cer
     return 0;
 }
 
+int get_elgkey_with_password(unsigned char* pw, unsigned char* private_key) {
+
+    FILE* file = fopen("private.key", "rb");
+    if (!file) {
+        printf("Failed to open private.key file\n");
+        return ERR_OPEN_FILE;
+    }
+    
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    
+    
+    size_t read = fread(private_key, 1, file_size, file);
+    fclose(file);
+    
+    if (read != (size_t)file_size) {
+        printf("Failed to read private key\n");
+        return ERR_OPEN_FILE;
+    }
+    
+    memcpy(pw, password, 6);
+    pw[6] = '\0';  // Явно добавляем нуль-терминатор
+
+    return 0;
+}
