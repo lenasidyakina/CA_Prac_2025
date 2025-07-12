@@ -20,7 +20,51 @@ DEBIAN_FRONTEND=noninteractive apt-get install -yq \
     python3-psutil \
     python3-pyasn1
 
+# 0.1. Запрос пути и копирование файлов библиотеки
+echo "=== Настройка библиотек BICRY ==="
+while true; do
+    read -p "Введите полный путь до папки с файлами библиотеки BICRY: " bicry_path
+    if [ -d "$bicry_path" ]; then
+        # Проверка наличия необходимых файлов
+        if [ -f "$bicry_path/bcry.h" ] && [ -f "$bicry_path/errors.h" ] && \
+           [ -f "$bicry_path/Linux/libbicr5_64.so" ] && [ -f "$bicry_path/Linux/libbiogrn.so" ]; then
 
+            # Создание целевых директорий
+            mkdir -p /opt/myapp/app/bicry
+            echo "Копирование файлов библиотеки..."
+
+            # Копирование заголовочных файлов
+            cp "$bicry_path/bcry.h" "$bicry_path/errors.h" /opt/myapp/app/bicry/
+
+            # Копирование библиотек
+            cp "$bicry_path/Linux/libbicr5_64.so" "$bicry_path/Linux/libbiogrn.so" /opt/myapp/app/bicry/
+
+            # Компиляция библиотеки
+            echo "Компиляция библиотеки libbicry_openkey.so..."
+            cd /opt/myapp/app/bicry
+            export LD_LIBRARY_PATH=/opt/myapp/app/bicry:$LD_LIBRARY_PATH
+            if [ -f "bicr_func.c" ]; then
+                gcc -shared -fPIC -o libbicry_openkey.so bicr_func.c -L. -lbicr5_64 -lbiogrn
+                if [ $? -eq 0 ]; then
+                    echo "✓ Библиотека успешно скомпилирована"
+                else
+                    echo "⚠️ Ошибка при компиляции библиотеки!"
+                fi
+            fi
+            break
+        else
+            echo "⚠️ В указанной папке отсутствуют необходимые файлы (bcry.h, errors.h, libbicr5_64.so, libbiogrn.so)!"
+        fi
+    else
+        echo "⚠️ Указанная папка не существует или недоступна!"
+    fi
+
+    read -p "Повторить ввод пути? (y/n) " choice
+    case "$choice" in
+        [nN]|[nN][oO]) exit 1 ;;
+        *) ;;
+    esac
+done
 
 # 1. Проверка и создание необходимых директорий
 echo "=== Настройка файловой структуры ==="
