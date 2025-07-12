@@ -3,7 +3,8 @@ from datetime import datetime, timezone
 from cert_parse import CertsAsn1
 from asn1_parse import bytes_to_pem, generate_serial_num
 from models.RootCert import RootCert, restore_root_cert
-from models.paramsSelfSignedCert import ParamsSelfSignedCert
+from models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN
+from models.CertTemplate import CertTemplate, RDNTemplate
 from models.RevokedCertificates import RevokedCertificates
 
 ROOT_CERT_PATH = 'root_cert.der'
@@ -51,9 +52,13 @@ def create_cert_test():
 
     serial_num = generate_serial_num() 
     # !!! проверка на уникальность serial_num(для этого обращение к БД: find serial_num)
+    rdn_template = RDNTemplate()
+    rdn_template.surname = rdn_template.givenName = rdn_template.streetAddress = False
+    cert_template = CertTemplate(rdn_template)
     cert_bytes = certsAsn1.create_cert(serial_num=serial_num, 
                                        beg_validity_date=datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
                                        end_validity_date=datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
+                                       cert_template=cert_template, 
                                        pem_csr=pem_csr)
     
     with open('res.pem', 'w') as f:
@@ -64,14 +69,15 @@ def create_cert_test():
 def create_selfsigned_cert_test():
     certsAsn1 = CertsAsn1()
 
+    prdn = ParamsRDN(surname="Tsurname", givenName="TgivenName", 
+                        organizationalUnitName="TorganizationalUnitName", title="Ttitle",
+                        commonName="TcommonName", organizationName="TorganizationName",
+                        countryName="TcountryName", stateOrProvinceName="TstateOrProvinceName", 
+                        streetAddress="TstreetAddress", localityName="TlocalityName")
     p = ParamsSelfSignedCert(alg_type="b", 
                              beg_validity_date=datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
                              end_validity_date=datetime(2026, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
-                            surname="Tsurname", givenName="TgivenName", 
-                            organizationalUnitName="TorganizationalUnitName", title="Ttitle",
-                            commonName="TcommonName", organizationName="TorganizationName",
-                            countryName="TcountryName", stateOrProvinceName="TstateOrProvinceName", 
-                            streetAddress="TstreetAddress", localityName="TlocalityName")
+                             paramsRDN=prdn)
 
     serial_num = generate_serial_num() 
     # !!! проверка на уникальность serial_num(для этого обращение к БД: find serial_num)

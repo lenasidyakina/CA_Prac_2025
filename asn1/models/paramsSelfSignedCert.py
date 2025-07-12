@@ -1,25 +1,36 @@
 from pyasn1_modules import rfc5280
 from datetime import datetime
-from models.CertTemplate import RDNTemplate
+from models.CertTemplate import RDNTemplate, ErrParamsTemplate
 
 
 class ParamsRDN:
-    def __init__(self, surname: str='',  givenName: str='',  organizationalUnitName: str='', title: str='', 
-                 commonName:str='', organizationName: str='', 
-                 countryName: str='', stateOrProvinceName: str='', streetAddress: str='', localityName :str=''):
-        self.surname = (surname, str(rfc5280.id_at_commonName))                     # фамилия
-        self.givenName = (givenName, str(rfc5280.id_at_givenName))                  # имя
-        self.organizationalUnitName = (organizationalUnitName, 
-                                       str(rfc5280.id_at_organizationalUnitName))   # подразделение
-        self.title = (title, str(rfc5280.id_at_title))                              # должность
+    oid_surname = str(rfc5280.id_at_surname)
+    oid_givenName = str(rfc5280.id_at_givenName)
+    oid_organizationalUnitName = str(rfc5280.id_at_organizationalUnitName)
+    oid_title = str(rfc5280.id_at_title)
+    oid_commonName = str(rfc5280.id_at_commonName)
+    oid_organizationName = str(rfc5280.id_at_organizationName)
+    oid_countryName = str(rfc5280.id_at_countryName)
+    oid_stateOrProvinceName = str(rfc5280.id_at_stateOrProvinceName)
+    oid_localityName = str(rfc5280.id_at_localityName)
+    oid_streetAddress = '2.5.4.9'  # OID для streetAddress
 
-        self.commonName = (commonName, str(rfc5280.id_at_commonName))                               # общее имя
-        self.organizationName = (organizationName, str(rfc5280.id_at_organizationName))             # наименование организации
-        
-        self.countryName = (countryName, str(rfc5280.id_at_countryName))                            # страна
-        self.stateOrProvinceName = (stateOrProvinceName, str(rfc5280.id_at_stateOrProvinceName))    # регион
-        self.localityName = (localityName, str(rfc5280.id_at_localityName))                         # нас пункт
-        self.streetAddress = (streetAddress, '2.5.4.9')                                             # адрес
+    def __init__(self, surname: str='', givenName: str='', organizationalUnitName: str='', 
+                 title: str='', commonName: str='', organizationName: str='',
+                 countryName: str='', stateOrProvinceName: str='', 
+                 streetAddress: str='', localityName: str=''):
+        self.params = {
+            self.oid_surname: surname,
+            self.oid_givenName: givenName,
+            self.oid_organizationalUnitName: organizationalUnitName,
+            self.oid_title: title,
+            self.oid_commonName: commonName,
+            self.oid_organizationName: organizationName,
+            self.oid_countryName: countryName,
+            self.oid_stateOrProvinceName: stateOrProvinceName,
+            self.oid_localityName: localityName,
+            self.oid_streetAddress: streetAddress
+        }
 
     def fit_template(self, t: RDNTemplate):
         """
@@ -34,69 +45,94 @@ class ParamsRDN:
             ErrParamsTemplate: если обязательное поле не заполнено
         """
         # Проверка обязательных полей
-        if t.surname and not self.surname[0]:
+        if t.surname and not self.params[self.oid_surname]:
             raise ErrParamsTemplate("Missing required field: surname")
         elif not t.surname:
-            self.surname = ('', self.surname[1])  # Сохраняем OID, очищаем значение
+            self.params[self.oid_surname] = ''
 
-        if t.givenName and not self.givenName[0]:
+        if t.givenName and not self.params[self.oid_givenName]:
             raise ErrParamsTemplate("Missing required field: givenName")
         elif not t.givenName:
-            self.givenName = ('', self.givenName[1])
+            self.params[self.oid_givenName] = ''
 
-        if t.organizationalUnitName and not self.organizationalUnitName[0]:
+        if t.organizationalUnitName and not self.params[self.oid_organizationalUnitName]:
             raise ErrParamsTemplate("Missing required field: organizationalUnitName")
         elif not t.organizationalUnitName:
-            self.organizationalUnitName = ('', self.organizationalUnitName[1])
+            self.params[self.oid_organizationalUnitName] = ''
 
-        if t.title and not self.title[0]:
+        if t.title and not self.params[self.oid_title]:
             raise ErrParamsTemplate("Missing required field: title")
         elif not t.title:
-            self.title = ('', self.title[1])
+            self.params[self.oid_title] = ''
 
-        if t.commonName and not self.commonName[0]:
+        if t.commonName and not self.params[self.oid_commonName]:
             raise ErrParamsTemplate("Missing required field: commonName")
         elif not t.commonName:
-            self.commonName = ('', self.commonName[1])
+            self.params[self.oid_commonName] = ''
 
-        if t.organizationName and not self.organizationName[0]:
+        if t.organizationName and not self.params[self.oid_organizationName]:
             raise ErrParamsTemplate("Missing required field: organizationName")
         elif not t.organizationName:
-            self.organizationName = ('', self.organizationName[1])
+            self.params[self.oid_organizationName] = ''
 
-        if t.countryName and not self.countryName[0]:
+        if t.countryName and not self.params[self.oid_countryName]:
             raise ErrParamsTemplate("Missing required field: countryName")
         elif not t.countryName:
-            self.countryName = ('', self.countryName[1])
+            self.params[self.oid_countryName] = ''
 
-        if t.stateOrProvinceName and not self.stateOrProvinceName[0]:
+        if t.stateOrProvinceName and not self.params[self.oid_stateOrProvinceName]:
             raise ErrParamsTemplate("Missing required field: stateOrProvinceName")
         elif not t.stateOrProvinceName:
-            self.stateOrProvinceName = ('', self.stateOrProvinceName[1])
+            self.params[self.oid_stateOrProvinceName] = ''
 
-        if t.localityName and not self.localityName[0]:
+        if t.localityName and not self.params[self.oid_localityName]:
             raise ErrParamsTemplate("Missing required field: localityName")
         elif not t.localityName:
-            self.localityName = ('', self.localityName[1])
+            self.params[self.oid_localityName] = ''
 
-        if t.streetAddress and not self.streetAddress[0]:
+        if t.streetAddress and not self.params[self.oid_streetAddress]:
             raise ErrParamsTemplate("Missing required field: streetAddress")
         elif not t.streetAddress:
-            self.streetAddress = ('', self.streetAddress[1])
+            self.params[self.oid_streetAddress] = ''
 
     def __str__(self):
-        restxt = ''
-        restxt += f"{self.surname}\n{self.givenName}\n{self.organizationalUnitName}\n" + \
-            f"{self.title}\n{self.commonName}\n{self.organizationName}\n{self.countryName}\n" + \
-                f"{self.stateOrProvinceName}\n{self.localityName}\n{self.streetAddress}"
-        return restxt
-    
-    def get_list(self):
-        lst = [self.countryName, self.organizationName, self.organizationalUnitName, 
-               self.stateOrProvinceName, self.commonName, self.localityName, self.title, 
-                self.surname, self.givenName, self.streetAddress]
-        return [el for el in lst if el[0] != '']
+        """Строковое представление всех заполненных полей"""
+        fields = [
+            (self.oid_surname, "Surname"),
+            (self.oid_givenName, "Given Name"),
+            (self.oid_organizationalUnitName, "Organizational Unit"),
+            (self.oid_title, "Title"),
+            (self.oid_commonName, "Common Name"),
+            (self.oid_organizationName, "Organization"),
+            (self.oid_countryName, "Country"),
+            (self.oid_stateOrProvinceName, "State/Province"),
+            (self.oid_localityName, "Locality"),
+            (self.oid_streetAddress, "Street Address")
+        ]
+        
+        result = []
+        for oid, name in fields:
+            if self.params[oid]:
+                result.append(f"{name}: {self.params[oid]}")
+        
+        return "\n".join(result)
 
+    def get_list(self):
+        """Возвращает список заполненных полей в виде кортежей (значение, OID)"""
+        fields_order = [
+            self.oid_countryName,
+            self.oid_organizationName,
+            self.oid_organizationalUnitName,
+            self.oid_stateOrProvinceName,
+            self.oid_commonName,
+            self.oid_localityName,
+            self.oid_title,
+            self.oid_surname,
+            self.oid_givenName,
+            self.oid_streetAddress
+        ]
+        
+        return [(self.params[oid], oid) for oid in fields_order if self.params[oid]]
 
 
 class ParamsSelfSignedCert:
@@ -109,7 +145,7 @@ class ParamsSelfSignedCert:
         self.paramsRDN = paramsRDN
 
     def __str__(self):
-        res = f"validity: {self.beg_validity_date.strftime("%y%m%d%H%M%SZ")}---{self.end_validity_date.strftime("%y%m%d%H%M%SZ")}\n"
+        res = f"validity: {self.beg_validity_date.strftime('%y%m%d%H%M%SZ')}---{self.end_validity_date.strftime('%y%m%d%H%M%SZ')}\n"
         res += f"alg_type: {self.alg_type}\n"
         res += str(self.paramsRDN)
         return res

@@ -135,5 +135,24 @@ def rdn_encode(params: ParamsRDN) -> bytes:
     return rdn_bytes
 
 def rdn_decode(rdn_bytes: bytes) -> ParamsRDN:
-    
+    decoder = asn1.Decoder()
+    decoder.start(rdn_bytes)
+    len_rdnSeq = block_length(rdn_bytes[decoder._get_current_position():])
+
+    resRDN = ParamsRDN()
+    decoder.enter()         # rdnSequence  SEQUENCE
+    start_pos = decoder._get_current_position()
+    while decoder._get_current_position() - start_pos < len_rdnSeq:
+        decoder.enter() # RelativeDistinguishedName
+        decoder.enter() # AttributeTypeAndValue
+        type = decoder.read()[-1]
+        val = decoder.read()[-1]
+        if type not in resRDN.params.keys():
+            raise Exception("rdn_decode: unknown oid")
+        resRDN.params[type] = val
+        decoder.leave() # out AttributeTypeAndValue
+        decoder.leave() # out RelativeDistinguishedName
+    decoder.leave()         # out rdnSequence  SEQUENCE
+
+    return resRDN
 

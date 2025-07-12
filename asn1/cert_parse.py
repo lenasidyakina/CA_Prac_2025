@@ -3,8 +3,9 @@ from datetime import datetime
 from typing import List, Tuple
 
 from asn1_parse import pem_to_bytes, tbsCertificate_encode, rdn_encode, \
-    block_to_raw_bytes, block_length, DATETIME_FORMAT
+    block_to_raw_bytes, block_length, DATETIME_FORMAT, rdn_decode
 from models.paramsSelfSignedCert import ParamsSelfSignedCert
+from models.CertTemplate import CertTemplate
 from models.RevokedCertificates import RevokedCertificates
 from models.RootCert import RootCert
 from models.AlgParams import ALL_ALG_PARAMS
@@ -57,6 +58,7 @@ class CertsAsn1:
     ''' Создает сертификат на основе запроса на сертификат'''
     def create_cert(self, serial_num: int, 
                     beg_validity_date: datetime, end_validity_date: datetime, 
+                    cert_template: CertTemplate,
                     pem_csr: str) -> bytes:
         if self.rootCert is None:
             raise Exception("no root cert created")
@@ -72,6 +74,9 @@ class CertsAsn1:
 
         subject_rdn_der = block_to_raw_bytes(der_csr[decoder._get_current_position():])
         decoder.read()
+        subject_rdn = rdn_decode(subject_rdn_der)
+        subject_rdn.fit_template(cert_template.rdnTemplate)
+        subject_rdn_der = rdn_encode(subject_rdn)
 
         # SubjectPublicKeyInfo
         subjectPKinfo_der = block_to_raw_bytes(der_csr[decoder._get_current_position():])
