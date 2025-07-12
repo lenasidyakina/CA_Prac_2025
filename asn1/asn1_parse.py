@@ -3,8 +3,7 @@ import asn1
 from datetime import datetime, timezone
 import os
 from typing import List
-from models.paramsSelfSignedCert import ParamsSelfSignedCert
-
+from models.paramsSelfSignedCert import ParamsRDN
 
 DATETIME_FORMAT = "%y%m%d%H%M%SZ"
 
@@ -119,8 +118,8 @@ def tbsCertificate_encode(serial_num: int, version: int, issuer_rdn_bytes: bytes
     tbs_bytes = encode.output()
     return tbs_bytes
 
-'''Создает rdnSequence Name SEQUENCE на основе ParamsSelfSignedCert.get_list()'''
-def create_rdn(params: ParamsSelfSignedCert) -> bytes:
+'''Создает rdnSequence Name SEQUENCE на основе ParamsRDN.get_list()'''
+def rdn_encode(params: ParamsRDN) -> bytes:
     encoder = asn1.Encoder()
     encoder.start()
     encoder.enter(asn1.Numbers.Sequence)    # rdnSequence
@@ -135,5 +134,6 @@ def create_rdn(params: ParamsSelfSignedCert) -> bytes:
     rdn_bytes = encoder.output()
     return rdn_bytes
 
-
+def rdn_decode(rdn_bytes: bytes) -> ParamsRDN:
+    
 

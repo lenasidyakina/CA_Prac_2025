@@ -2,7 +2,7 @@ import asn1
 from datetime import datetime
 from typing import List, Tuple
 
-from asn1_parse import pem_to_bytes, tbsCertificate_encode, create_rdn, \
+from asn1_parse import pem_to_bytes, tbsCertificate_encode, rdn_encode, \
     block_to_raw_bytes, block_length, DATETIME_FORMAT
 from models.paramsSelfSignedCert import ParamsSelfSignedCert
 from models.RevokedCertificates import RevokedCertificates
@@ -23,11 +23,11 @@ class CertsAsn1:
         self.bicrypt = BicryWrapper(param=ord(alg_type), lib_path='libbicry_openkey.so')
         self.algParams = ALL_ALG_PARAMS[alg_type]
 
-    '''Создает самопоодписанный сертификат  на основе ParamsSelfSignedCert.get_list()
+    '''Создает самопоодписанный сертификат  на основе ParamsSelfSignedCert.get_list.get_list()
     return самоподписанный сертификат, открытый ключ, пароль'''
     def create_selfsigned_cert(self, params: ParamsSelfSignedCert, serial_num: int) -> Tuple[bytes, bytes, str]:
         version = 2
-        rdn_bytes = create_rdn(params)
+        rdn_bytes = rdn_encode(params.paramsRDN)
         public_key = self.bicrypt.generate_keypair("Ivanov")   
         tbsCertificate_bytes = tbsCertificate_encode(
             serial_num=serial_num, version=version, 
