@@ -2,7 +2,7 @@ import ctypes
 import os
 
 class BicryWrapper:
-    def __init__(self, param=98, lib_path='libbicry_openkey.so'):
+    def __init__(self, param=98, lib_path='./libbicry_openkey.so'):
         """
         Инициализация обертки для работы с криптографической библиотекой
         :param lib_path: путь к скомпилированной C-библиотеке
@@ -25,14 +25,18 @@ class BicryWrapper:
         self.lib.uninit_bicr.restype = ctypes.c_int  # Код возврата
         self.lib.uninit_bicr.argtypes = []
 
-        self.lib.export_keys.restype = ctypes.c_int  # Код возврата
-        self.lib.export_keys.argtypes = [
+        self.lib.generate_keypair.restype = ctypes.c_int  # Код возврата
+        self.lib.generate_keypair.argtypes = [
             ctypes.c_char_p,              # userid (строка)
-            ctypes.POINTER(ctypes.c_ubyte)  # Буфер для открытого ключа (256 байт)
+            ctypes.POINTER(ctypes.c_ubyte)  # указатель на буфер для открытого ключа (64 байт)
         ]
 
         self.lib.electronic_signature.restype = ctypes.c_int  # Код возврата
-        self.lib.electronic_signature.argtypes = []
+        self.lib.electronic_signature.argtypes = [
+            ctypes.POINTER(ctypes.c_ubyte), # Буфер для подписи
+            ctypes.POINTER(ctypes.c_ubyte),
+            ctypes.c_size_t
+        ]
 
         # Инициализация библиотеки
         result = self.lib.init_bicr(param)
@@ -57,7 +61,7 @@ class BicryWrapper:
         """Явная деинициализация ресурсов"""
         self._uninit()
 
-    def export_public_key(self, userid: str) -> bytes:
+    def generate_keypair(self, userid: str) -> bytes:
         """
         Экспорт открытого ключа для указанного пользователя
         
@@ -80,7 +84,7 @@ class BicryWrapper:
         userid_bytes = userid.encode('utf-8')
         
         # Вызываем C-функцию
-        result = self.lib.export_keys(
+        result = self.lib.generate_keypair(
             userid_bytes,  # userid
             key_buffer     # буфер для ключа
         )
@@ -91,7 +95,7 @@ class BicryWrapper:
         # Преобразуем буфер в байты
         return bytes(key_buffer)
 
-    def electronic_signature(self):
+    def electronic_signature(self, cert_data: bytes) -> bytes:
         """
         Подпись буфера ЭП
         
@@ -100,25 +104,42 @@ class BicryWrapper:
 
         if not self._initialized:
             raise RuntimeError("Library not initialized")
-        
+
+        # Создаем буфер для подписи (64 байт)
+        es_buffer = (ctypes.c_ubyte * 64)()
+
+        # Создаем буфер для данных сертификата
+        cert_buffer = (ctypes.c_ubyte * len(cert_data)).from_buffer_copy(cert_data)
+
         # Вызываем C-функцию
-        result = self.lib.electronic_signature()
+        result = self.lib.electronic_signature(
+            es_buffer,
+            cert_buffer,
+            len(cert_data)
+        )
         
         if result != 0:
             raise RuntimeError(f"Crypto operation failed with error code: {result}")
+
+        # Преобразуем буфер в байты
+        return bytes(es_buffer)
         
 
 # Пример использования
 if __name__ == "__main__":
     wrapper = None
     try:
-        wrapper = BicryWrapper()
+        wrapper = BicryWrapper(lib_path='./libbicry_openkey.so')
         
-        public_key = wrapper.export_public_key("Ivanov")
-        print(f"Public key: {public_key.hex()}")
+        public_key = wrapper.generate_keypair("Ivanov")
+        #print(f"Public key: {public_key.hex()}")
         
-        wrapper.electronic_signature()
-        print("Signature created")
+        # Пример чтения сертификата из файла (для примера)
+        with open('tbs.der', 'rb') as f:
+            cert_data = f.read()
+        
+        es = wrapper.electronic_signature(cert_data)    #в качсетве аргумента буфер для подписи
+        #print(f"Signature: {es.hex()}")
         
     except Exception as e:
         print(f"Error: {e}")

@@ -65,7 +65,7 @@ int uninit_bicr() {
     return result;
 }
 
-int export_keys(char* userid, unsigned char* public_key) {
+int generate_keypair(char* userid, unsigned char* public_key) {
     // 1. Генерация ключевой пары
     int pass_blen = 7;
     H_PKEY pkey_handle;
@@ -129,27 +129,8 @@ void reverse_buffer(char* buffer, int length) {
     }
 }
 
-int electronic_signature() {
+int electronic_signature(unsigned char* es, unsigned char* cert_data, size_t cert_data_len) {
     // 1. Загрузка из файла закрытого ключа ЭП с паролем
-    
-    // Открываем файл для чтения 
-    /*FILE *file = fopen("password.txt", "r");
-    if (file == NULL) {
-        printf("Ошибка открытия файла");
-        cr_uninit(init_handle);
-        return 1;
-    }
-    
-    // Читаем пароль из файла
-    if (fgets(password, sizeof(password), file) == NULL) {
-        printf("Ошибка чтения из файла");
-        fclose(file);
-        cr_uninit(init_handle);
-        return 1;
-    }
-    
-    fclose(file);*/
-
     int pass_blen = 6;
     char userid[33];
     int userid_blen = 33;
@@ -165,40 +146,9 @@ int electronic_signature() {
         return result;
     }
 
-    // 3. Чтениея буфера с сертификатом в формате X.509 из файла
-    FILE *file = fopen("tbs.der", "rb");
-    if (!file) {
-        printf("Ошибка открытия файла tbs.der\n");
-        cr_elgkey_close(init_handle, user_handle);
-        return 1;
-    }
-
-    // Определяем размер буфера с именем
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file); // Используем long для размера файла
-    fseek(file, 0, SEEK_SET);
-
-    // Выделяем буфер
-    void* dataBuffer = (void*)malloc(file_size);
-    if (!dataBuffer) {
-        printf("Ошибка выделения памяти\n");
-        fclose(file);
-        cr_elgkey_close(init_handle, user_handle);
-        return 1;
-    }
-
-    // Читаем данные
-    size_t bytes_read = fread(dataBuffer, 1, file_size, file);
-    fclose(file);
-
-    if (bytes_read != (size_t)file_size) { // Сравниваем с учётом типа
-        printf("Ошибка чтения файла\n");
-        free(dataBuffer);
-        cr_elgkey_close(init_handle, user_handle);
-        return 1;
-    }
-
-    int dataBufferLength = (int)file_size; // Сохраняем реальный размер
+    // 3. Используем переданный буфер с сертификатом вместо чтения из файла
+    void* dataBuffer = cert_data;
+    int dataBufferLength = (int)cert_data_len;
 
     // 4. Формирование ЭП для блока памяти
     char sign[64];
@@ -213,7 +163,6 @@ int electronic_signature() {
 
     if (result != ERR_OK) {
         printf("Ошибка формирования ЭП для блока памяти: %d\n", result);
-        free(dataBuffer);
         cr_elgkey_close(init_handle, user_handle);
         return result;
     }  
@@ -221,29 +170,9 @@ int electronic_signature() {
     // Переворачиваем буфер
     reverse_buffer(sign, sign_blen);
 
-    if (sign_blen > 0) {
-        FILE *f = fopen("signature.bin", "wb");
-        if (f) {
-            fwrite(sign, 1, sign_blen, f);
-            fclose(f);
-        } else {
-            printf("Ошибка создания файла\n");
-            free(dataBuffer);
-            cr_elgkey_close(init_handle, user_handle);
-            return 1;
-        }
-    } else {
-        printf("Ошибка генерации подписи\n");
-        free(dataBuffer);
-        cr_elgkey_close(init_handle, user_handle);
-        return 1;
-    }
+    memcpy(es, sign, 64);
 
-    printf("Подпись сохранена (%d байт)\n", sign_blen);
-
-    free(dataBuffer);
     cr_elgkey_close(init_handle, user_handle);
-    printf("ok");
 
     return 0;
 }

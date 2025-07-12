@@ -1,9 +1,15 @@
 from pyasn1_modules import rfc5280
+from datetime import datetime, timezone
 
 class ParamsSelfSignedCert:
-    def __init__(self, surname: str,  givenName: str,  organizationalUnitName: str, title: str, 
+    def __init__(self, beg_validity_date: datetime, end_validity_date: datetime, 
+                 alg_type: chr,
+                 surname: str,  givenName: str,  organizationalUnitName: str, title: str, 
                  commonName:str, organizationName: str, 
                  countryName: str, stateOrProvinceName: str, streetAddress: str, localityName :str):
+        self.beg_validity_date = beg_validity_date  # время начала действия сертификата
+        self.end_validity_date = end_validity_date  # время ококнчания действия сертификата
+        self.alg_type = alg_type                    # тип алгоритмов шифрования ("b", "a") # TODO пока только "b"
         self.surname = (surname, str(rfc5280.id_at_commonName))                     # фамилия
         self.givenName = (givenName, str(rfc5280.id_at_givenName))                  # имя
         self.organizationalUnitName = (organizationalUnitName, 

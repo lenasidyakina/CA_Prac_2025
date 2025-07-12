@@ -9,7 +9,7 @@
 
 # Как запустить:
 ```bash
-source ./prep_birct.sh
+source ./prep_bicr.sh
 ```
 
 # Про библиотеки
