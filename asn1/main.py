@@ -6,6 +6,7 @@ from models.RootCert import RootCert, restore_root_cert
 from models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN
 from models.CertTemplate import CertTemplate, RDNTemplate
 from models.RevokedCertificates import RevokedCertificates, CRLReasonCode
+from models.AlgParams import AlgTypes
 
 ROOT_CERT_PATH = 'root_cert.der'
     
@@ -78,7 +79,7 @@ def create_selfsigned_cert_test():
                         commonName="TcommonName", organizationName="TorganizationName",
                         countryName="TcountryName", stateOrProvinceName="TstateOrProvinceName", 
                         streetAddress="TstreetAddress", localityName="TlocalityName")
-    p = ParamsSelfSignedCert(alg_type="b", 
+    p = ParamsSelfSignedCert(alg_type=AlgTypes.A, 
                              beg_validity_date=datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
                              end_validity_date=datetime(2026, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
                              paramsRDN=prdn)
@@ -94,8 +95,8 @@ def create_selfsigned_cert_test():
 
 if __name__ == '__main__':
 
-    # create_selfsigned_cert_test() 
-    # create_cert_test()
+    create_selfsigned_cert_test() 
+    create_cert_test()
     crl_test()
 
     

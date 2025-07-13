@@ -1,7 +1,7 @@
 from datetime import datetime
 import asn1
 
-from models.AlgParams import ALL_ALG_PARAMS
+from models.AlgParams import ALL_ALG_PARAMS, AlgTypes
 from asn1_parse import block_to_raw_bytes, UTC_DATETIME_FORMAT
 
 class RootCert:
@@ -14,7 +14,7 @@ class RootCert:
 
     '''при повторной инициализации будет перезапись атрибутов во всех экземплярах
     т к RootCert может быть только один'''
-    def __init__(self, serial_num: int, issuer_rdn_bytes: bytes, alg_type: chr,
+    def __init__(self, serial_num: int, issuer_rdn_bytes: bytes, alg_type: AlgTypes,
                  beg_validity_date: datetime, end_validity_date: datetime,
                  public_key: bytes):
         self.serial_num = serial_num
@@ -42,12 +42,12 @@ def restore_root_cert(cert_bytes: bytes) -> RootCert:
 
     decoder.enter()         # signature AlgorithmIdentifier
     signAlgId = decoder.read()[-1][-1]
-    alg_type = ''
+    alg_type = None
     for char_alg, params_alg in ALL_ALG_PARAMS.items():
         if params_alg.signAlgId == signAlgId:
             alg_type = char_alg
             break
-    if alg_type == '':
+    if alg_type is None:
         e = f"unknown signature algorithm: {signAlgId}"
         raise Exception(e)
     decoder.leave()         # out signature AlgorithmIdentifier
