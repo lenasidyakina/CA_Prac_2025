@@ -63,8 +63,10 @@ deb https://download.astralinux.ru/astra/stable/1.7_x86-64/repository-extended/ 
 /path/to/bicript/
 ├── bcry.h
 ├── errors.h
+├── ...
 └── Linux/
     ├── libbicr5_64.so
+    ├── ...
     └── libbiogrn.so
 ```
 
