@@ -2,7 +2,7 @@ from datetime import datetime
 import asn1
 
 from models.AlgParams import ALL_ALG_PARAMS
-from asn1_parse import block_to_raw_bytes, DATETIME_FORMAT
+from asn1_parse import block_to_raw_bytes, UTC_DATETIME_FORMAT
 
 class RootCert:
     _instance = None  # Классовый атрибут для хранения экземпляра
@@ -56,8 +56,8 @@ def restore_root_cert(cert_bytes: bytes) -> RootCert:
     decoder.read()
 
     decoder.enter()         # validity
-    beg_validity_date = datetime.strptime(decoder.read()[-1], DATETIME_FORMAT) 
-    end_validity_date = datetime.strptime(decoder.read()[-1], DATETIME_FORMAT) 
+    beg_validity_date = datetime.strptime(decoder.read()[-1], UTC_DATETIME_FORMAT) 
+    end_validity_date = datetime.strptime(decoder.read()[-1], UTC_DATETIME_FORMAT) 
     decoder.leave()         # out  validity
     if datetime.now() > end_validity_date:
         # e = 

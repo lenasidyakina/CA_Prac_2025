@@ -5,7 +5,7 @@ from asn1_parse import bytes_to_pem, generate_serial_num
 from models.RootCert import RootCert, restore_root_cert
 from models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN
 from models.CertTemplate import CertTemplate, RDNTemplate
-from models.RevokedCertificates import RevokedCertificates
+from models.RevokedCertificates import RevokedCertificates, CRLReasonCode
 
 ROOT_CERT_PATH = 'root_cert.der'
     
@@ -21,10 +21,14 @@ def crl_test():
     certsAsn1 = CertsAsn1(rootCert=root)
 
     # получаем из БД:
+    reasons = [CRLReasonCode.cACompromise, CRLReasonCode.unspecified, CRLReasonCode.affiliationChanged]
     rlist = []
-    for _ in range(3):
+    for i in range(3):
         serial_num = generate_serial_num() 
-        r = RevokedCertificates(serialNumber=serial_num, revocationDate=datetime(2025, 7, 10, tzinfo=timezone.utc))
+        r = RevokedCertificates(serialNumber=serial_num, 
+                                revocationDate=datetime(2025, 7, 10, tzinfo=timezone.utc),
+                                crlReasonCode=reasons[i],
+                                invalidityDate=datetime(1900 + i, 7, 10, tzinfo=timezone.utc))
         rlist.append(r)
 
     crl_bytes = certsAsn1.create_crl(
@@ -91,8 +95,8 @@ def create_selfsigned_cert_test():
 if __name__ == '__main__':
 
     # create_selfsigned_cert_test() 
-    create_cert_test()
-    # crl_test()
+    # create_cert_test()
+    crl_test()
 
     
 

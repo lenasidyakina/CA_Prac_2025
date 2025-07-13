@@ -2,7 +2,6 @@ from pyasn1_modules import rfc5280
 from datetime import datetime
 from models.CertTemplate import RDNTemplate, ErrParamsTemplate
 
-
 class ParamsRDN:
     oid_surname = str(rfc5280.id_at_surname)
     oid_givenName = str(rfc5280.id_at_givenName)

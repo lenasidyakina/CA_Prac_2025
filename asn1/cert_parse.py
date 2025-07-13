@@ -1,9 +1,10 @@
 import asn1
 from datetime import datetime
 from typing import List, Tuple
+from pyasn1_modules import rfc5280
 
 from asn1_parse import pem_to_bytes, tbsCertificate_encode, rdn_encode, \
-    block_to_raw_bytes, block_length, DATETIME_FORMAT, rdn_decode
+    block_to_raw_bytes, block_length, UTC_DATETIME_FORMAT, rdn_decode, GENERALIZED_TIME_FORMAT
 from models.paramsSelfSignedCert import ParamsSelfSignedCert
 from models.CertTemplate import CertTemplate
 from models.RevokedCertificates import RevokedCertificates
@@ -141,16 +142,32 @@ class CertsAsn1:
         issuer_rdn_bytes = self.rootCert.issuer_rdn_bytes
         encoder._emit(issuer_rdn_bytes)
 
-        encoder.write(thisUpdate.strftime(DATETIME_FORMAT), asn1.Numbers.UTCTime)
-        encoder.write(nextUpdate.strftime(DATETIME_FORMAT), asn1.Numbers.UTCTime)
+        encoder.write(thisUpdate.strftime(UTC_DATETIME_FORMAT), asn1.Numbers.UTCTime)
+        encoder.write(nextUpdate.strftime(UTC_DATETIME_FORMAT), asn1.Numbers.UTCTime)
 
         # revokedCertificates
         encoder.enter(asn1.Numbers.Sequence)    # revokedCertificates
         for rcert in revokedCerts:
             encoder.enter(asn1.Numbers.Sequence)
             encoder.write(rcert.serialNumber, asn1.Numbers.Integer)
-            encoder.write(rcert.revocationDate.strftime(DATETIME_FORMAT), asn1.Numbers.UTCTime)
-            # TODO crlEntryExtensions
+            encoder.write(rcert.revocationDate.strftime(UTC_DATETIME_FORMAT), asn1.Numbers.UTCTime)
+            encoder.enter(asn1.Numbers.Sequence)    # crlEntryExtensions
+
+            encoder.enter(asn1.Numbers.Sequence)    # reasonCode
+            encoder.write(str(rfc5280.id_ce_cRLReasons), asn1.Numbers.ObjectIdentifier)
+            value_encoder = asn1.Encoder()
+            value_encoder.start()
+            value_encoder.write(rcert.crlReasonCode.value, asn1.Numbers.Enumerated)
+            encoded_value = value_encoder.output()
+            encoder.write(encoded_value, asn1.Numbers.OctetString)
+            encoder.leave()                         # out reasonCode
+
+            encoder.enter(asn1.Numbers.Sequence)    # invalidityDate
+            encoder.write(str(rfc5280.id_ce_invalidityDate), asn1.Numbers.ObjectIdentifier)
+            encoder.write(rcert.invalidityDate.strftime(GENERALIZED_TIME_FORMAT), asn1.Numbers.GeneralizedTime)
+            encoder.leave()                         # out invalidityDate
+
+            encoder.leave()                         # out crlEntryExtensions
             encoder.leave() 
         encoder.leave()                         # out revokedCertificates  
         # TODO crlExtensions           

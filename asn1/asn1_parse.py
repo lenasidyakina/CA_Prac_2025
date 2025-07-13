@@ -5,7 +5,8 @@ import os
 from typing import List
 from models.paramsSelfSignedCert import ParamsRDN
 
-DATETIME_FORMAT = "%y%m%d%H%M%SZ"
+UTC_DATETIME_FORMAT = "%y%m%d%H%M%SZ"
+GENERALIZED_TIME_FORMAT = "%Y%m%d%H%M%SZ"
 
 def generate_serial_num() -> int:
     return int.from_bytes(os.urandom(8), 'big') & 0x7FFFFFFFFFFFFFFF
@@ -88,8 +89,8 @@ def tbsCertificate_encode(serial_num: int, version: int, issuer_rdn_bytes: bytes
 
     # Validity SEQUENCE
     encode.enter(asn1.Numbers.Sequence)
-    encode.write(beg_date.strftime(DATETIME_FORMAT), asn1.Numbers.UTCTime)
-    encode.write(end_date.strftime(DATETIME_FORMAT), asn1.Numbers.UTCTime)
+    encode.write(beg_date.strftime(UTC_DATETIME_FORMAT), asn1.Numbers.UTCTime)
+    encode.write(end_date.strftime(UTC_DATETIME_FORMAT), asn1.Numbers.UTCTime)
     encode.leave()
 
     # subject rdnSequence Name SEQUENCE
