@@ -57,19 +57,16 @@ deb https://download.astralinux.ru/astra/stable/1.7_x86-64/repository-extended/ 
 
 Во время установки потребуется указать абсолютный путь до папки в которой лежат заголовочные файлы bcry.h и errors.h, а так же папка Linux внутри которой лежат файлы libbicr5_64.so и libbiogrn.so.
 
-> Пример:
-> 
->/path/to/bicript/
-> 
->├── bcry.h
-> 
->├── errors.h
-> 
->└── Linux/
-> 
->    ├── libbicr5_64.so
-> 
->    └── libbiogrn.so.
+Пример:
+
+```
+/path/to/bicript/
+├── bcry.h
+├── errors.h
+└── Linux/
+    ├── libbicr5_64.so
+    └── libbiogrn.so
+```
 
 ## 6. Настройка базы данных
 
