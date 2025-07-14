@@ -5,7 +5,7 @@
     <title>Отзыв сертификатов</title>
     <style>
         body {
-            font-size: 18px;
+            font-size: 20px;
             font-family: Arial, sans-serif;
             line-height: 1.6;
             padding: 20px;
@@ -14,27 +14,33 @@
         }
         
         h1 {
-            font-size: 28px;
+            font-size: 30px;
             margin-bottom: 30px;
             color: #333;
         }
         
         table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-            font-size: 18px;
-        }
-        
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    font-size: 20px; /* Увеличено с 18px */
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+    font-size: 20px; /* Добавлено для явного указания */
+}
+
+input[type="checkbox"] {
+    transform: scale(1.8); /* Увеличено с 1.5 */
+    margin: 0 12px 0 8px; /* Увеличено с 0 10px 0 5px */
+}
         
         th {
             background-color: #f2f2f2;
-            font-size: 20px;
+            font-size: 22px;
             font-weight: bold;
         }
         
@@ -50,7 +56,7 @@
         
         .button {
             padding: 14px 28px;
-            font-size: 20px;
+            font-size: 22px;
             background-color: #3b3832;
             color: white;
             border: none;
@@ -58,6 +64,8 @@
             cursor: pointer;
             margin-top: 30px;
             transition: background-color 0.3s;
+            margin: 15px auto; /* auto по бокам центрирует кнопку */
+    display: block; /* делает кнопку блочным элементом для правильного центрирования */
         }
         
         .button:hover {
@@ -69,29 +77,29 @@
             margin-top: 20px; 
             color: #8a2be2;
             text-decoration: underline;
-            font-size: 20px;
+            font-size: 22px;
             cursor: pointer;
             transition: color 0.3s;
             background: none;
             border: none;
             padding: 0;
             text-align: center; 
+            display: block; /* теперь центрируется */
+    margin: 15px auto; /* auto по бокам центрирует */
+    width: fit-content; /* ширина по содержимому */
         }
         
         .home-link:hover {
             color: #6a1b9a;
         }
         
-        input[type="checkbox"] {
-            transform: scale(1.5);
-            margin: 0 10px 0 5px;
-        }
         
-        .buttons-container {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start; 
-        }
+       .buttons-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* теперь кнопки центрированы */
+    margin-top: 20px; /* добавил отступ сверху */
+}
         
         .date-column {
             white-space: nowrap;

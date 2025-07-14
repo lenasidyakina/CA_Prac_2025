@@ -18,7 +18,8 @@ DEBIAN_FRONTEND=noninteractive apt-get install -yq \
     firewalld \
     python3-dev \
     python3-psutil \
-    python3-pyasn1
+    python3-pyasn1 \
+    keepassxc
 
 # 0.1. Запрос пути и копирование файлов библиотеки
 echo "=== Настройка библиотек BICRY ==="
@@ -41,16 +42,22 @@ while true; do
 
             # Компиляция библиотеки
             echo "Компиляция библиотеки libbicry_openkey.so..."
-            cd /opt/myapp/app/bicry
-            export LD_LIBRARY_PATH=/opt/myapp/app/bicry:$LD_LIBRARY_PATH
-            if [ -f "bicr_func.c" ]; then
-                gcc -shared -fPIC -o libbicry_openkey.so bicr_func.c -L. -lbicr5_64 -lbiogrn
-                if [ $? -eq 0 ]; then
-                    echo "✓ Библиотека успешно скомпилирована"
-                else
-                    echo "⚠️ Ошибка при компиляции библиотеки!"
-                fi
-            fi
+            # cd /opt/myapp/app/
+            
+            sudo chmod +x ./opt/myapp/app/prep_bicr.sh
+            sudo source ./opt/myapp/app/prep_bicr.sh
+            # pwd
+            # gcc -shared -fPIC -o libbicry_openkey.so bicr_func.c -L. -lbicr5_64 -lbiogrn
+            
+            # export LD_LIBRARY_PATH=/opt/myapp/app/bicry:$LD_LIBRARY_PATH
+            # if [ -f "bicr_func.c" ]; then
+            #     gcc -shared -fPIC -o libbicry_openkey.so bicr_func.c -L. -lbicr5_64 -lbiogrn
+            #     if [ $? -eq 0 ]; then
+            #         echo "✓ Библиотека успешно скомпилирована"
+            #     else
+            #         echo "⚠️ Ошибка при компиляции библиотеки!"
+            #     fi
+            # fi
             break
         else
             echo "⚠️ В указанной папке отсутствуют необходимые файлы (bcry.h, errors.h, libbicr5_64.so, libbiogrn.so)!"
@@ -70,8 +77,11 @@ done
 echo "=== Настройка файловой структуры ==="
 mkdir -p /opt/myapp/{venv,app,logs}
 mkdir -p /var/log/myapp/
-chown -R www-data:www-data /opt/myapp /var/log/myapp
+mkdir -p /var/lib/myapp/
+chown -R www-data:www-data /opt/myapp /var/log/myapp /var/lib/myapp
+chmod 755 /var/log/myapp
 chmod 755 /opt/myapp
+chmod 755 /var/lib/myapp
 chmod 644 /var/log/myapp/*.log 2>/dev/null || true
 
 # 2. Настройка Python окружения
@@ -83,7 +93,7 @@ pip install gunicorn flask psycopg2-binary >/dev/null
 pip install asn1
 pip install pyasn1_modules
 pip install sqlalchemy
-
+pip install pykeepass
 # Установка дополнительных зависимостей, если есть requirements.txt
 if [ -f "/opt/myapp/app/requirements.txt" ]; then
     pip install -r /opt/myapp/app/requirements.txt >/dev/null
@@ -298,3 +308,5 @@ echo "Данные для подключения к БД:"
 echo "============================"
 cat "$DB_CONFIG" | sed 's/DB_PASS=.*/DB_PASS=********/'
 echo "============================"
+
+

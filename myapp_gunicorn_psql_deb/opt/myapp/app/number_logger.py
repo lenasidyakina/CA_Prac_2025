@@ -9,6 +9,12 @@ from datetime import datetime, timezone, timedelta
 from paramsSelfSignedCert import ParamsSelfSignedCert
 from asn1_parse import bytes_to_pem, create_crl, generate_serial_num
 from RevokedCertificates import RevokedCertificates
+from models.RootCert import restore_root_cert
+from cert_parse import CertsAsn1
+
+
+ROOT_CERT_FOLDER = 'root_certs'  # для корневых сертификатов
+ROOT_CERT_PATH = os.path.join(ROOT_CERT_FOLDER, 'root_cert.der')
 
 
 class NumberLogger:
@@ -75,18 +81,23 @@ class NumberLogger:
                 array_of_revoked_certificate = get_revoked_certificates()
                 current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
-                # TODO Данные из корневого сертификата (их получение будет добавлено потом)
-                p = ParamsSelfSignedCert("", "", "", "", "", "", "TcountryName", "", "", "")
+                with open(ROOT_CERT_PATH, 'rb') as f:  
+                    cert_bytes = f.read()
+                root = restore_root_cert(cert_bytes)
+                print(root)
+                certsAsn1 = CertsAsn1(rootCert=root)
 
-                crl_bytes = create_crl(
-                    revokedCerts=array_of_revoked_certificate,
-                    issuer=p,
+                
+                crl_bytes = certsAsn1.create_crl(
+                    revokedCerts=array_of_revoked_certificate, 
                     thisUpdate=datetime.now(tz=timezone.utc),
-                    nextUpdate=datetime.now(tz=timezone.utc) + timedelta(seconds=self.interval))
-            
-                with open('/opt/myapp/app/res.pem', 'w') as f:
-                    f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL"))  # !!! pem_type - НЕ МЕНЯТЬ
+                    nextUpdate=datetime(2027, 7, 10, tzinfo=timezone.utc))
 
+                
+                with open('/opt/myapp/app/crl.pem', 'w') as f:
+                    f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL")) # !!! pem_type - НЕ МЕНЯТЬ
+            
+                
                 self.logger.info(f"Updated numbers at {current_time}")
 
             except Exception as e:
