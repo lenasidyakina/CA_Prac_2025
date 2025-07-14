@@ -6,11 +6,11 @@ import signal
 import sys
 from app import get_revoked_certificates
 from datetime import datetime, timezone, timedelta
-from paramsSelfSignedCert import ParamsSelfSignedCert
-from asn1_parse import bytes_to_pem, create_crl, generate_serial_num
-from RevokedCertificates import RevokedCertificates
-from models.RootCert import restore_root_cert
-from cert_parse import CertsAsn1
+from asn1_parser.models.paramsSelfSignedCert import ParamsSelfSignedCert
+from asn1_parser.asn1_parse import bytes_to_pem, generate_serial_num
+from asn1_parser.models.RevokedCertificates import RevokedCertificates
+from asn1_parser.models.RootCert import restore_root_cert
+from asn1_parser.cert_parse import CertsAsn1
 
 
 ROOT_CERT_FOLDER = 'root_certs'  # для корневых сертификатов
