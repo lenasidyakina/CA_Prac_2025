@@ -1,0 +1,23 @@
+[Unit]
+Description=MyApp Gunicorn Service
+After=network.target number_logger.service  # Добавлена зависимость
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/myapp/app
+Environment="PATH=/opt/myapp/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStartPre=/bin/rm -f /opt/myapp/myapp.sock
+ExecStart=/bin/sh -c 'rm -f /opt/myapp/myapp.sock && \
+    /opt/myapp/venv/bin/gunicorn \
+    --workers 1 \
+    --bind unix:/opt/myapp/myapp.sock \
+    --log-level debug \
+    --preload \
+    wsgi:app'
+Restart=always
+RestartSec=3
+Environment="PYTHONPATH=/opt/myapp/app"
+
+[Install]
+WantedBy=multi-user.target

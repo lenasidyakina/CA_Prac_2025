@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание сертификата</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-size: 20px;
+        }
+        .form-container {
+            text-align: center;
+            margin-top: 50px;
+        }
+        .form-group {
+            margin: 15px 0;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            font-size: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: grey;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-unit {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+}
+
+.unit-title {
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.form-group {
+    margin: 10px 0;
+}
+.button {
+    padding: 12px 24px;
+    font-size: 20px;
+    background-color: #3b3832;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+}
+.button:hover {
+            background-color: #5a564c;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+
+.home-link {
+    display: inline-block;
+    margin-top: 30px;
+    color: #8a2be2; 
+    text-decoration: underline;
+    font-size: 22px;
+    cursor: pointer;
+    transition: color 0.3s;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.home-link:hover {
+    color: #6a1b9a; 
+}
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Заполните следующие поля:</h1>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="organization">Организация</div>
+            <div class="tab" data-tab="employee">Сотрудник</div>
+            <div class="tab" data-tab="other">Прочие</div>
+        </div>
+        
+        <form id="certForm">
+            <!-- Вкладка "Организация" -->
+            <div id="organization-tab" class="tab-content active">
+                <div class="form-unit">
+                    <h3 class="unit-title">Наименование</h3>
+                    <div class="form-group">
+                        <label for="common_name">Общее имя:</label>
+                        <input type="text" id="common_name" name="common_name" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        <label for="org_name">Наименование организации:</label>
+                        <input type="text" id="org_name" name="org_name" placeholder="">
+                    </div>
+                </div>
+                
+                
+                <div class="form-unit">
+                    <h3 class="unit-title">Юридический адрес</h3>
+                    <div class="form-group">
+                        <label for="org_country">Страна:</label>
+                        <input type="text" id="org_country" name="org_country" placeholder="">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="org_region">Регион:</label>
+                        <input type="text" id="org_region" name="org_region" placeholder="">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="org_locality">Населенный пункт:</label>
+                        <input type="text" id="org_locality" name="org_locality" placeholder="">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="org_address">Адрес:</label>
+                        <input type="text" id="org_address" name="org_address" placeholder="">
+                    </div>
+                </div>
+
+                
+            </div>
+            
+            <!-- Вкладка "Сотрудник" -->
+            <div id="employee-tab" class="tab-content">
+                <div class="form-unit">
+                    <h3 class="unit-title">Информация об ответственном сотруднике</h3>
+                    <div class="form-group">
+                        <label for="surname">Фамилия:</label>
+                        <input type="text" id="surname" name="surname" placeholder="">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="name">Имя и отчество:</label>
+                        <input type="text" id="name" name="name" placeholder="">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="department">Подразделение:</label>
+                        <input type="text" id="department" name="department" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="position">Должность:</label>
+                        <input type="text" id="position" name="position" placeholder="">
+                    </div>
+                </div>
+
+                <div class="form-unit">
+                    <h3 class="unit-title">Дополнительные поля</h3>
+                    <div class="form-group">
+                        <label for="snils">Снилс:</label>
+                        <input type="text" id="snils" name="snils" placeholder="">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Адрес электронной почты:</label>
+                        <input type="text" id="email" name="email" placeholder="">
+                    </div>
+                    
+                </div>
+
+            </div>
+            
+            <!-- Вкладка "Прочие параметры" -->
+            <!-- <div id="other-tab" class="tab-content">
+                
+            </div> -->
+            
+            <button type="submit" class="button">Создать сертификат</button>
+        </form>
+        
+        <!-- ОТЛАДОЧНЫЙ ВЫВОД -->
+        <div id="result" class="result" style="display: none;">
+            <h3>Результат:</h3>
+            <p id="resultText"></p>
+            <div id="downloadLinks"></div>
+        </div>
+        
+        <a href="/" class="home-link">На главную страницу</a>
+    </div>
+
+    <script>
+        // переключение вкладок
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+            });
+        });
+
+        // отправка формы 
+        document.getElementById('certForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = 'Создание...';
+        
+        try {
+            const formData = new FormData(e.target);
+            const response = await fetch('/api/create-selfsigned-certificate', {
+                method: 'POST',
+                body: formData
+            });
+
+            // Редирект при успехе (302)
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+
+            // Проверяем тип ответа
+            const contentType = response.headers.get('content-type');
+            
+            // Если это HTML (например error.html)
+            if (contentType && contentType.includes('text/html')) {
+                const html = await response.text();
+                document.body.innerHTML = html; // Заменяем всю страницу
+                return;
+            }
+            
+            // Если это JSON (альтернативный вариант обработки ошибок)
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || data.details || 'Неизвестная ошибка');
+                }
+            }
+
+            // Другие случаи
+            throw new Error(`Неожиданный ответ сервера: ${response.status}`);
+            
+        } catch (error) {
+            // Красивое отображение ошибки вместо alert
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #ffebee;
+                color: #c62828;
+                padding: 15px;
+                border-radius: 4px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                z-index: 1000;
+            `;
+            errorDiv.textContent = `Ошибка: ${error.message}`;
+            document.body.appendChild(errorDiv);
+            
+            // Автоскрытие через 5 секунд
+            setTimeout(() => errorDiv.remove(), 5000);
+            
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Создать сертификат';
+        }
+    });
+    </script>
+</body>
+</html>
