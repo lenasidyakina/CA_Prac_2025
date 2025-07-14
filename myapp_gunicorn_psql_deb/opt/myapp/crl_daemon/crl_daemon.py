@@ -4,16 +4,21 @@ import os
 import logging
 import signal
 import sys
+from pathlib import Path
+
+# Получаем абсолютный путь к директории app
+app_dir = Path(__file__).parent.parent / "app"  # убрал "../", так как parent уже поднимается наверх
+sys.path.insert(0, str(app_dir))  # insert(0) - приоритетнее append
+
+# Теперь можно импортировать напрямую
 from app import get_revoked_certificates
+from asn1_parser.asn1_parse import bytes_to_pem
 from datetime import datetime, timezone, timedelta
-from asn1_parser.models.paramsSelfSignedCert import ParamsSelfSignedCert
-from asn1_parser.asn1_parse import bytes_to_pem, generate_serial_num
-from asn1_parser.models.RevokedCertificates import RevokedCertificates
 from asn1_parser.models.RootCert import restore_root_cert
 from asn1_parser.cert_parse import CertsAsn1
 
-
-ROOT_CERT_FOLDER = 'root_certs'  # для корневых сертификатов
+CONFIG_FILE = '../../../etc/myapp/crl_daemon.conf'
+ROOT_CERT_FOLDER = '../app/root_certs'  # для корневых сертификатов
 ROOT_CERT_PATH = os.path.join(ROOT_CERT_FOLDER, 'root_cert.der')
 
 
@@ -53,7 +58,7 @@ class NumberLogger:
 
     def _read_interval_from_config(self):
         """Чтение интервала из конфигурационного файла"""
-        config_file = 'app_config.conf'
+        config_file = CONFIG_FILE
         default_interval = 15  # Значение по умолчанию
 
         try:
@@ -89,13 +94,13 @@ class NumberLogger:
 
                 
                 crl_bytes = certsAsn1.create_crl(
-                    revokedCerts=array_of_revoked_certificate, 
+                    revokedCerts=array_of_revoked_certificate,
                     thisUpdate=datetime.now(tz=timezone.utc),
-                    nextUpdate=datetime(2027, 7, 10, tzinfo=timezone.utc))
+                    nextUpdate=datetime.now(tz=timezone.utc) + timedelta(seconds=self.interval))
 
                 
                 with open('/opt/myapp/app/crl.pem', 'w') as f:
-                    f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL")) # !!! pem_type - НЕ МЕНЯТЬ
+                    f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL"))
             
                 
                 self.logger.info(f"Updated numbers at {current_time}")

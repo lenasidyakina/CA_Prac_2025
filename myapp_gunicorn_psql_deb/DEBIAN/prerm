@@ -2,12 +2,12 @@
 
 # Остановка сервисов перед удалением
 echo "Stopping and disabling services..."
-systemctl stop myapp.service number_logger.service || true
-systemctl disable myapp.service number_logger.service || true
+systemctl stop myapp.service crl_daemon.service || true
+systemctl disable myapp.service crl_daemon.service || true
 
 # Дополнительная остановка логгера через Python (на случай если сервис не ответил)
 echo "Stopping number logger directly..."
-/opt/myapp/venv/bin/python -c "from number_logger import logger; logger.stop()" || true
+/opt/myapp/venv/bin/python -c "from crl_daemon import logger; logger.stop()" || true
 
 # Очистка правил фаервола
 echo "Removing firewall rules..."
@@ -21,7 +21,7 @@ rm -f /opt/myapp/myapp.sock || true
 
 # Проверка что процессы завершились
 echo "Checking for remaining processes..."
-pkill -f "/opt/myapp/venv/bin/python3 /opt/myapp/app/number_logger.py" || true
+pkill -f "/opt/myapp/venv/bin/python3 /opt/myapp/crl_daemon/crl_daemon.py" || true
 pkill -f "gunicorn.*wsgi:app" || true
 
 echo "Cleanup complete"

@@ -3,7 +3,7 @@ import asn1
 from datetime import datetime, timezone
 import os
 from typing import List
-from models.paramsSelfSignedCert import ParamsRDN
+from .models.paramsSelfSignedCert import ParamsRDN
 
 UTC_DATETIME_FORMAT = "%y%m%d%H%M%SZ"
 GENERALIZED_TIME_FORMAT = "%Y%m%d%H%M%SZ"

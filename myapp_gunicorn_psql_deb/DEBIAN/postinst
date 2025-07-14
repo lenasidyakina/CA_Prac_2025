@@ -185,8 +185,8 @@ sudo -u postgres psql -d $db_name -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public 
 # 7. Инициализация таблиц БД
 echo "Инициализация таблиц БД..."
 init_log="/tmp/myapp_db_init.log"
-if [ -f "/opt/myapp/app/init_db.py" ]; then
-    sudo -u www-data /opt/myapp/venv/bin/python /opt/myapp/app/init_db.py 2>&1 | tee "$init_log"
+if [ -f "/opt/myapp/app/db/init_db.py" ]; then
+    sudo -u www-data /opt/myapp/venv/bin/python /opt/myapp/app/db/init_db.py 2>&1 | tee "$init_log"
 
     # Проверка успешности создания таблиц
     if sudo -u postgres psql -d $db_name -c "\dt" | grep -q "certificates"; then
@@ -223,25 +223,25 @@ echo "=== Настройка сервисов ==="
 # Основной сервис приложения
 cat > /etc/systemd/system/myapp.service <<'EOL'
 [Unit]
-Description=MyApp Service
-After=network.target postgresql.service
-Requires=postgresql.service
+Description=MyApp Gunicorn Service
+After=network.target crl_daemon.service  # Добавлена зависимость
 
 [Service]
 User=www-data
 Group=www-data
 WorkingDirectory=/opt/myapp/app
 Environment="PATH=/opt/myapp/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-Environment="PYTHONPATH=/opt/myapp/app"
-ExecStart=/opt/myapp/venv/bin/gunicorn \
+ExecStartPre=/bin/rm -f /opt/myapp/myapp.sock
+ExecStart=/bin/sh -c 'rm -f /opt/myapp/myapp.sock && \
+    /opt/myapp/venv/bin/gunicorn \
     --workers 1 \
     --bind unix:/opt/myapp/myapp.sock \
-    --log-level info \
-    --timeout 120 \
+    --log-level debug \
     --preload \
-    wsgi:app
+    wsgi:app'
 Restart=always
-RestartSec=5
+RestartSec=3
+Environment="PYTHONPATH=/opt/myapp/app"
 
 [Install]
 WantedBy=multi-user.target
@@ -250,18 +250,20 @@ EOL
 # Сервис логгера
 cat > /etc/systemd/system/number_logger.service <<'EOL'
 [Unit]
-Description=Number Logger Service
-After=myapp.service
-Requires=myapp.service
+Description=CRL Daemon Service
+After=network.target
 
 [Service]
 User=www-data
 Group=www-data
-WorkingDirectory=/opt/myapp/app
+WorkingDirectory=/opt/myapp/crl_daemon
 Environment="PATH=/opt/myapp/venv/bin"
-ExecStart=/opt/myapp/venv/bin/python3 /opt/myapp/app/number_logger.py
+ExecStart=/opt/myapp/venv/bin/python3 /opt/myapp/crl_daemon/crl_daemon.py
 Restart=always
 RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=crl_daemon
 
 [Install]
 WantedBy=multi-user.target
@@ -271,12 +273,12 @@ EOL
 echo "=== Запуск сервисов ==="
 systemctl daemon-reload
 systemctl enable myapp.service
-systemctl enable number_logger.service
+systemctl enable crl_daemon.service
 
 systemctl restart postgresql
 systemctl start myapp
 sleep 3  # Даем время основному приложению запуститься
-systemctl start number_logger
+systemctl start crl_daemon
 systemctl restart nginx
 
 # 10. Проверка установки
@@ -295,7 +297,7 @@ check_service() {
 
 check_service postgresql
 check_service myapp
-check_service number_logger
+check_service crl_daemon
 check_service nginx
 
 # Проверка доступности приложения

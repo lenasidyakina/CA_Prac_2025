@@ -2,14 +2,13 @@ import asn1
 from datetime import datetime
 from typing import List, Tuple
 from pyasn1_modules import rfc5280
-
-from asn1_parse import pem_to_bytes, tbsCertificate_encode, rdn_encode, \
+from .asn1_parse import pem_to_bytes, tbsCertificate_encode, rdn_encode, \
     block_to_raw_bytes, block_length, UTC_DATETIME_FORMAT, rdn_decode, GENERALIZED_TIME_FORMAT
-from models.paramsSelfSignedCert import ParamsSelfSignedCert
-from models.CertTemplate import CertTemplate
-from models.RevokedCertificates import RevokedCertificates
-from models.RootCert import RootCert
-from models.AlgParams import ALL_ALG_PARAMS
+from .models.paramsSelfSignedCert import ParamsSelfSignedCert
+from .models.CertTemplate import CertTemplate
+from .models.RevokedCertificates import RevokedCertificates
+from .models.RootCert import RootCert
+from .models.AlgParams import ALL_ALG_PARAMS
 from bicry.bicry import BicryWrapper
 
 
