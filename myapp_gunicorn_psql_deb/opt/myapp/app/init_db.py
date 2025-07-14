@@ -1,5 +1,5 @@
 import logging
-from models import Base, engine
+from models_db import Base, engine
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

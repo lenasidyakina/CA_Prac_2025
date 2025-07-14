@@ -50,19 +50,16 @@ KEEPASS_DB_PATH = "/var/lib/myapp/secrets.kdbx"  # Путь к базе
 log_path = Path('/var/log/myapp/app.log')
 fallback_path = Path.home() / 'myapp_logs/app.log'
 
-# Пытаемся использовать основной путь
 try:
     log_path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
     log_path.touch(mode=0o644, exist_ok=True)
     current_log = log_path
 except (PermissionError, OSError):
-    # Fallback на домашнюю директорию
     fallback_path.parent.mkdir(parents=True, exist_ok=True)
     fallback_path.touch(exist_ok=True)
     current_log = fallback_path
     logging.warning(f"Using fallback log location: {fallback_path}")
 
-# Настройка обработчиков
 handlers = [
     logging.StreamHandler(sys.stdout),
     RotatingFileHandler(
