@@ -1,8 +1,8 @@
 from datetime import datetime
 import asn1
 
-from models.AlgParams import ALL_ALG_PARAMS
-from asn1_parse import block_to_raw_bytes, UTC_DATETIME_FORMAT
+from .AlgParams import ALL_ALG_PARAMS
+from ..asn1_parse import block_to_raw_bytes, UTC_DATETIME_FORMAT
 
 class RootCert:
     _instance = None  # Классовый атрибут для хранения экземпляра
