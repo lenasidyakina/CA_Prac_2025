@@ -16,7 +16,7 @@ class CertsAsn1:
     def __init__(self, rootCert: RootCert =None):
         self.rootCert = rootCert
         # TODO где то здесь функция проверки что открытый ключ rootCert соответствует закрытом ключу
-        self.bicrypt = BicryWrapper(lib_path='libbicry_openkey.so')
+        self.bicrypt = BicryWrapper(lib_path='./bicry/libbicry_openkey.so')
 
     '''Создает самопоодписанный сертификат  на основе ParamsSelfSignedCert.get_list.get_list()
     return самоподписанный сертификат, открытый ключ, пароль'''

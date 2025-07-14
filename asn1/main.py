@@ -65,7 +65,8 @@ def create_cert_test():
                                        end_validity_date=datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
                                        cert_template=cert_template, 
                                        pem_csr=pem_csr)
-    
+    with open("res.cer", 'wb') as f:
+        f.write(cert_bytes)
     with open('res.pem', 'w') as f:
         f.write(bytes_to_pem(cert_bytes, pem_type="CERTIFICATE")) # !!! pem_type - НЕ МЕНЯТЬ
 
@@ -79,7 +80,7 @@ def create_selfsigned_cert_test():
                         commonName="TcommonName", organizationName="TorganizationName",
                         countryName="TcountryName", stateOrProvinceName="TstateOrProvinceName", 
                         streetAddress="TstreetAddress", localityName="TlocalityName")
-    p = ParamsSelfSignedCert(alg_type=AlgTypes.A, 
+    p = ParamsSelfSignedCert(alg_type=AlgTypes.b, 
                              beg_validity_date=datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
                              end_validity_date=datetime(2026, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
                              paramsRDN=prdn)
@@ -96,8 +97,8 @@ def create_selfsigned_cert_test():
 if __name__ == '__main__':
 
     create_selfsigned_cert_test() 
-    create_cert_test()
-    crl_test()
+    # create_cert_test()
+    # crl_test()
 
     
 
