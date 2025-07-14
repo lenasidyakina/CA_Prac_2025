@@ -1,6 +1,7 @@
 from pyasn1_modules import rfc5280
 from datetime import datetime
-from ..models.CertTemplate import RDNTemplate, ErrParamsTemplate
+from .CertTemplate import RDNTemplate, ErrParamsTemplate
+from .AlgParams import AlgTypes
 
 class ParamsRDN:
     oid_surname = str(rfc5280.id_at_surname)
@@ -136,7 +137,7 @@ class ParamsRDN:
 
 class ParamsSelfSignedCert:
     def __init__(self, beg_validity_date: datetime, end_validity_date: datetime, 
-                 alg_type: chr,
+                 alg_type: AlgTypes,
                  paramsRDN: ParamsRDN):
         self.beg_validity_date = beg_validity_date  # время начала действия сертификата
         self.end_validity_date = end_validity_date  # время ококнчания действия сертификата

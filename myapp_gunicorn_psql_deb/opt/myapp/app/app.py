@@ -15,6 +15,7 @@ from asn1_parser.models.RootCert import RootCert, restore_root_cert
 from asn1_parser.models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN
 from asn1_parser.models.CertTemplate import CertTemplate, RDNTemplate
 from asn1_parser.models.RevokedCertificates import RevokedCertificates, CRLReasonCode
+from asn1_parser.models.AlgParams import AlgTypes
 from threading import Lock
 from pathlib import Path
 from io import BytesIO
@@ -23,15 +24,15 @@ import subprocess
 
 app = Flask(__name__)
 app.config['ROOT_CERT_INIT_LOCK'] = Lock()
-app.config['ROOT_CERT'] = None  
 
 UPLOAD_FOLDER = 'uploads' #дир-рия для хранения загруженных файлов (полученных из запроса файлов)
 CREATED_FILES_FOLDER = 'created_files'
 ROOT_CERT_FOLDER = 'root_certs'  # для корневых сертификатов
 ROOT_CERT_PATH = os.path.join(ROOT_CERT_FOLDER, 'root_cert.der')
-ALLOWED_EXTENSIONS = {'p10'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 KEEPASS_DB_PATH = "/var/lib/myapp/secrets.kdbx"  # Путь к базе
+
+CERTSASN1 = 'CertsAsn1'
 
 # logging.basicConfig(level=logging.INFO)
 # logger = logging.getLogger(__name__)
@@ -81,33 +82,6 @@ logger = logging.getLogger(__name__)
 
 
 '''------------------------------- ПРОВЕРКА НА СУЩЕСТВ-НИЕ КОРНЕВОГО СЕРТИФИКАТА ПРИ ЗАПУСКЕ ПРИЛОЖЕНИЯ--------------------------------'''
-# def init_root_cert():
-#     cert_path = Path('./root_certs/root_cert.der')
-    
-#     with app.config['ROOT_CERT_INIT_LOCK']:
-#         if cert_path.exists():
-
-#             try:
-#                 with open(cert_path, 'rb') as f:
-#                     cert_data = f.read()
-#                     app.config['ROOT_CERT'] = restore_root_cert(cert_data)
-#                     logger.info("Existing root certificate was restored")
-#             except Exception as e:
-#                 logger.error(f"Error loading cert: {e}")
-#                 app.config['ROOT_CERT'] = None
-#         else:
-#             logger.info("There is no existing root certificate")
-#             # app.config['ROOT_CERT'] = RootCert(
-#             #     serial_num=1,
-#             #     issuer_rdn_bytes=b'default_issuer',  # Замените реальными данными
-#             #     alg_type='RSA',
-#             #     beg_validity_date=datetime.now(),
-#             #     end_validity_date=datetime(2025, 12, 31),
-#             #     public_key=b'default_public_key'  # Замените реальным ключом
-#             # )
-#             # print("New root certificate created")
-            
-#             app.config['ROOT_CERT'] = None
 def init_root_cert():
     cert_path = Path('./root_certs/root_cert.der')
     
@@ -115,21 +89,21 @@ def init_root_cert():
     logger.info("Checking existance of root certificate...")
     
     with app.config['ROOT_CERT_INIT_LOCK']:
+        rootCert = None
         if cert_path.exists():
             try:
                 with open(cert_path, 'rb') as f:
                     cert_data = f.read()
-                    app.config['ROOT_CERT'] = restore_root_cert(cert_data)
+                    
+                    rootCert = restore_root_cert(cert_data)
+                    
                     logger.info("Existing root certificate was successfully restored")
-                    # Добавим подробную информацию о сертификате
-                    if app.config['ROOT_CERT']:
-                        logger.info(f"Root certificate was restored successfully")
             except Exception as e:
                 logger.error(f"Error loading certificate: {e}")
-                app.config['ROOT_CERT'] = None
         else:
             logger.warning("No existing root certificate found at %s", cert_path)
-            app.config['ROOT_CERT'] = None
+
+        app.config[CERTSASN1] = CertsAsn1(rootCert=rootCert)
 
 '''-----------------------------------------------------------------------------------------------------------------------------'''
 
@@ -152,7 +126,6 @@ def find_serial_number(number):
     
     conn.close()
     return number
-
 
 '''------------------------------------------------ РАБОТА С БД -------------------------------------------------------------------'''
 def get_db_config():
@@ -189,9 +162,7 @@ def get_db_connection():
     except psycopg2.Error as e:
         logger.error(f"Data base connection error: {str(e)}")
         raise
-
 '''------------------------------------------------------------------------------------------------------'''
-
 # главная страница
 @app.route('/')
 def index():
@@ -225,17 +196,17 @@ def create_selfsigned_certificate():
         # # дополнительные поля
         # snils = req_data.get('snils', '').strip()
         # email = req_data.get('email', '').strip()
-
-        certsAsn1 = CertsAsn1()
+    
+        certsAsn1 = app.config[CERTSASN1]
         prdn = ParamsRDN(surname= surname, givenName=given_name, 
                             organizationalUnitName=org_unit_name, title=title,
                             commonName=common_name, organizationName=org_name,
                             countryName=org_country, stateOrProvinceName=org_region, 
                             streetAddress=org_address, localityName=org_locality)
-        current_date_utc = datetime.now(timezone.utc)
-        next_year_date = datetime.now(timezone.utc) + timedelta(days=365)
-
-        p = ParamsSelfSignedCert(alg_type="b", 
+        current_date_utc = datetime.now(timezone.utc)   # TODO interface
+        next_year_date = datetime.now(timezone.utc) + timedelta(days=365)   # TODO interface
+        alg_type=AlgTypes.b # TODO interface
+        p = ParamsSelfSignedCert(alg_type=alg_type, 
                                 beg_validity_date=current_date_utc,
                                 end_validity_date=next_year_date,
                                 paramsRDN=prdn)
@@ -246,8 +217,6 @@ def create_selfsigned_certificate():
         logger.info(certsAsn1.rootCert)
         with open(ROOT_CERT_PATH, 'wb') as f:
             f.write(cert_bytes)
-
-
         # ENTRY_NAME = "cert_password"  # Название записи
         # # Команда для добавления пароля
         # cmd = [
@@ -267,24 +236,13 @@ def create_selfsigned_certificate():
         #     logger.info("Пароль успешно сохранён!")
         # except subprocess.CalledProcessError as e:
         #     logger.error(f"Ошибка: {e.stderr}")
-
-        # app.config['ROOT_CERT'] = RootCert(
-        #         serial_num=serial_num,
-        #         issuer_rdn_bytes=prdn, #  ?????????????????????
-        #         alg_type="b",
-        #         beg_validity_date=current_date_utc,
-        #         end_validity_date=next_year_date,
-        #         public_key= private_key # ?????????????????
-        #     )
         
-
         app.config['CERT_DATA'] = {
             'password': password,
             'private_key': private_key,
             'cert_bytes': cert_bytes,
             'serial_num': serial_num
         }
-
         logger.info("Root self signed certificate was successfully created")
         return redirect(url_for('selfsigned_certificate_created'))
 
@@ -307,8 +265,6 @@ def selfsigned_certificate_created():
     
     return render_template('selfsigned_certificate_created.html',
                          serial_num=cert_data['serial_num'])
-
-
 
 @app.route('/download-certificate')
 def download_certificate():
@@ -382,19 +338,16 @@ def revoke_certificate_page():
     except Exception as e:
         return render_template('error.html', error=str(e)), 500
 
-
 @app.route('/api/revoke-certificate', methods=['POST'])
 def revoke_certificate():
     try:
         # Получаем список сертификатов для отзыва из формы
         certs_to_revoke = request.form.getlist('revoke_cert')
-        
         if not certs_to_revoke:
             return jsonify({"error": "Не выбраны сертификаты для отзыва"}), 400
         
         conn = get_db_connection()
         cursor = conn.cursor()
-        
         try:
             # Обновляем статус выбранных сертификатов
             for cert_serial in certs_to_revoke:
@@ -423,22 +376,22 @@ def get_revoked_certificates():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT serial_number, revoke_date FROM certificates WHERE is_revoked = TRUE")
-    # revoked_certificates = [
-    #     RevokedCertificates(
-    #         serialNumber=int(row[0]),  
-    #         revocationDate=row[1]     
-    #     )
-    #     for row in cursor.fetchall()
-    # ]
-    # conn.close()
+    revoked_certificates = [
+        RevokedCertificates(
+            serialNumber=int(row[0]),  
+            revocationDate=row[1],
+            crlReasonCode=CRLReasonCode.cACompromise,   # TODO брать из БД (CRLReasonCode - это enum)
+            invalidityDate=datetime(1900, 7, 10, tzinfo=timezone.utc)   # TODO брать из БД. Дата признания недействительным
+        )
+        for row in cursor.fetchall()
+    ]
+    conn.close()
 
-    # print("Revoked certificates:")
-    # for cert in revoked_certificates:
-    #     print(f"Serial: {cert.serialNumber}, Revocation Date: {cert.revocationDate}")
+    print("Revoked certificates:")
+    for cert in revoked_certificates:
+        print(f"Serial: {cert.serialNumber}, Revocation Date: {cert.revocationDate}")
     
-    # return revoked_certificates
-
-
+    return revoked_certificates
 
 '''------------------------------------------------ СОЗДАНИЕ СЕРТИФИКАТА ПО ЗАПРОСУ -------------------------------------'''
 # прием запроса на создание сертификата (файла .p10)
@@ -448,12 +401,8 @@ def create_certificate_p10():
         return jsonify({"error": "No file provided"}), 400 # файл отсутствует в запросе
     
     file = request.files['file']
-    
     if file.filename == '':
         return jsonify({"error": "Empty filename"}), 400
-    
-    if not allowed_file(file.filename):
-        return jsonify({"error": "Only .p10 files allowed"}), 400 # неподдерживаемое расширение файла
     
     try:
         if not os.path.exists(UPLOAD_FOLDER):
@@ -467,22 +416,32 @@ def create_certificate_p10():
         with open(file_path, 'r') as pem_file:
             pem_csr = pem_file.read()
 
-        serial_num = generate_serial_num() 
-        # !!! проверка на уникальность serial_num(для этого обращение к БД: find serial_num)
-        serial_num = find_serial_number(serial_num)
+        certsAsn1 = app.config[CERTSASN1]
+        
+        rdn_template = RDNTemplate()    
+        # TODO заполнить поля rdn_template на основе файла-шаблона от пользователя (если файл не поступил, то поля не трогаем)
+        rdn_template.surname = rdn_template.givenName = rdn_template.streetAddress = False  
+        cert_template = CertTemplate(rdn_template)  # пока не трогаем
 
-        #cert_bytes = create_cert(serial_num, pem_csr)
+        serial_num = find_serial_number(generate_serial_num())
+        beg_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
+        end_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
+        cert_bytes = certsAsn1.create_cert(serial_num=serial_num, 
+                                       beg_validity_date=beg_validity_date,
+                                       end_validity_date=end_validity_date,
+                                       cert_template=cert_template, 
+                                       pem_csr=pem_csr)
+
         res_filename =  f"./created_files/res{serial_num}.pem"
         with open(res_filename, 'w') as f:
             f.write(bytes_to_pem(cert_bytes, pem_type="CERTIFICATE")) # !!! pem_type - НЕ МЕНЯТЬ
 
         return send_file(
-        res_filename,
-        as_attachment=True,
-        download_name=res_filename , 
-        mimetype='application/x-pem-file'
-    )
-    
+            res_filename,
+            as_attachment=True,
+            download_name=res_filename , 
+            mimetype='application/x-pem-file'
+        )
     except Exception as e:
         return jsonify({"error": f"Failed to send PEM: {str(e)}"}), 500 
     
