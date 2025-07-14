@@ -8,8 +8,14 @@ from models.paramsSelfSignedCert import ParamsRDN
 UTC_DATETIME_FORMAT = "%y%m%d%H%M%SZ"
 GENERALIZED_TIME_FORMAT = "%Y%m%d%H%M%SZ"
 
+# def generate_serial_num() -> int:
+#     return int.from_bytes(os.urandom(8), 'big') & 0x7FFFFFFFFFFFFFFF
+
 def generate_serial_num() -> int:
-    return int.from_bytes(os.urandom(8), 'big') & 0x7FFFFFFFFFFFFFFF
+    random_bytes = os.urandom(36)
+    num = int.from_bytes(random_bytes, 'big')
+    # Маска для 286 бит: 2^286 - 1
+    return num & ((1 << 286) - 1)
 
 def bytes_to_pem(der_bytes: bytes, pem_type: str = "CERTIFICATE") -> str:
     b64_data = base64.b64encode(der_bytes).decode('ascii')
@@ -80,9 +86,9 @@ def tbsCertificate_encode(serial_num: int, version: int, issuer_rdn_bytes: bytes
     encode.write(serial_num, asn1.Numbers.Integer)
 
     # signature AlgorithmIdentifier SEQUENCE
-    encode.enter(asn1.Numbers.Sequence)
+    #encode.enter(asn1.Numbers.Sequence)
     encode._emit(sign_algid_bytes) # encode.write(algid_bytes, asn1.Numbers.OctetString)
-    encode.leave()
+    #encode.leave()
 
     # issuer rdnSequence Name SEQUENCE
     encode._emit(issuer_rdn_bytes) # encode.write(rdn_bytes, asn1.Numbers.OctetString)
