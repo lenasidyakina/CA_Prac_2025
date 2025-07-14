@@ -40,24 +40,28 @@ while true; do
             # Копирование библиотек
             cp "$bicry_path/Linux/libbicr5_64.so" "$bicry_path/Linux/libbiogrn.so" /opt/myapp/app/bicry/
 
+            sudo cp "$bicry_path/Linux/libbicr5_64.so" "$bicry_path/Linux/libbiogrn.so" /usr/lib/
+            sudo ldconfig
+
+
             # Компиляция библиотеки
             echo "Компиляция библиотеки libbicry_openkey.so..."
-            # cd /opt/myapp/app/
-            
-            sudo chmod +x ./opt/myapp/app/prep_bicr.sh
-            sudo source ./opt/myapp/app/prep_bicr.sh
-            # pwd
-            # gcc -shared -fPIC -o libbicry_openkey.so bicr_func.c -L. -lbicr5_64 -lbiogrn
-            
-            # export LD_LIBRARY_PATH=/opt/myapp/app/bicry:$LD_LIBRARY_PATH
-            # if [ -f "bicr_func.c" ]; then
-            #     gcc -shared -fPIC -o libbicry_openkey.so bicr_func.c -L. -lbicr5_64 -lbiogrn
-            #     if [ $? -eq 0 ]; then
-            #         echo "✓ Библиотека успешно скомпилирована"
-            #     else
-            #         echo "⚠️ Ошибка при компиляции библиотеки!"
-            #     fi
-            # fi
+            cd /opt/myapp/app/bicry
+            export LD_LIBRARY_PATH=/opt/myapp/app/bicry:$LD_LIBRARY_PATH
+            if [ -f "bicr_func.c" ]; then
+                # 1. Сборка библиотеки (как в вашем оригинальном примере)
+                gcc -shared -fPIC -o libbicry_openkey.so bicr_func.c -L. -lbicr5_64 -lbiogrn
+
+                # 2. Копирование библиотеки в /usr/lib/your_app/
+                sudo cp libbicry_openkey.so /usr/lib/
+                sudo ldconfig
+
+                if [ $? -eq 0 ]; then
+                    echo "✓ Библиотека успешно скомпилирована"
+                else
+                    echo "⚠️ Ошибка при компиляции библиотеки!"
+                fi
+            fi
             break
         else
             echo "⚠️ В указанной папке отсутствуют необходимые файлы (bcry.h, errors.h, libbicr5_64.so, libbiogrn.so)!"
