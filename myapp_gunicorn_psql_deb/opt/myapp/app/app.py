@@ -9,12 +9,12 @@ import logging
 from logging.handlers import RotatingFileHandler
 import sys
 from datetime import datetime, timezone,  timedelta
-from cert_parse import CertsAsn1
-from asn1_parse import bytes_to_pem, generate_serial_num
-from models.RootCert import RootCert, restore_root_cert
-from models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN
-from models.CertTemplate import CertTemplate, RDNTemplate
-from models.RevokedCertificates import RevokedCertificates, CRLReasonCode
+from asn1_parser.cert_parse import CertsAsn1
+from asn1_parser.asn1_parse import bytes_to_pem, generate_serial_num
+from asn1_parser.models.RootCert import RootCert, restore_root_cert
+from asn1_parser.models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN
+from asn1_parser.models.CertTemplate import CertTemplate, RDNTemplate
+from asn1_parser.models.RevokedCertificates import RevokedCertificates, CRLReasonCode
 from threading import Lock
 from pathlib import Path
 from io import BytesIO
