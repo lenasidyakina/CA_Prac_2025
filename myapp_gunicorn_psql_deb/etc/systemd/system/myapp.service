@@ -1,6 +1,6 @@
 [Unit]
 Description=MyApp Gunicorn Service
-After=network.target number_logger.service  # Добавлена зависимость
+After=network.target crl_daemon.service  # Добавлена зависимость
 
 [Service]
 User=www-data

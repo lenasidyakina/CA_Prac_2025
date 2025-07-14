@@ -1,18 +1,18 @@
 [Unit]
-Description=Number Logger Service
+Description=CRL Daemon Service
 After=network.target
 
 [Service]
 User=www-data
 Group=www-data
-WorkingDirectory=/opt/myapp/app
+WorkingDirectory=/opt/myapp/crl_daemon
 Environment="PATH=/opt/myapp/venv/bin"
-ExecStart=/opt/myapp/venv/bin/python3 /opt/myapp/app/number_logger.py
+ExecStart=/opt/myapp/venv/bin/python3 /opt/myapp/crl_daemon/crl_daemon.py
 Restart=always
 RestartSec=10
 StandardOutput=syslog
 StandardError=syslog
-SyslogIdentifier=number_logger
+SyslogIdentifier=crl_daemon
 
 [Install]
 WantedBy=multi-user.target
