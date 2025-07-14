@@ -76,7 +76,6 @@ class NumberLogger:
             self.logger.error(f"Error reading config file: {str(e)}, using default interval")
             return default_interval
 
-
     def run(self):
         self._running = True
         self.logger.info(f"Number logger started with interval {self.interval} seconds")
@@ -89,7 +88,7 @@ class NumberLogger:
                 with open(ROOT_CERT_PATH, 'rb') as f:  
                     cert_bytes = f.read()
                 root = restore_root_cert(cert_bytes)
-                print(root)
+                # print(root)
                 certsAsn1 = CertsAsn1(rootCert=root)
 
                 

@@ -8,7 +8,7 @@
 H_INIT init_handle;
 char password[7] = {0}; // 6 символов + '\0'
 
-int init_bicr(int param) {
+int init_bicr() {
     // 1. Загрузка библиотеки, её инициализация и инициализация ДСЧ
     int result = cr_load_bicr_dll ("");
 
@@ -27,19 +27,7 @@ int init_bicr(int param) {
         return result;
     }
 
-    // 2. Установка параметров библиотеки
-    int option = 1;
-    result = cr_set_param (
-        init_handle,            //дескриптор H_INIT, возвращенный функцией cr_init() или дескриптор H_USER, возвращенный функцией cr_read_skey() или дескриптор H_PKEY, возвращенный функцией cr_pkey_load()
-        option,             //номер опции, принимает значение 1
-        param);             //значение опции option. для опции option=1: установка параметров криптографических алгоритмов – см. Приложение №3
-
-    if (result != ERR_OK) {
-        printf("Ошибка установки параметров библиотеки: %d\n", result);
-        return result;
-    }
-
-    // 3. Инициализация ДСЧ
+    // 2. Инициализация ДСЧ
     int flag_init_grn = 1;
     result = cr_init_prnd (
         init_handle,
@@ -73,12 +61,24 @@ int uninit_bicr() {
     return result;
 }
 
-int generate_keypair(char* userid, unsigned char* public_key) {
-    // 1. Генерация ключевой пары
+int generate_keypair(int param, char* userid, unsigned char* public_key) {
+    // 1. Установка параметров библиотеки
+    int option = 1;
+    int result = cr_set_param (
+        init_handle,            //дескриптор H_INIT, возвращенный функцией cr_init() или дескриптор H_USER, возвращенный функцией cr_read_skey() или дескриптор H_PKEY, возвращенный функцией cr_pkey_load()
+        option,             //номер опции, принимает значение 1
+        param);             //значение опции option. для опции option=1: установка параметров криптографических алгоритмов – см. Приложение №3
+
+    if (result != ERR_OK) {
+        printf("Ошибка установки параметров библиотеки: %d\n", result);
+        return result;
+    }
+
+    // 2. Генерация ключевой пары
     int pass_blen = 7;
     H_PKEY pkey_handle;
      
-    int result = cr_gen_keypair(
+    result = cr_gen_keypair(
         init_handle, password, &pass_blen, "private.key", &pkey_handle, userid
     );
 
@@ -98,7 +98,7 @@ int generate_keypair(char* userid, unsigned char* public_key) {
     fprintf(file, "%s", password);
     fclose(file);
 
-    // 7. Экспортирование открытого ключа
+    // 3. Экспортирование открытого ключа
     char pkbuf[256] = {};
     int pkbuf_blen = sizeof(pkbuf);
     result =  cr_pkey_getinfo (
@@ -118,7 +118,7 @@ int generate_keypair(char* userid, unsigned char* public_key) {
     memcpy(public_key, pkbuf, 32);          // Первые 32 байта
     memcpy(public_key + 32, pkbuf + 64, 32); // Байты 64-95
 
-    // 8. Очистка ресурсов
+    // 4. Очистка ресурсов
     cr_pkey_close(pkey_handle);
     
     return result;
@@ -153,11 +153,11 @@ int electronic_signature(unsigned char* es, unsigned char* cert_data, size_t cer
         return result;
     }
 
-    // 3. Используем переданный буфер с сертификатом вместо чтения из файла
+    // 2. Используем переданный буфер с сертификатом
     void* dataBuffer = cert_data;
     int dataBufferLength = (int)cert_data_len;
 
-    // 4. Формирование ЭП для блока памяти
+    // 3. Формирование ЭП для блока памяти
     char sign[64];
     int sign_blen = sizeof(sign);
     result = cr_sign_buf(
@@ -174,7 +174,7 @@ int electronic_signature(unsigned char* es, unsigned char* cert_data, size_t cer
         return result;
     }  
     
-    // Переворачиваем буфер
+    // 4. Переворачиваем буфер
     reverse_buffer(sign, sign_blen);
 
     memcpy(es, sign, 64);

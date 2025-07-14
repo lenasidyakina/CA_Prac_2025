@@ -2,7 +2,7 @@ import ctypes
 import os
 
 class BicryWrapper:
-    def __init__(self, param=98, lib_path='./libbicry_openkey.so'):
+    def __init__(self, lib_path='./libbicry_openkey.so'):
         """
         Инициализация обертки для работы с криптографической библиотекой
         :param lib_path: путь к скомпилированной C-библиотеке
@@ -18,15 +18,14 @@ class BicryWrapper:
         
         # Настраиваем прототип C-функции
         self.lib.init_bicr.restype = ctypes.c_int  # Код возврата
-        self.lib.init_bicr.argtypes = [
-            ctypes.c_int              # Параметр криптографического алгоритма
-        ]
+        self.lib.init_bicr.argtypes = []
 
         self.lib.uninit_bicr.restype = ctypes.c_int  # Код возврата
         self.lib.uninit_bicr.argtypes = []
 
         self.lib.generate_keypair.restype = ctypes.c_int  # Код возврата
         self.lib.generate_keypair.argtypes = [
+            ctypes.c_int,              # Параметр криптографического алгоритма
             ctypes.c_char_p,              # userid (строка)
             ctypes.POINTER(ctypes.c_ubyte)  # указатель на буфер для открытого ключа (64 байт)
         ]
@@ -45,7 +44,7 @@ class BicryWrapper:
         ]
 
         # Инициализация библиотеки
-        result = self.lib.init_bicr(param)
+        result = self.lib.init_bicr()
         if result != 0:
             raise RuntimeError(f"init_bicr failed with error: {result}")
 
@@ -67,7 +66,7 @@ class BicryWrapper:
         """Явная деинициализация ресурсов"""
         self._uninit()
 
-    def generate_keypair(self, userid: str) -> bytes:
+    def generate_keypair(self, userid: str, param=98) -> bytes:
         """
         Экспорт открытого ключа для указанного пользователя
         
@@ -82,7 +81,11 @@ class BicryWrapper:
         # Проверяем длину userid
         if len(userid) == 0 or len(userid) > 32:
             raise ValueError("UserID must be 1-32 characters")
-        
+
+        # Проверяем значения параметра криптографического алгоритма
+        if param not in {49, 50, 51, 65, 66, 67, 68, 97, 98, 99}:
+            raise ValueError("Cryptographic algorithm parametr must take one of the following values: 49-51, 65-68, 97-99")
+
         # Создаем буфер для ключа (64 байт)
         key_buffer = (ctypes.c_ubyte * 64)()
         
@@ -91,6 +94,7 @@ class BicryWrapper:
         
         # Вызываем C-функцию
         result = self.lib.generate_keypair(
+            param,         #Параметр криптографического алгоритма
             userid_bytes,  # userid
             key_buffer     # буфер для ключа
         )
@@ -156,9 +160,9 @@ class BicryWrapper:
 if __name__ == "__main__":
     wrapper = None
     try:
-        wrapper = BicryWrapper(param=98, lib_path='libbicry_openkey.so')
+        wrapper = BicryWrapper(lib_path='./libbicry_openkey.so')
 
-        public_key = wrapper.generate_keypair("Ivanov")
+        public_key = wrapper.generate_keypair("Ivanov", param=98)
         #print(f"Public key: {public_key.hex()}")
 
         password, private_key = wrapper.get_private_key_with_password()
@@ -166,14 +170,14 @@ if __name__ == "__main__":
 
         wrapper.close()
      
-        wrapper = BicryWrapper(param=98, lib_path='./libbicry_openkey.so')
+        wrapper = BicryWrapper(lib_path='./libbicry_openkey.so')
         
         # Пример чтения сертификата из файла (для примера)
         with open('tbs.der', 'rb') as f:
             cert_data = f.read()
         
         es = wrapper.electronic_signature(cert_data)    #в качсетве аргумента буфер для подписи
-        #print(f"Signature: {es.hex()}")
+        print(f"Signature: {es.hex()}")
         
     except Exception as e:
         print(f"Error: {e}")
