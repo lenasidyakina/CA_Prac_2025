@@ -18,8 +18,6 @@ appl = Flask(__name__)
 appl.config['ROOT_CERT_INIT_LOCK'] = Lock()
 appl.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-from api import *
-
 def init_root_cert(logger: Logger) -> CertsAsn1:
     cert_path = Path('./root_certs/root_cert.der')
     
@@ -43,26 +41,30 @@ def init_root_cert(logger: Logger) -> CertsAsn1:
 
         appl.config[CERTSASN1] = CertsAsn1(rootCert=rootCert)
 
-if __name__ == "__main__":
-    logger = setup_logging()
-    storage = Storage(logger=logger)
+# if __name__ == "__main__":
+logger = setup_logging()
+logger.info(f"__name__ = {__name__}")
+logger.info("started-------")
+storage = Storage(logger=logger)
 
-    appl.config[LOGGER] = logger
-    appl.config[STORAGE] = storage
+appl.config[LOGGER] = logger
+appl.config[STORAGE] = storage
 
-    try:
-        create_app_folders(logger=logger)
-        required_templates = ['index.html', 'revoke_certificate.html', 'create_selfsigned_certificate.html']
-        for template in required_templates:
-            if not os.path.exists(f'./templates/{template}'):
-                logger.error(f"Шаблон {template} не найден в директории templates")
-        init_root_cert(logger=logger)
+try:
+    create_app_folders(logger=logger)
+    required_templates = ['index.html', 'revoke_certificate.html', 'create_selfsigned_certificate.html']
+    for template in required_templates:
+        if not os.path.exists(f'./templates/{template}'):
+            logger.error(f"Шаблон {template} не найден в директории templates")
+    init_root_cert(logger=logger)
 
-        get_revoked_certificates(storage=storage)
-        logger.info("here-----1")
-        appl.run(host='127.0.0.1', port=5000, debug=True)
-    except Exception as e:
-        logger.error(f"Failed to start application: {str(e)}")
-        sys.exit(1)
+    get_revoked_certificates(storage=storage)
+    logger.info("here-----1")
+    appl.run(host='127.0.0.1', port=5000, debug=True)
+except Exception as e:
+    logger.error(f"Failed to start application: {str(e)}")
+    sys.exit(1)
 
-    # app.run()
+# app.run()
+
+from api import *
