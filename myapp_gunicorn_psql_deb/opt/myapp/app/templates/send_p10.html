@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание сертификата из .p10</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <h1>Загрузка .p10 и выбор шаблона</h1>
+    <form id="certForm">
+        <div class="form-group">
+            <label for="template">Шаблон сертификата:</label>
+            <select id="template" name="template" required>
+                <option value="">-- Выберите шаблон --</option>
+                <option value="user">User Certificate</option>
+                <option value="server">Server Certificate</option>
+                <option value="device">Device Certificate</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="p10file">Файл .p10:</label>
+            <input type="file" id="p10file" name="file" accept=".p10,.csr" required>
+        </div>
+        <button type="submit">Создать сертификат</button>
+    </form>
+    <div id="status"></div>
+
+    <script>
+        document.getElementById('certForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('p10file');
+            const template = document.getElementById('template').value;
+            
+            if (!template) {
+                showStatus('Выберите шаблон!', 'error');
+                return;
+            }
+            
+            if (fileInput.files.length === 0) {
+                showStatus('Выберите файл .p10!', 'error');
+                return;
+            }
+            
+            formData.append('file', fileInput.files[0]);
+            formData.append('template', template);
+            
+            showStatus('Отправка запроса...', 'info');
+            
+            try {
+                const response = await fetch('/api/create_certificate_p10', {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Ошибка сервера');
+                }
+                
+                // Если сервер возвращает файл (не JSON)
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'certificate.pem';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                showStatus('Сертификат успешно создан!', 'success');
+            } catch (error) {
+                showStatus(`Ошибка: ${error.message}`, 'error');
+                console.error('Error:', error);
+            }
+        });
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = type;
+        }
+    </script>
+</body>
+</html>

@@ -121,6 +121,9 @@ read -s -p "Пароль пользователя PostgreSQL: " db_pass
 echo
 
 # Запрос имени БД с проверкой существования
+read -p "Имя базы данных: " db_name
+db_name=${db_name:-flower_db}
+
 while true; do
     read -p "Имя базы данных: " db_name
     db_name=${db_name:-flower_db}
@@ -273,12 +276,12 @@ EOL
 echo "=== Запуск сервисов ==="
 systemctl daemon-reload
 systemctl enable myapp.service
-systemctl enable crl_daemon.service
+# systemctl enable crl_daemon.service
 
 systemctl restart postgresql
 systemctl start myapp
 sleep 3  # Даем время основному приложению запуститься
-systemctl start crl_daemon
+# systemctl start crl_daemon
 systemctl restart nginx
 
 # 10. Проверка установки
@@ -297,7 +300,7 @@ check_service() {
 
 check_service postgresql
 check_service myapp
-check_service crl_daemon
+# check_service crl_daemon
 check_service nginx
 
 # Проверка доступности приложения

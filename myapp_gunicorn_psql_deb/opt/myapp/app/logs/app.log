@@ -1,0 +1,542 @@
+2025-07-14 23:42:17,366 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:42:17,367 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:42:17,425 - __main__ - INFO - starting app
+2025-07-14 23:42:17,592 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:42:17,592 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:42:17,653 - __main__ - INFO - starting app
+2025-07-14 23:42:54,549 - __main__ - INFO - START
+2025-07-14 23:42:54,552 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:42:54,553 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:42:54,607 - __main__ - INFO - starting app
+2025-07-14 23:42:54,771 - __main__ - INFO - START
+2025-07-14 23:42:54,774 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:42:54,775 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:42:54,834 - __main__ - INFO - starting app
+2025-07-14 23:44:48,783 - __main__ - INFO - START
+2025-07-14 23:44:48,786 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:44:48,787 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:44:48,839 - __main__ - INFO - starting app
+2025-07-14 23:44:48,995 - __main__ - INFO - START
+2025-07-14 23:44:48,998 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:44:48,998 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:44:49,055 - __main__ - INFO - starting app
+2025-07-14 23:46:40,653 - __main__ - INFO - START
+2025-07-14 23:46:40,656 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:46:40,656 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:46:40,712 - __main__ - INFO - starting app
+2025-07-14 23:46:40,880 - __main__ - INFO - START
+2025-07-14 23:46:40,884 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:46:40,884 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:46:40,950 - __main__ - INFO - starting app
+2025-07-14 23:46:44,974 - __main__ - INFO - Successfully connected to data base
+2025-07-14 23:46:44,978 - __main__ - INFO - RootCert:
+	 serial_num=109753165135793364483988670998758383995626762775704381632259191641284518961972770855358
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-14 20:46:44.965152+00:00
+	 end_validity_date=2026-07-14 20:46:44.965156+00:00
+
+2025-07-14 23:46:44,979 - __main__ - INFO - Root self signed certificate was successfully created
+2025-07-14 23:47:12,559 - __main__ - INFO - START
+2025-07-14 23:47:12,563 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:47:12,563 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:47:12,615 - __main__ - INFO - starting app
+2025-07-14 23:47:12,777 - __main__ - INFO - START
+2025-07-14 23:47:12,780 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:47:12,780 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:47:12,839 - __main__ - INFO - starting app
+2025-07-14 23:57:55,042 - __main__ - INFO - START
+2025-07-14 23:57:55,045 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:57:55,045 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:57:55,098 - __main__ - INFO - starting app
+2025-07-14 23:57:55,259 - __main__ - INFO - START
+2025-07-14 23:57:55,263 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:57:55,263 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:57:55,319 - __main__ - INFO - starting app
+2025-07-14 23:58:05,035 - __main__ - INFO - Successfully connected to data base
+2025-07-14 23:58:05,038 - __main__ - INFO - RootCert:
+	 serial_num=80190584681294156490736156942703181756137575621622629817585897823351400178429530691547
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-14 20:58:05.027000+00:00
+	 end_validity_date=2026-07-14 20:58:05.027004+00:00
+
+2025-07-14 23:58:05,039 - __main__ - INFO - Root self signed certificate was successfully created
+2025-07-14 23:58:46,101 - __main__ - INFO - Successfully connected to data base
+2025-07-14 23:58:46,104 - __main__ - INFO - RootCert:
+	 serial_num=113439912007797166204407370172055682990396020597183231220734428108827326251980639630223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-14 20:58:46.094070+00:00
+	 end_validity_date=2026-07-14 20:58:46.094074+00:00
+
+2025-07-14 23:58:46,105 - __main__ - INFO - Root self signed certificate was successfully created
+2025-07-14 23:59:16,505 - __main__ - INFO - START
+2025-07-14 23:59:16,508 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:59:16,509 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:59:16,573 - __main__ - INFO - starting app
+2025-07-14 23:59:42,920 - __main__ - INFO - START
+2025-07-14 23:59:42,923 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:59:42,923 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:59:42,980 - __main__ - INFO - starting app
+2025-07-14 23:59:43,148 - __main__ - INFO - START
+2025-07-14 23:59:43,151 - __main__ - INFO - Checking existance of root certificate...
+2025-07-14 23:59:43,151 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-14 23:59:43,209 - __main__ - INFO - starting app
+2025-07-15 00:00:00,403 - __main__ - INFO - alg:AlgTypes.b, beg:2025-07-14, end=2026-07-14
+2025-07-15 00:00:00,413 - __main__ - INFO - Successfully connected to data base
+2025-07-15 00:00:00,419 - __main__ - INFO - RootCert:
+	 serial_num=36134321129727635079166610258194946170821848226242498217589623966964152974101019095041
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-14 21:00:00.401054+00:00
+	 end_validity_date=2026-07-14 21:00:00.401058+00:00
+
+2025-07-15 00:00:00,420 - __main__ - INFO - Root self signed certificate was successfully created
+2025-07-15 00:00:55,635 - __main__ - INFO - START
+2025-07-15 00:00:55,638 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 00:00:55,639 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 00:00:55,696 - __main__ - INFO - starting app
+2025-07-15 00:00:55,861 - __main__ - INFO - START
+2025-07-15 00:00:55,864 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 00:00:55,865 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 00:00:55,923 - __main__ - INFO - starting app
+2025-07-15 00:01:05,378 - __main__ - INFO - alg:AlgTypes.A, beg:2025-07-14, end=2026-07-14
+2025-07-15 00:01:05,386 - __main__ - INFO - Successfully connected to data base
+2025-07-15 00:01:05,391 - __main__ - INFO - RootCert:
+	 serial_num=83236768498019626486843579575975849896739477334262216701007567734886003856188613803319
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-14 21:01:05.376884+00:00
+	 end_validity_date=2026-07-14 21:01:05.376888+00:00
+
+2025-07-15 00:01:05,391 - __main__ - INFO - Root self signed certificate was successfully created
+2025-07-15 00:03:59,022 - __main__ - INFO - START
+2025-07-15 00:03:59,025 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 00:03:59,025 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 00:03:59,077 - __main__ - INFO - starting app
+2025-07-15 00:03:59,235 - __main__ - INFO - START
+2025-07-15 00:03:59,238 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 00:03:59,238 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 00:03:59,294 - __main__ - INFO - starting app
+2025-07-15 00:06:52,808 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 00:06:52,809 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 00:06:52,867 - __main__ - INFO - starting app
+2025-07-15 00:06:53,039 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 00:06:53,039 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 00:06:53,097 - __main__ - INFO - starting app
+2025-07-15 00:06:57,230 - __main__ - INFO - Successfully connected to data base
+2025-07-15 00:06:57,234 - __main__ - INFO - RootCert:
+	 serial_num=771026877425252082932083711262391604095260684954537681590024791960568180058994714283
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-14
+	 end_validity_date=2026-07-14
+
+2025-07-15 00:06:57,234 - __main__ - INFO - Root self signed certificate was successfully created
+2025-07-15 02:08:02,589 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:08:02,590 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:08:02,653 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:08:02,836 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:08:02,836 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:08:02,905 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:08:59,292 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:08:59,293 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:08:59,359 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:08:59,539 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:08:59,539 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:08:59,607 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:10:26,049 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:10:26,050 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:10:26,115 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:10:26,117 - __main__ - ERROR - Failed to start application: 'function' object has no attribute 'append'
+2025-07-15 02:10:49,409 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:10:49,409 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:10:49,476 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:10:49,478 - __main__ - ERROR - Failed to start application: __init__() missing 2 required positional arguments: 'crlReasonCode' and 'invalidityDate'
+2025-07-15 02:13:20,421 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:13:20,421 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:13:20,480 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:13:20,482 - __main__ - ERROR - Failed to start application: 'RevokedCertificates' object has no attribute 'nvalidityDate'
+2025-07-15 02:13:51,445 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:13:51,446 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:13:51,513 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:13:51,681 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:13:51,681 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:13:51,751 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:14:08,575 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:14:08,576 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:14:08,643 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:14:08,819 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:14:08,820 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:14:08,886 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:14:22,384 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:14:22,385 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:14:22,449 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:14:22,627 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:14:22,628 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:14:22,704 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:22:37,024 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:22:37,024 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:22:37,085 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:22:37,259 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:22:37,260 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:22:37,328 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:22:41,381 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:35:11,017 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:35:11,017 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:35:11,089 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:35:11,276 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:35:11,277 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:35:11,341 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:35:14,545 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:35:46,220 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:35:46,221 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:35:46,282 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:35:46,452 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:35:46,453 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:35:46,521 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:35:49,560 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:39:52,913 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:39:52,913 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:39:52,977 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:39:53,152 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:39:53,153 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:39:53,217 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:39:56,792 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:44:11,666 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:44:11,666 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:44:11,733 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:44:11,906 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:44:11,907 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:44:11,974 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:44:15,249 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:45:23,509 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:45:23,509 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:45:23,573 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:45:23,763 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 02:45:23,763 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 02:45:23,831 - __main__ - INFO - Successfully connected to data base
+2025-07-15 02:45:27,382 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:07:28,967 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:07:28,967 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:07:29,062 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:07:29,239 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:07:29,239 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:07:29,312 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:07:32,247 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:07:55,124 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:07:56,916 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:09:14,393 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:09:14,393 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:09:14,455 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:09:14,623 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:09:14,624 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:09:14,690 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:09:17,863 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:09:22,215 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:09:50,215 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:09:50,216 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:09:50,282 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:09:50,458 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:09:50,458 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:09:50,525 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:09:53,161 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:10:02,281 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:12:12,106 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:12:12,107 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:12:12,171 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:12:12,340 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:12:12,340 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:12:12,408 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:12:22,493 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:12:38,069 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:12:39,364 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:12:54,405 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:14:10,655 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:14:10,655 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:14:10,719 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:14:10,899 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:14:10,899 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:14:10,965 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:14:13,670 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:14:21,562 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:14:25,360 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:14:28,935 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:14:30,883 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:15:59,530 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:15:59,530 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:15:59,591 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:15:59,754 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:15:59,754 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:15:59,817 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:16:03,122 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:16:13,640 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:16:15,283 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:16:20,204 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:16:21,971 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:17:19,898 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:17:19,898 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:17:19,964 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:17:23,733 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:17:23,733 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:17:23,796 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:17:23,961 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:17:23,962 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:17:24,023 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:17:26,467 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:17:48,300 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:17:51,161 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:17:59,110 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:18:00,360 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:18:14,138 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:18:15,441 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:18:24,713 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:18:57,305 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:18:57,306 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:18:57,375 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:19:43,862 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:19:43,862 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:19:43,932 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:19:44,121 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:19:44,122 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:19:44,189 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:19:46,750 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:19:59,855 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:20:51,200 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:20:51,201 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:20:51,301 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:21:29,385 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:21:29,386 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:21:29,452 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:21:29,632 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:21:29,632 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:21:29,703 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:21:32,212 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:21:42,393 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:23:46,701 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:23:46,701 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:23:46,763 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:23:46,937 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:23:46,937 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:23:47,002 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:23:49,784 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:23:58,478 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:24:00,027 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:24:04,928 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:24:13,021 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:24:14,311 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:24:20,944 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:24:22,100 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:30:08,799 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:30:08,800 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:30:08,865 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:30:09,047 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:30:09,048 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:30:09,119 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:30:12,085 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:30:21,046 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:31:07,974 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:31:07,974 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:31:08,040 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:33:51,009 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:33:51,009 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:33:51,075 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:33:51,246 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:33:51,246 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:33:51,316 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:34:12,940 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:34:12,940 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:34:13,008 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:34:13,178 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:34:13,179 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:34:13,244 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:34:15,916 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:34:22,882 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:34:24,190 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:34:37,381 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:34:38,645 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:53:21,345 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:53:21,345 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:53:21,410 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:53:21,585 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 03:53:21,585 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 03:53:21,656 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:53:26,575 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:53:26,580 - __main__ - INFO - RootCert:
+	 serial_num=5253610719800942634702332164459336294683242402507436097838608232247989479462420866569
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15
+	 end_validity_date=2026-07-15
+
+2025-07-15 03:53:26,581 - __main__ - INFO - Root self signed certificate was successfully created
+2025-07-15 03:53:32,428 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:53:44,110 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:53:46,560 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:54:42,552 - __main__ - INFO - Successfully connected to data base
+2025-07-15 03:54:42,554 - __main__ - ERROR - Missing required field: organizationalUnitName ErrParamsTemplate 
+2025-07-15 11:36:40,282 - __main__ - INFO - Application starting...
+2025-07-15 11:36:40,282 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 11:36:40,283 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 11:36:40,422 - __main__ - INFO - Successfully connected to data base
+2025-07-15 11:36:40,791 - __main__ - INFO - Application starting...
+2025-07-15 11:36:40,791 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 11:36:40,792 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 11:36:40,909 - __main__ - INFO - Successfully connected to data base
+2025-07-15 11:37:09,668 - __main__ - INFO - Application starting...
+2025-07-15 11:37:09,668 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 11:37:09,669 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 11:37:09,760 - __main__ - INFO - Successfully connected to data base
+2025-07-15 11:37:13,466 - __main__ - INFO - Application starting...
+2025-07-15 11:37:13,466 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 11:37:13,467 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 11:37:13,569 - __main__ - INFO - Successfully connected to data base
+2025-07-15 11:37:13,815 - __main__ - INFO - Application starting...
+2025-07-15 11:37:13,816 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 11:37:13,816 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 11:37:13,908 - __main__ - INFO - Successfully connected to data base
+2025-07-15 11:56:11,109 - __main__ - INFO - Application starting...
+2025-07-15 11:56:11,110 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 11:56:11,110 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 11:56:11,231 - __main__ - INFO - Successfully connected to data base
+2025-07-15 11:56:11,467 - __main__ - INFO - Application starting...
+2025-07-15 11:56:11,468 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 11:56:11,469 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 11:56:11,560 - __main__ - INFO - Successfully connected to data base
+2025-07-15 12:57:18,390 - __main__ - ERROR - Error reading database configuration file: Section [postgresql] not found in config file
+2025-07-15 12:58:04,563 - __main__ - ERROR - Error reading database configuration file: Section [postgresql] not found in config file
+2025-07-15 13:00:52,754 - __main__ - INFO - Successfully connected to database
+2025-07-15 13:00:52,758 - __main__ - INFO - Application starting...
+2025-07-15 13:00:52,758 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:00:52,759 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:00:52,837 - __main__ - ERROR - Failed to start application: get_revoked_certificates() missing 1 required positional argument: 'db_manager'
+2025-07-15 13:01:04,667 - __main__ - INFO - Successfully connected to database
+2025-07-15 13:01:04,670 - __main__ - INFO - Application starting...
+2025-07-15 13:01:04,671 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:01:04,671 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:01:04,760 - __main__ - ERROR - Failed to start application: get_revoked_certificates() missing 1 required positional argument: 'db_manager'
+2025-07-15 13:01:37,051 - __main__ - INFO - Successfully connected to database
+2025-07-15 13:01:37,054 - __main__ - INFO - Application starting...
+2025-07-15 13:01:37,054 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:01:37,055 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:01:37,131 - __main__ - DEBUG - Revoked certificates count: 3
+2025-07-15 13:01:37,434 - __main__ - INFO - Successfully connected to database
+2025-07-15 13:01:37,440 - __main__ - INFO - Application starting...
+2025-07-15 13:01:37,440 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:01:37,441 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:01:37,533 - __main__ - DEBUG - Revoked certificates count: 3
+2025-07-15 13:01:44,598 - __main__ - INFO - RootCert:
+	 serial_num=48085384813565582632816055688835171502971607286849854130145798463542145803739014183138
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15
+	 end_validity_date=2026-07-15
+
+2025-07-15 13:01:44,599 - __main__ - INFO - Root self signed certificate was successfully created
+2025-07-15 13:09:54,384 - __main__ - INFO - Successfully connected to database
+2025-07-15 13:09:54,390 - __main__ - INFO - Application starting...
+2025-07-15 13:09:54,390 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:09:54,391 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:09:54,488 - __main__ - DEBUG - Revoked certificates count: 3
+2025-07-15 13:10:00,418 - __main__ - INFO - Successfully connected to database
+2025-07-15 13:10:00,422 - __main__ - INFO - Application starting...
+2025-07-15 13:10:00,422 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:10:00,423 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:10:00,499 - __main__ - DEBUG - Revoked certificates count: 3
+2025-07-15 13:10:00,790 - __main__ - INFO - Successfully connected to database
+2025-07-15 13:10:00,795 - __main__ - INFO - Application starting...
+2025-07-15 13:10:00,796 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:10:00,796 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:10:00,928 - __main__ - DEBUG - Revoked certificates count: 3
+2025-07-15 13:12:11,938 - __main__ - INFO - Successfully connected to database
+2025-07-15 13:12:11,941 - __main__ - INFO - Application starting...
+2025-07-15 13:12:11,941 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:12:11,942 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:12:12,024 - __main__ - DEBUG - Revoked certificates count: 3
+2025-07-15 13:12:12,024 - __main__ - DEBUG - Serial: 8, Revocation Date: 2025-07-15, Reason:superseded, inv:2025-07-26
+2025-07-15 13:12:12,025 - __main__ - DEBUG - Serial: 6, Revocation Date: 2025-07-15, Reason:cACompromise, inv:2025-07-26
+2025-07-15 13:12:12,025 - __main__ - DEBUG - Serial: 5, Revocation Date: 2025-07-15, Reason:unspecified, inv:2025-07-18
+2025-07-15 13:12:12,301 - __main__ - INFO - Successfully connected to database
+2025-07-15 13:12:12,304 - __main__ - INFO - Application starting...
+2025-07-15 13:12:12,305 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:12:12,305 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:12:12,386 - __main__ - DEBUG - Revoked certificates count: 3
+2025-07-15 13:12:12,386 - __main__ - DEBUG - Serial: 8, Revocation Date: 2025-07-15, Reason:superseded, inv:2025-07-26
+2025-07-15 13:12:12,387 - __main__ - DEBUG - Serial: 6, Revocation Date: 2025-07-15, Reason:cACompromise, inv:2025-07-26
+2025-07-15 13:12:12,387 - __main__ - DEBUG - Serial: 5, Revocation Date: 2025-07-15, Reason:unspecified, inv:2025-07-18
+2025-07-15 13:13:06,520 - __main__ - INFO - Successfully connected to database
+2025-07-15 13:13:06,523 - __main__ - INFO - Application starting...
+2025-07-15 13:13:06,524 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:13:06,525 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:13:06,618 - __main__ - DEBUG - Revoked certificates count: 3
+2025-07-15 13:13:06,618 - __main__ - DEBUG - Serial: 8, Revocation Date: 2025-07-15, Reason:superseded, inv:2025-07-26
+2025-07-15 13:13:06,619 - __main__ - DEBUG - Serial: 6, Revocation Date: 2025-07-15, Reason:cACompromise, inv:2025-07-26
+2025-07-15 13:13:06,619 - __main__ - DEBUG - Serial: 5, Revocation Date: 2025-07-15, Reason:unspecified, inv:2025-07-18
+2025-07-15 13:13:06,952 - __main__ - INFO - Successfully connected to database
+2025-07-15 13:13:06,957 - __main__ - INFO - Application starting...
+2025-07-15 13:13:06,958 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:13:06,958 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:13:07,050 - __main__ - DEBUG - Revoked certificates count: 3
+2025-07-15 13:13:07,050 - __main__ - DEBUG - Serial: 8, Revocation Date: 2025-07-15, Reason:superseded, inv:2025-07-26
+2025-07-15 13:13:07,050 - __main__ - DEBUG - Serial: 6, Revocation Date: 2025-07-15, Reason:cACompromise, inv:2025-07-26
+2025-07-15 13:13:07,051 - __main__ - DEBUG - Serial: 5, Revocation Date: 2025-07-15, Reason:unspecified, inv:2025-07-18
+2025-07-15 13:13:45,137 - __main__ - INFO - RootCert:
+	 serial_num=1350839606892782865882148371771250344756678726765427432937361561585111876300224917840
+	 alg_type=AlgTypes.c
+	 beg_validity_date=2025-07-15
+	 end_validity_date=2026-07-31
+
+2025-07-15 13:13:45,138 - __main__ - INFO - Root self signed certificate was successfully created
+2025-07-15 14:11:24,883 - __main__ - INFO - Successfully connected to database
+2025-07-15 14:11:24,886 - __main__ - INFO - Application starting...
+2025-07-15 14:11:24,887 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 14:11:24,887 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 14:11:24,973 - __main__ - DEBUG - Revoked certificates count: 4
+2025-07-15 14:11:24,974 - __main__ - DEBUG - Serial: 8, Revocation Date: 2025-07-15, Reason:superseded, inv:2025-07-26
+2025-07-15 14:11:24,974 - __main__ - DEBUG - Serial: 6, Revocation Date: 2025-07-15, Reason:cACompromise, inv:2025-07-26
+2025-07-15 14:11:24,974 - __main__ - DEBUG - Serial: 5, Revocation Date: 2025-07-15, Reason:unspecified, inv:2025-07-18
+2025-07-15 14:11:24,974 - __main__ - DEBUG - Serial: 111, Revocation Date: 2025-07-15, Reason:superseded, inv:2025-07-17
+2025-07-15 14:11:24,974 - __main__ - INFO - Application initialized successfully
+2025-07-15 14:11:25,267 - __main__ - INFO - Successfully connected to database
+2025-07-15 14:11:25,271 - __main__ - INFO - Application starting...
+2025-07-15 14:11:25,271 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 14:11:25,272 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 14:11:25,412 - __main__ - DEBUG - Revoked certificates count: 4
+2025-07-15 14:11:25,412 - __main__ - DEBUG - Serial: 8, Revocation Date: 2025-07-15, Reason:superseded, inv:2025-07-26
+2025-07-15 14:11:25,412 - __main__ - DEBUG - Serial: 6, Revocation Date: 2025-07-15, Reason:cACompromise, inv:2025-07-26
+2025-07-15 14:11:25,412 - __main__ - DEBUG - Serial: 5, Revocation Date: 2025-07-15, Reason:unspecified, inv:2025-07-18
+2025-07-15 14:11:25,412 - __main__ - DEBUG - Serial: 111, Revocation Date: 2025-07-15, Reason:superseded, inv:2025-07-17
+2025-07-15 14:11:25,412 - __main__ - INFO - Application initialized successfully
+2025-07-15 14:12:40,086 - __main__ - INFO - Successfully connected to database
+2025-07-15 14:12:40,092 - __main__ - INFO - Application starting...
+2025-07-15 14:12:40,093 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 14:12:40,094 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 14:12:40,230 - __main__ - DEBUG - Revoked certificates count: 4
+2025-07-15 14:12:40,230 - __main__ - DEBUG - Serial: 8, Revocation Date: 2025-07-15, Reason:superseded, inv:2025-07-26
+2025-07-15 14:12:40,230 - __main__ - DEBUG - Serial: 6, Revocation Date: 2025-07-15, Reason:cACompromise, inv:2025-07-26
+2025-07-15 14:12:40,231 - __main__ - DEBUG - Serial: 5, Revocation Date: 2025-07-15, Reason:unspecified, inv:2025-07-18
+2025-07-15 14:12:40,231 - __main__ - DEBUG - Serial: 111, Revocation Date: 2025-07-15, Reason:superseded, inv:2025-07-17
+2025-07-15 14:12:40,231 - __main__ - INFO - Application initialized successfully
+2025-07-15 14:12:40,737 - __main__ - INFO - Successfully connected to database
+2025-07-15 14:12:40,744 - __main__ - INFO - Application starting...
+2025-07-15 14:12:40,745 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 14:12:40,745 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 14:12:40,922 - __main__ - DEBUG - Revoked certificates count: 4
+2025-07-15 14:12:40,923 - __main__ - DEBUG - Serial: 8, Revocation Date: 2025-07-15, Reason:superseded, inv:2025-07-26
+2025-07-15 14:12:40,923 - __main__ - DEBUG - Serial: 6, Revocation Date: 2025-07-15, Reason:cACompromise, inv:2025-07-26
+2025-07-15 14:12:40,923 - __main__ - DEBUG - Serial: 5, Revocation Date: 2025-07-15, Reason:unspecified, inv:2025-07-18
+2025-07-15 14:12:40,924 - __main__ - DEBUG - Serial: 111, Revocation Date: 2025-07-15, Reason:superseded, inv:2025-07-17
+2025-07-15 14:12:40,924 - __main__ - INFO - Application initialized successfully
+2025-07-15 15:25:47,054 - __main__ - INFO - Successfully connected to database
+2025-07-15 15:25:47,057 - __main__ - INFO - Application starting...
+2025-07-15 15:25:47,057 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 15:25:47,058 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 15:25:47,146 - __main__ - INFO - Application initialized successfully
+2025-07-15 15:25:47,546 - __main__ - INFO - Successfully connected to database
+2025-07-15 15:25:47,550 - __main__ - INFO - Application starting...
+2025-07-15 15:25:47,550 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 15:25:47,550 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 15:25:47,663 - __main__ - INFO - Application initialized successfully
+2025-07-15 15:30:56,842 - __main__ - INFO - Successfully connected to database
+2025-07-15 15:30:56,847 - __main__ - INFO - Application starting...
+2025-07-15 15:30:56,848 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 15:30:56,848 - __main__ - ERROR - Error while loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 15:30:56,935 - __main__ - INFO - Application initialized successfully
+2025-07-15 15:30:57,154 - __main__ - INFO - Successfully connected to database
+2025-07-15 15:30:57,159 - __main__ - INFO - Application starting...
+2025-07-15 15:30:57,160 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 15:30:57,160 - __main__ - ERROR - Error while loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 15:30:57,238 - __main__ - INFO - Application initialized successfully

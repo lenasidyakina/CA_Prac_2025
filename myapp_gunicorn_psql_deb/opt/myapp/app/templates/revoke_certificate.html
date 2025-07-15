@@ -9,7 +9,7 @@
             font-family: Arial, sans-serif;
             line-height: 1.6;
             padding: 20px;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         
@@ -20,23 +20,23 @@
         }
         
         table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 30px;
-    font-size: 20px; /* Увеличено с 18px */
-}
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 20px;
+        }
 
-th, td {
-    border: 1px solid #ddd;
-    padding: 12px;
-    text-align: left;
-    font-size: 20px; /* Добавлено для явного указания */
-}
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            font-size: 20px;
+        }
 
-input[type="checkbox"] {
-    transform: scale(1.8); /* Увеличено с 1.5 */
-    margin: 0 12px 0 8px; /* Увеличено с 0 10px 0 5px */
-}
+        input[type="checkbox"] {
+            transform: scale(1.8);
+            margin: 0 12px 0 8px;
+        }
         
         th {
             background-color: #f2f2f2;
@@ -64,8 +64,8 @@ input[type="checkbox"] {
             cursor: pointer;
             margin-top: 30px;
             transition: background-color 0.3s;
-            margin: 15px auto; /* auto по бокам центрирует кнопку */
-    display: block; /* делает кнопку блочным элементом для правильного центрирования */
+            margin: 15px auto;
+            display: block;
         }
         
         .button:hover {
@@ -84,25 +84,54 @@ input[type="checkbox"] {
             border: none;
             padding: 0;
             text-align: center; 
-            display: block; /* теперь центрируется */
-    margin: 15px auto; /* auto по бокам центрирует */
-    width: fit-content; /* ширина по содержимому */
+            display: block;
+            margin: 15px auto;
+            width: fit-content;
         }
         
         .home-link:hover {
             color: #6a1b9a;
         }
         
-        
-       .buttons-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* теперь кнопки центрированы */
-    margin-top: 20px; /* добавил отступ сверху */
-}
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
         
         .date-column {
             white-space: nowrap;
+        }
+        
+        select, input[type="date"] {
+            font-size: 18px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .editable-field {
+            display: none;
+        }
+        
+        .static-field {
+            display: block;
+        }
+        
+        input[type="checkbox"]:checked ~ .editable-field {
+            display: block;
+        }
+        
+        input[type="checkbox"]:checked ~ .static-field {
+            display: none;
+        }
+        
+        .disabled-input {
+            opacity: 0.5;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -117,7 +146,9 @@ input[type="checkbox"] {
                     <th>Серийный номер</th>
                     <th>Статус</th>
                     <th>Дата отзыва</th>
-                    <th>Отправлен в OCSP</th>
+                    <th>Дата признания недействительным</th>
+                    <th>Причина отзыва</th>
+                    <th>Серийный номер сертификата-источника</th>
                 </tr>
             </thead>
             <tbody>
@@ -125,7 +156,7 @@ input[type="checkbox"] {
                 <tr>
                     <td>
                         {% if cert.status == "Не отозван" %}
-                        <input type="checkbox" name="revoke_cert" value="{{ cert.serial_number }}">
+                        <input type="checkbox" name="revoke_cert" value="{{ cert.serial_number }}" class="cert-checkbox">
                         {% endif %}
                     </td>
                     <td>{{ cert.serial_number }}</td>
@@ -133,7 +164,41 @@ input[type="checkbox"] {
                         {{ cert.status }}
                     </td>
                     <td class="date-column">{{ cert.revoke_date or '-' }}</td>
-                    <td>{{ cert.send_to_ocsp }}</td>
+                    <td class="date-column">
+                        <span class="static-field">{{ cert.invalidity_date or '-' }}</span>
+                        <div class="editable-field">
+                            <input type="date" name="invalidity_date_{{ cert.serial_number }}" 
+                                   value="{{ cert.invalidity_date if cert.invalidity_date else '' }}"
+                                   class="date-input">
+                        </div>
+                    </td>
+                    <td class="reason-code">
+                        <span class="static-field">
+                            {{ {
+                                'unspecified': 'unspecified',
+                                'keyCompromise': 'keyCompromise',
+                                'cACompromise': 'cACompromise',
+                                'affiliationChanged': 'affiliationChanged',
+                                'superseded': 'superseded',
+                                'cessationOfOperation': 'cessationOfOperation',
+                                'certificateHold': 'certificateHold',
+                                'removeFromCRL': 'removeFromCRL'
+                            }.get(cert.revoke_reason, '-') }}
+                        </span>
+                        <div class="editable-field">
+                            <select name="revoke_reason_{{ cert.serial_number }}" class="reason-select">
+                                <option value="unspecified" selected>unspecified</option>
+                                <option value="keyCompromise">keyCompromise</option>
+                                <option value="cACompromise">cACompromise</option>
+                                <option value="affiliationChanged">affiliationChanged</option>
+                                <option value="superseded">superseded</option>
+                                <option value="cessationOfOperation">cessationOfOperation</option>
+                                <option value="certificateHold">certificateHold</option>
+                                <option value="removeFromCRL">removeFromCRL</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td>{{ cert.source_serial_number }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -146,27 +211,77 @@ input[type="checkbox"] {
     </form>
 
     <script>
-        document.getElementById('revokeForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('.cert-checkbox');
             
-            try {
+            // Функция для обновления состояния полей
+            function updateFields(checkbox) {
+                const row = checkbox.closest('tr');
+                const dateInput = row.querySelector('.date-input');
+                const reasonSelect = row.querySelector('.reason-select');
+                const staticFields = row.querySelectorAll('.static-field');
+                const editableFields = row.querySelectorAll('.editable-field');
+                
+                if (checkbox.checked) {
+                    staticFields.forEach(field => field.style.display = 'none');
+                    editableFields.forEach(field => field.style.display = 'block');
+                    dateInput.disabled = false;
+                    reasonSelect.disabled = false;
+                } else {
+                    staticFields.forEach(field => field.style.display = 'block');
+                    editableFields.forEach(field => field.style.display = 'none');
+                    dateInput.disabled = true;
+                    reasonSelect.disabled = true;
+                }
+            }
+            
+            // Инициализация при загрузке
+            checkboxes.forEach(checkbox => {
+                updateFields(checkbox);
+                
+                // Обработчик изменений
+                checkbox.addEventListener('change', function() {
+                    updateFields(this);
+                });
+            });
+            
+            // Обработчик формы
+            document.getElementById('revokeForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
                 const formData = new FormData(e.target);
-                const response = await fetch(e.target.action, {
-                    method: 'POST',
-                    body: formData
+                const certificatesData = [];
+                const serialNumbers = formData.getAll('revoke_cert');
+                
+                serialNumbers.forEach(serial => {
+                    certificatesData.push({
+                        serial_number: serial,
+                        invalidity_date: formData.get(`invalidity_date_${serial}`),
+                        revoke_reason: formData.get(`revoke_reason_${serial}`)
+                    });
                 });
                 
-                const result = await response.json();
-                
-                if (response.ok) {
-                    alert(result.message);
-                    window.location.reload();
-                } else {
-                    alert(`Ошибка: ${result.error}`);
+                try {
+                    const response = await fetch(e.target.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ certificates: certificatesData })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        alert(result.message);
+                        window.location.reload();
+                    } else {
+                        alert(`Ошибка: ${result.error}`);
+                    }
+                } catch (error) {
+                    alert(`Произошла ошибка: ${error}`);
                 }
-            } catch (error) {
-                alert(`Произошла ошибка: ${error}`);
-            }
+            });
         });
     </script>
 </body>

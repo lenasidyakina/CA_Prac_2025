@@ -11,11 +11,11 @@ app_dir = Path(__file__).parent.parent / "app"  # убрал "../", так ка�
 sys.path.insert(0, str(app_dir))  # insert(0) - приоритетнее append
 
 # Теперь можно импортировать напрямую
-from app import get_revoked_certificates
 from asn1_parser.asn1_parse import bytes_to_pem
 from datetime import datetime, timezone, timedelta
 from asn1_parser.models.RootCert import restore_root_cert
 from asn1_parser.cert_parse import CertsAsn1
+from db.DatabaseManager import DatabaseManager
 
 CONFIG_FILE = '../../../etc/myapp/crl_daemon.conf'
 ROOT_CERT_FOLDER = '../app/root_certs'  # для корневых сертификатов
@@ -56,6 +56,8 @@ class NumberLogger:
         except Exception as e:
             self.logger.error(f"Failed to initialize log file: {str(e)}")
 
+        self.db_manager = DatabaseManager(logger=self.logger)
+
     def _read_interval_from_config(self):
         """Чтение интервала из конфигурационного файла"""
         config_file = CONFIG_FILE
@@ -82,7 +84,7 @@ class NumberLogger:
 
         while self._running:
             try:
-                array_of_revoked_certificate = get_revoked_certificates()
+                array_of_revoked_certificate = self.db_manager.get_revoked_certificates()
                 current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
                 with open(ROOT_CERT_PATH, 'rb') as f:  
