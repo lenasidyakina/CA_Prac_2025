@@ -695,6 +695,43 @@ def download_certificate_p10():
 #                             error=f"Error downloading certificate: {str(e)}"), 500
 
 
+
+
+'''------------------------CRL КНОПО4КА ------------'''
+@app.route('/download-crl') 
+def download_crl():
+    logger.info("start download_crl():")
+
+    try:
+        certsAsn1 = app.config[CERTSASN1]
+        
+        array_of_revoked_certificate = db_manager.get_revoked_certificates()
+        logger.info(f"array_of_revoked_certificate: {array_of_revoked_certificate}")
+        crl_bytes = certsAsn1.create_crl(
+                        revokedCerts=array_of_revoked_certificate,
+                        thisUpdate=datetime.now(tz=timezone.utc),
+                        nextUpdate=datetime.now(tz=timezone.utc) + timedelta(days=10))
+        logger.info("crl created")
+        res_filename = os.path.join(CREATED_FILES_FOLDER, "crl.der")
+        logger.info(f"saving to: {res_filename}")
+        with open(res_filename, 'w') as f:
+            f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL"))
+    
+        return send_file(
+            res_filename,
+            mimetype='application/x-x509-ca-cert', # указывает тип содержимого
+            as_attachment=True,  # указание браузеру, что файл должен быть скачан (а не открыт в браузере)
+            # download_name=f'certificate_{cert_data["serial_num"]}.der'
+            download_name="crl.der"
+        )
+    
+    except Exception as e:
+        logger.error(f"Error create crl: {str(e)}")
+
+        # return redirect(url_for('index'))
+        return render_template('error.html', 
+                            error=f"Error create crl: {str(e)}"), 500
+
 '''-------------------------------------------------------------------------------'''
 def create_app_folders():
     folders = [

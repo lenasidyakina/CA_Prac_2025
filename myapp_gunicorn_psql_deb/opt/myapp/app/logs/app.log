@@ -971,3 +971,56 @@
 2025-07-16 00:57:00,081 - __main__ - INFO - Application initialized successfully
 2025-07-16 00:57:28,544 - __main__ - INFO - template - t_no_address
 2025-07-16 00:57:28,545 - __main__ - INFO - RDNTemplate fields: surname=True, givenName=True, organizationalUnitName=True, title=True, commonName=True, organizationName=True, countryName=False, stateOrProvinceName=False, localityName=False, streetAddress=False
+2025-07-16 01:38:36,693 - __main__ - INFO - Successfully connected to database
+2025-07-16 01:38:36,701 - __main__ - INFO - Application starting...
+2025-07-16 01:38:36,702 - __main__ - INFO - current_dir: /home/lusix/prac/template_work/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 01:38:36,703 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 01:38:36,703 - __main__ - INFO - No existing root certificate was found at root_certs/root_cert.der
+2025-07-16 01:38:36,833 - __main__ - INFO - Application initialized successfully
+2025-07-16 01:38:37,280 - __main__ - INFO - Successfully connected to database
+2025-07-16 01:38:37,289 - __main__ - INFO - Application starting...
+2025-07-16 01:38:37,289 - __main__ - INFO - current_dir: /home/lusix/prac/template_work/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 01:38:37,289 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 01:38:37,290 - __main__ - INFO - No existing root certificate was found at root_certs/root_cert.der
+2025-07-16 01:38:37,441 - __main__ - INFO - Application initialized successfully
+2025-07-16 01:39:17,463 - __main__ - INFO - Successfully connected to database
+2025-07-16 01:39:17,471 - __main__ - INFO - Application starting...
+2025-07-16 01:39:17,471 - __main__ - INFO - current_dir: /home/lusix/prac/template_work/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 01:39:17,472 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 01:39:17,472 - __main__ - INFO - No existing root certificate was found at root_certs/root_cert.der
+2025-07-16 01:39:17,596 - __main__ - INFO - Application initialized successfully
+2025-07-16 01:39:18,129 - __main__ - INFO - Successfully connected to database
+2025-07-16 01:39:18,138 - __main__ - INFO - Application starting...
+2025-07-16 01:39:18,139 - __main__ - INFO - current_dir: /home/lusix/prac/template_work/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 01:39:18,139 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 01:39:18,140 - __main__ - INFO - No existing root certificate was found at root_certs/root_cert.der
+2025-07-16 01:39:18,275 - __main__ - INFO - Application initialized successfully
+2025-07-16 01:39:21,898 - __main__ - INFO - start download_crl():
+2025-07-16 01:39:21,912 - __main__ - INFO - array_of_revoked_certificate: [<asn1_parser.models.RevokedCertificates.RevokedCertificates object at 0x7dc90e9580f0>, <asn1_parser.models.RevokedCertificates.RevokedCertificates object at 0x7dc90e958518>]
+2025-07-16 01:39:21,913 - __main__ - ERROR - Error create crl: no root cert created ErrNoRootCert 
+2025-07-16 01:39:27,106 - __main__ - INFO - start download_crl():
+2025-07-16 01:39:27,109 - __main__ - INFO - array_of_revoked_certificate: [<asn1_parser.models.RevokedCertificates.RevokedCertificates object at 0x7dc90d9264e0>, <asn1_parser.models.RevokedCertificates.RevokedCertificates object at 0x7dc90d926438>]
+2025-07-16 01:39:27,109 - __main__ - ERROR - Error create crl: no root cert created ErrNoRootCert 
+2025-07-16 01:39:38,022 - __main__ - INFO - start download_crl():
+2025-07-16 01:39:38,024 - __main__ - INFO - array_of_revoked_certificate: [<asn1_parser.models.RevokedCertificates.RevokedCertificates object at 0x7dc90d926b00>, <asn1_parser.models.RevokedCertificates.RevokedCertificates object at 0x7dc90d926e48>]
+2025-07-16 01:39:38,025 - __main__ - ERROR - Error create crl: no root cert created ErrNoRootCert 
+2025-07-16 01:42:15,669 - __main__ - INFO - Successfully connected to database
+2025-07-16 01:42:15,676 - __main__ - INFO - Application starting...
+2025-07-16 01:42:15,676 - __main__ - INFO - current_dir: /home/lusix/prac/template_work/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 01:42:15,677 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 01:42:15,677 - __main__ - INFO - No existing root certificate was found at root_certs/root_cert.der
+2025-07-16 01:42:15,805 - __main__ - INFO - Application initialized successfully
+2025-07-16 01:42:16,248 - __main__ - INFO - Successfully connected to database
+2025-07-16 01:42:16,257 - __main__ - INFO - Application starting...
+2025-07-16 01:42:16,257 - __main__ - INFO - current_dir: /home/lusix/prac/template_work/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 01:42:16,258 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 01:42:16,258 - __main__ - INFO - No existing root certificate was found at root_certs/root_cert.der
+2025-07-16 01:42:16,398 - __main__ - INFO - Application initialized successfully
+2025-07-16 01:42:20,647 - __main__ - INFO - start download_crl():
+2025-07-16 01:42:20,652 - __main__ - INFO - array_of_revoked_certificate: [<asn1_parser.models.RevokedCertificates.RevokedCertificates object at 0x7fe8072b4b70>, <asn1_parser.models.RevokedCertificates.RevokedCertificates object at 0x7fe8072b4048>]
+2025-07-16 01:42:20,653 - __main__ - ERROR - Error create crl: no root cert created ErrNoRootCert 
+2025-07-16 01:42:33,065 - __main__ - INFO - Root self signed certificate was successfully created
+2025-07-16 01:42:36,336 - __main__ - INFO - start download_crl():
+2025-07-16 01:42:36,341 - __main__ - INFO - array_of_revoked_certificate: [<asn1_parser.models.RevokedCertificates.RevokedCertificates object at 0x7fe806296860>, <asn1_parser.models.RevokedCertificates.RevokedCertificates object at 0x7fe806296c18>]
+2025-07-16 01:42:36,343 - __main__ - INFO - crl created
+2025-07-16 01:42:36,344 - __main__ - INFO - saving to: created_files/crl.der
