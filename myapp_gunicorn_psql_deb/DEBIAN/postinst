@@ -139,7 +139,7 @@ while true; do
         break
     fi
 done
-db_name=${db_name:-flower_db}
+#db_name=${db_name:-flower_db}
 
 # Создание пользователя и БД с проверкой существования
 sudo -u postgres psql -c "DO \$$
@@ -262,7 +262,7 @@ Group=www-data
 WorkingDirectory=/opt/myapp/app
 Environment="PATH=/opt/myapp/venv/bin"
 ExecStart=/opt/myapp/venv/bin/python3 /opt/myapp/app/crl_daemon.py
-Restart=always
+Restart=none
 RestartSec=10
 StandardOutput=syslog
 StandardError=syslog

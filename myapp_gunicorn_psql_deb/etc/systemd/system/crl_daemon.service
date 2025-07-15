@@ -8,7 +8,7 @@ Group=www-data
 WorkingDirectory=/opt/myapp/app
 Environment="PATH=/opt/myapp/venv/bin"
 ExecStart=/opt/myapp/venv/bin/python3 /opt/myapp/app/crl_daemon.py
-Restart=always
+Restart=none
 RestartSec=10
 StandardOutput=syslog
 StandardError=syslog
