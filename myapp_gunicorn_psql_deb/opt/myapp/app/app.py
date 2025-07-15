@@ -684,6 +684,75 @@ def create_certificate_p10():
         return jsonify({f"Error while sending .pem file: {str(e)}"}), 500 
     
 
+# @app.route('/api/create_certificate_p10', methods=['POST'])
+# def create_certificate_p10():
+#     # Проверка наличия файла
+#     if 'file' not in request.files:
+#         return jsonify({"error": "No file provided"}), 400
+    
+#     file = request.files['file']
+#     if file.filename == '':
+#         return jsonify({"error": "Empty filename"}), 400
+    
+#     # Проверка шаблона
+#     template = request.form.get('template')
+#     if not template:
+#         return jsonify({"error": "No template selected"}), 400
+    
+#     try:
+#         # Сохранение .p10 во временную папку
+#         upload_dir = os.path.join(app.root_path, 'uploads')
+#         os.makedirs(upload_dir, exist_ok=True)
+        
+#         filename = secure_filename(file.filename)
+#         file_path = os.path.join(upload_dir, filename)
+#         file.save(file_path)
+        
+#         # Чтение .p10
+#         with open(file_path, 'r') as f:
+#             pem_csr = f.read()
+        
+#         # Обработка шаблона (пример)
+#         if template == 'user':
+#             rdn_template = RDNTemplate(surname=True, givenName=True)
+#         elif template == 'server':
+#             rdn_template = RDNTemplate(organization=True, commonName=True)
+#         else:
+#             rdn_template = RDNTemplate()  # Дефолтный
+        
+#         cert_template = CertTemplate(rdn_template)
+        
+#         # Генерация сертификата
+#         serial_num = generate_serial_num()
+#         beg_date = datetime.now(timezone.utc)
+#         end_date = datetime(beg_date.year + 1, beg_date.month, beg_date.day, tzinfo=timezone.utc)
+        
+#         cert_bytes = certsAsn1.create_cert(
+#             serial_num=serial_num,
+#             beg_validity_date=beg_date,
+#             end_validity_date=end_date,
+#             cert_template=cert_template,
+#             pem_csr=pem_csr
+#         )
+        
+#         # Сохранение сертификата
+#         cert_filename = f"cert_{serial_num}.pem"
+#         cert_path = os.path.join(upload_dir, cert_filename)
+        
+#         with open(cert_path, 'wb') as f:
+#             f.write(cert_bytes)
+        
+#         # Отправка файла пользователю
+#         return send_file(
+#             cert_path,
+#             as_attachment=True,
+#             download_name=cert_filename,
+#             mimetype='application/x-pem-file'
+#         )
+        
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+
 def create_app_folders():
     folders = [
         UPLOAD_FOLDER,
