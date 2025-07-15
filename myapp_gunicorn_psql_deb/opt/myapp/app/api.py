@@ -22,12 +22,15 @@ def index():
 '''------------------------------------------------ СОЗДАНИЕ САМОПОДПИСНОГО СЕРТИФИКАТА -------------------------------------'''
 @appl.route('/create-selfsigned-certificate')
 def create_certificate_page():
+    logger = appl.config[LOGGER]
+    logger.info("create_certificate_page")
     return render_template('create_selfsigned_certificate.html')
 
 @appl.route('/api/create-selfsigned-certificate', methods=['POST'])
 def create_selfsigned_certificate():
     try:
         logger = appl.config[LOGGER]
+        logger.info("create_selfsigned_certificate")
         logger.warning("here create_selfsigned_certificate -----")
         storage = appl.config[STORAGE]
 
@@ -117,6 +120,8 @@ def create_selfsigned_certificate():
     
 @appl.route('/certificate-created')
 def selfsigned_certificate_created():
+    logger = appl.config[LOGGER]
+    logger.info("selfsigned_certificate_created")
     cert_data = appl.config.get('CERT_DATA', {})
     if not cert_data:
         return redirect(url_for('create_certificate_page'))
@@ -126,6 +131,8 @@ def selfsigned_certificate_created():
 
 @appl.route('/download-certificate')
 def download_certificate():
+    logger = appl.config[LOGGER]
+    logger.info("download_certificate")
     cert_data = appl.config.get('CERT_DATA')
     if not cert_data or 'cert_bytes' not in cert_data:
         return "Self signed certificate not found", 404
@@ -140,6 +147,8 @@ def download_certificate():
 
 @appl.route('/download-private-key')
 def download_private_key():
+    logger = appl.config[LOGGER]
+    logger.info("download_private_key")
     cert_data = appl.config.get('CERT_DATA')
     if not cert_data or 'private_key' not in cert_data:
         return "Private key not found", 404
@@ -162,6 +171,8 @@ def download_private_key():
 
 @appl.route('/show-password')
 def show_password():
+    logger = appl.config[LOGGER]
+    logger.info("show_password")
     cert_data = appl.config.get('CERT_DATA')
     if not cert_data or 'password' not in cert_data:
         return "Password not found", 404
@@ -172,6 +183,8 @@ def show_password():
 @appl.route('/revoke-certificate')
 def revoke_certificate_page():
     try:
+        logger = appl.config[LOGGER]
+        logger.info("revoke_certificate_page")
         stogare = appl.config[STORAGE]
         conn = stogare.get_db_connection()
         cursor = conn.cursor(cursor_factory=DictCursor)
@@ -202,6 +215,8 @@ def revoke_certificate_page():
 @appl.route('/api/revoke-certificate', methods=['POST'])
 def revoke_certificate():
     try:
+        logger = appl.config[LOGGER]
+        logger.info("revoke_certificate")
         stogare = appl.config[STORAGE]
 
         data = request.get_json()
@@ -256,6 +271,8 @@ def revoke_certificate():
 # прием запроса на создание сертификата (файла .p10)
 @appl.route('/api/create_certificate_p10', methods=['POST'])
 def create_certificate_p10(logger: Logger):
+    logger = appl.config[LOGGER]
+    logger.info("create_certificate_p10")
     if 'file' not in request.files:
         return jsonify({"error": "No file provided"}), 400 # файл отсутствует в запросе
     

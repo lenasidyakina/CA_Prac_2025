@@ -44,7 +44,6 @@ def init_root_cert(logger: Logger) -> CertsAsn1:
 # if __name__ == "__main__":
 logger = setup_logging()
 logger.info(f"__name__ = {__name__}")
-logger.info("started-------")
 storage = Storage(logger=logger)
 
 appl.config[LOGGER] = logger
@@ -59,7 +58,6 @@ try:
     init_root_cert(logger=logger)
 
     get_revoked_certificates(storage=storage)
-    logger.info("here-----1")
     appl.run(host='127.0.0.1', port=5000, debug=True)
 except Exception as e:
     logger.error(f"Failed to start application: {str(e)}")
