@@ -28,7 +28,7 @@ Base = declarative_base()
 class Certificate(Base):
     __tablename__ = 'certificates'
     serial_number = Column(
-        String(20),  
+        String(27),  
         primary_key=True,
     )
     
@@ -52,7 +52,7 @@ class Certificate(Base):
     invalidity_date = Column(Date)
 
     source_serial_number = Column(
-        String(20), nullable=False
+        String(27), nullable=False
     )
     
     
@@ -61,8 +61,8 @@ class Certificate(Base):
     def validate_serial_number(self, key, value):
         if not value.isdigit():
             raise ValueError("Серийный номер сертификата должен содержать только цифры")
-        if len(value) > 20:
-            raise ValueError("Серийный номер сертификата не может быть длиннее 20 символов")
+        if len(value) > 27:
+            raise ValueError("Серийный номер сертификата не может быть длиннее 27 символов")
         return value
     
     @validates('revoke_date')
@@ -102,7 +102,7 @@ class Certificate(Base):
     def validate_source_serial_number(self, key, value):
         if not value.isdigit():
             raise ValueError("Серийный номер самоподписанного сертификата должен содержать только цифры")
-        if len(value) > 20:
+        if len(value) > 27:
             raise ValueError("Серийный номер самоподписанного сертификата не может быть длиннее 20 символов")
         return value
 
