@@ -21,9 +21,6 @@ from io import BytesIO
 import subprocess
 from db.DatabaseManager import DatabaseManager
 
-# curl -X POST   -F "file=@./full.p10"   http://localhost/api/create_certificate_p10   --output received_cert.pem
-# cp /opt/myapp/app/root_certs/root_cert.der ./myapp_gunicorn_psql_deb/opt/myapp/app/root_certs/root_cert.der
-
 BASE_DIR = Path(__file__).parent
 # UPLOAD_FOLDER = BASE_DIR / 'uploads'
 # CREATED_FILES_FOLDER = BASE_DIR / 'created_files'
@@ -41,13 +38,12 @@ CERTSASN1 = 'CertsAsn1'
 def setup_logging():
     logger = logging.getLogger(__name__)
     
-    # Убедимся, что логгер не дублирует сообщения
+    # тобы логгер не дублировал сообщения
     logger.propagate = False
     
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     
-    # Основной обработчик - вывод в консоль
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
     
@@ -60,7 +56,6 @@ def setup_logging():
         fallback_log_dir = BASE_DIR / 'logs'
         fallback_log_file = fallback_log_dir / 'app.log'
         
-        # Пытаемся использовать основной путь
         try:
             log_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
             log_file.touch(mode=0o666)
@@ -69,7 +64,6 @@ def setup_logging():
             )
             logger.info(f"Logging to system directory: {log_file}")
         except (PermissionError, OSError) as e:
-            # Fallback на локальную директорию
             fallback_log_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
             fallback_log_file.touch(mode=0o644, exist_ok=True)
             file_handler = RotatingFileHandler(
@@ -80,7 +74,6 @@ def setup_logging():
         file_handler.setFormatter(formatter)
         handlers = [file_handler, console_handler]
     except Exception as e:
-        # Если вообще ничего не получилось - используем только консоль
         handlers = [console_handler]
         logger.error(f"Failed to setup file logging: {str(e)}")
     
@@ -98,59 +91,11 @@ app.config['ROOT_CERT_INIT_LOCK'] = Lock()
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 db_manager = DatabaseManager(logger)
 
-# logging.basicConfig(level=logging.INFO)
-# logger = logging.getLogger(__name__)
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-#     handlers=[
-#         logging.StreamHandler(sys.stdout),  # Вывод в консоль
-#         RotatingFileHandler('/var/log/myapp/app.log', maxBytes=1e6, backupCount=3)  # Ротация логов
-#     ]
-# )
-# logger = logging.getLogger(__name__)
-
-
-
-# log_path = Path('/var/log/myapp/app.log')
-# fallback_path = Path.home() / 'myapp_logs/app.log'
-
-# try:
-#     log_path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
-#     log_path.touch(mode=0o644, exist_ok=True)
-#     current_log = log_path
-# except (PermissionError, OSError):
-#     fallback_path.parent.mkdir(parents=True, exist_ok=True)
-#     fallback_path.touch(exist_ok=True)
-#     current_log = fallback_path
-#     logging.warning(f"Using fallback log location: {fallback_path}")
-
-# handlers = [
-#     logging.StreamHandler(sys.stdout),
-#     RotatingFileHandler(
-#         str(current_log),
-#         maxBytes=1_000_000,
-#         backupCount=3,
-#         encoding='utf-8'
-#     )
-# ]
-
-# # Инициализация логгера
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-#     handlers=handlers
-# )
-
-# logger = logging.getLogger(__name__)
-
-
 
 '''------------------------------- ПРОВЕРКА НА СУЩЕСТВ-НИЕ КОРНЕВОГО СЕРТИФИКАТА ПРИ ЗАПУСКЕ ПРИЛОЖЕНИЯ--------------------------------'''
 def init_root_cert():
     cert_path = Path('./root_certs/root_cert.der')
     
-    # Добавим явное сообщение о начале инициализации
     logger.info("Checking existance of root certificate...")
     
     with app.config['ROOT_CERT_INIT_LOCK']:
@@ -295,8 +240,9 @@ def create_selfsigned_certificate():
 
         serial_num = generate_serial_num() 
         serial_num = db_manager.find_serial_number(serial_num)  # проверка на уникальность серийного номера
+        
         cert_bytes, private_key, password = certsAsn1.create_selfsigned_cert(params=p, serial_num=serial_num)
-        #logger.info(certsAsn1.rootCert)
+        
         with open(ROOT_CERT_PATH, 'wb') as f:
             f.write(cert_bytes)
         # ENTRY_NAME = "cert_password"  # Название записи
@@ -319,6 +265,7 @@ def create_selfsigned_certificate():
         # except subprocess.CalledProcessError as e:
         #     logger.error(f"Ошибка: {e.stderr}")
         logger.info("Root self signed certificate was successfully created")
+        
         return redirect(url_for('selfsigned_certificate_created'))
 
     except Exception as e:
@@ -522,17 +469,103 @@ def revoke_certificate():
         return jsonify({"error": str(e)}), 500
     
 '''------------------------------------------------ СОЗДАНИЕ СЕРТИФИКАТА ПО ЗАПРОСУ -------------------------------------'''
-# прием запроса на создание сертификата (файла .p10)
+@app.route('/send-p10')
+def upload_p10_form():
+    return render_template('send_p10.html')
+
+# --------------------------------------------------- ВЕРСИЯ БЕЗ ИНТЕРФЕЙСА ---------------------------------------------
+# # прием запроса на создание сертификата (файла .p10)
+# @app.route('/api/create_certificate_p10', methods=['POST'])
+# def create_certificate_p10():
+#     if 'file' not in request.files:
+#         return jsonify({"error": "No file provided"}), 400 # файл отсутствует в запросе
+    
+#     file = request.files['file']
+#     if file.filename == '':
+#         return jsonify({"error": "Empty filename"}), 400
+    
+#     try:
+#         if not os.path.exists(UPLOAD_FOLDER):
+#             os.makedirs(UPLOAD_FOLDER)
+        
+#         # сохранение полученного файла p10
+#         filename = secure_filename(file.filename)
+#         file_path = os.path.join(UPLOAD_FOLDER, filename)
+#         file.save(file_path)
+
+#         with open(file_path, 'r') as pem_file:
+#             pem_csr = pem_file.read()
+
+#         certsAsn1 = app.config[CERTSASN1]
+        
+#         rdn_template = RDNTemplate()    
+#         # TODO заполнить поля rdn_template на основе файла-шаблона от пользователя (если файл не поступил, то поля не трогаем)
+#         rdn_template.surname = rdn_template.givenName = rdn_template.streetAddress = False  
+#         cert_template = CertTemplate(rdn_template)  # пока не трогаем
+
+#         # TODO интерфейс для отправки запроса p10
+#         serial_num = find_serial_number(generate_serial_num(), db_manager)
+#         beg_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
+#         end_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
+#         cert_bytes = certsAsn1.create_cert(serial_num=serial_num, 
+#                                        beg_validity_date=beg_validity_date,
+#                                        end_validity_date=end_validity_date,
+#                                        cert_template=cert_template, 
+#                                        pem_csr=pem_csr)
+        
+#         rc = insert_to_db(serial_num, app.config['CERT_DATA']['serial_num'], db_manager) # TODO проверка на то, что  app.config['CERT_DATA']['serial_num'] не none
+#         if not rc:
+#             raise Exception("Не удалось добавить сертификат в БД")
+#         res_filename =  f"./created_files/res{serial_num}.pem"
+#         with open(res_filename, 'w') as f:
+#             f.write(bytes_to_pem(cert_bytes, pem_type="CERTIFICATE")) # !!! pem_type - НЕ МЕНЯТЬ
+        
+#         return send_file(
+#             res_filename,
+#             as_attachment=True,
+#             download_name=res_filename , 
+#             mimetype='application/x-pem-file'
+#         )
+#     except Exception as e:
+#         logger.error(f"Error while sending .pem file: {str(e)}")
+#         return jsonify({f"Error while sending .pem file: {str(e)}"}), 500 
+
+ 
+
 @app.route('/api/create_certificate_p10', methods=['POST'])
 def create_certificate_p10():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file provided"}), 400 # файл отсутствует в запросе
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "Empty filename"}), 400
-    
     try:
+        if 'file' not in request.files:
+            return render_template('error.html', error="No file was sent to server"), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return render_template('error.html', error="Empty filename"), 400
+        
+        template = request.form.get('template')
+        if not template:
+            return render_template('error.html', error="No template was selected"), 400
+        
+        beg_date_str = request.form.get('beg_validity_date')
+        end_date_str = request.form.get('end_validity_date')
+        
+        if not beg_date_str or not end_date_str:
+            return render_template('error.html', 
+                                error="Please specify both start and end validity dates"), 400
+        
+        try:
+            beg_validity_date = datetime.strptime(beg_date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+            end_validity_date = datetime.strptime(end_date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+            
+            if end_validity_date <= beg_validity_date:
+                return render_template('error.html', 
+                                    error="End date must be after start date"), 400
+                
+        except ValueError as e:
+            return render_template('error.html', 
+                                error=f"Invalid date format: {str(e)}"), 400
+
+    
         if not os.path.exists(UPLOAD_FOLDER):
             os.makedirs(UPLOAD_FOLDER)
         
@@ -544,111 +577,137 @@ def create_certificate_p10():
         with open(file_path, 'r') as pem_file:
             pem_csr = pem_file.read()
 
+        logger.info(f"template - {template}")
+
         certsAsn1 = app.config[CERTSASN1]
         
         rdn_template = RDNTemplate()    
         # TODO заполнить поля rdn_template на основе файла-шаблона от пользователя (если файл не поступил, то поля не трогаем)
-        rdn_template.surname = rdn_template.givenName = rdn_template.streetAddress = False  
+        #rdn_template.surname = rdn_template.givenName = rdn_template.streetAddress = False
+        if template == "user":
+            rdn_template.surname = False
+            rdn_template.givenName = False
+            rdn_template.commonName = False
+        elif template == "server":
+            rdn_template.organization = False
+            rdn_template.organizationalUnit = False
+            rdn_template.commonName = False
+        elif template == "device":
+            rdn_template.deviceID = False
+            rdn_template.serialNumber = False
+
+
+
         cert_template = CertTemplate(rdn_template)  # пока не трогаем
 
         # TODO интерфейс для отправки запроса p10
         serial_num = db_manager.find_serial_number(generate_serial_num())
-        beg_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
-        end_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
+        # beg_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
+        # end_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
         cert_bytes = certsAsn1.create_cert(serial_num=serial_num, 
                                        beg_validity_date=beg_validity_date,
                                        end_validity_date=end_validity_date,
                                        cert_template=cert_template, 
                                        pem_csr=pem_csr)
+        if CERTSASN1 not in app.config:
+            raise Exception("Configuration 'CERTASN1' not found in app.config")
+            
+        source_num = certsAsn1.rootCert.serial_num
+        if source_num == None:
+            raise Exception("Root self signed certificate not found")
         
-        rc = insert_to_db(serial_num, certsAsn1.rootCert.serial_num, db_manager) 
+        rc = insert_to_db(serial_num, source_num, db_manager) 
         if not rc:
-            raise Exception("Не удалось добавить сертификат в БД")
-        res_filename =  f"./created_files/res{serial_num}.pem"
-        with open(res_filename, 'w') as f:
-            f.write(bytes_to_pem(cert_bytes, pem_type="CERTIFICATE")) # !!! pem_type - НЕ МЕНЯТЬ
-        
-        return send_file(
-            res_filename,
-            as_attachment=True,
-            download_name=res_filename , 
-            mimetype='application/x-pem-file'
-        )
-    # TODO отдельно обработать ошибку ErrNoRootCert
-    except Exception as e:
-        logger.error(f"Error while sending .pem file: {str(e)}")
-        return jsonify({f"Error while sending .pem file: {str(e)}"}), 500 
-    
+            raise Exception("Inserting certificate into database failed")
+        res_filename =  f"./{CREATED_FILES_FOLDER}/res.der"
+        # with open(res_filename, 'w') as f:
+        #     f.write(bytes_to_pem(cert_bytes, pem_type="CERTIFICATE")) # !!! pem_type - НЕ МЕНЯТЬ
+        with open(res_filename, 'wb') as f:
+            f.write(cert_bytes)
 
-# @app.route('/api/create_certificate_p10', methods=['POST'])
-# def create_certificate_p10():
-#     # Проверка наличия файла
-#     if 'file' not in request.files:
-#         return jsonify({"error": "No file provided"}), 400
+        logger.info("Certificate was successfully created")
+        
+        return redirect(url_for('certificate_created_p10'))
+
+    except Exception as e:
+        logger.error(f"Error while creating certificate: {str(e)}")
+        return render_template('error.html', 
+                            error=f"Error while creating certificate: {str(e)}"), 500
+
+@app.route('/certificate-created-request')
+def certificate_created_p10():
+    res_filename = os.path.join(CREATED_FILES_FOLDER, "res.der")
     
-#     file = request.files['file']
-#     if file.filename == '':
-#         return jsonify({"error": "Empty filename"}), 400
+    # Проверяем существование файла
+    if not os.path.exists(res_filename):
+        # Если файла нет - редирект на страницу создания сертификата
+        return redirect(url_for('upload_p10_form'))
     
-#     # Проверка шаблона
-#     template = request.form.get('template')
-#     if not template:
-#         return jsonify({"error": "No template selected"}), 400
+    try:
+        # Если файл существует - показываем страницу с информацией о сертификате
+        return render_template('new_certificate_created.html')
     
+    except Exception as e:
+        # В случае ошибки также делаем редирект
+        logger.error(f"Error in certificate_created_p10: {str(e)}")
+        return redirect(url_for('upload_p10_form'))
+
+@app.route('/download-certificate-p10') 
+def download_certificate_p10():
+    res_filename = os.path.join(CREATED_FILES_FOLDER, "res.der")
+    
+    # Проверяем существование файла
+    if not os.path.exists(res_filename):
+        return redirect(url_for('upload_p10_form'))
+    
+    try:
+        # Отправляем файл для скачивания
+        # return send_file(
+        #     res_filename,  # Путь к файлу
+        #     mimetype='application/x-pem-file',  # MIME-тип для PEM-файлов
+        #     as_attachment=True,  # Принудительное скачивание
+        #     download_name='certificate.pem'  # Имя файла при скачивании
+        # )
+        return send_file(
+        res_filename,
+        mimetype='application/x-x509-ca-cert', # указывает тип содержимого
+        as_attachment=True,  # указание браузеру, что файл должен быть скачан (а не открыт в браузере)
+        # download_name=f'certificate_{cert_data["serial_num"]}.der'
+        download_name="certificate.der"
+    )
+    
+    except Exception as e:
+        logger.error(f"Error downloading certificate: {str(e)}")
+        return redirect(url_for('upload_p10_form'))
+
+# @app.route('/download-certificate-p10')
+# def download_certificate_p10(filename):
 #     try:
-#         # Сохранение .p10 во временную папку
-#         upload_dir = os.path.join(app.root_path, 'uploads')
-#         os.makedirs(upload_dir, exist_ok=True)
+#         filepath = os.path.join(CREATED_FILES_FOLDER, filename)
         
-#         filename = secure_filename(file.filename)
-#         file_path = os.path.join(upload_dir, filename)
-#         file.save(file_path)
+#         if not os.path.exists(filepath):
+#             return render_template('error.html', 
+#                                 error="Created certificate file (.pem) not found"), 404
         
-#         # Чтение .p10
-#         with open(file_path, 'r') as f:
-#             pem_csr = f.read()
+#         # Читаем содержимое PEM-файла
+#         with open(filepath, 'rb') as f:
+#             pem_data = f.read()
         
-#         # Обработка шаблона (пример)
-#         if template == 'user':
-#             rdn_template = RDNTemplate(surname=True, givenName=True)
-#         elif template == 'server':
-#             rdn_template = RDNTemplate(organization=True, commonName=True)
-#         else:
-#             rdn_template = RDNTemplate()  # Дефолтный
-        
-#         cert_template = CertTemplate(rdn_template)
-        
-#         # Генерация сертификата
-#         serial_num = generate_serial_num()
-#         beg_date = datetime.now(timezone.utc)
-#         end_date = datetime(beg_date.year + 1, beg_date.month, beg_date.day, tzinfo=timezone.utc)
-        
-#         cert_bytes = certsAsn1.create_cert(
-#             serial_num=serial_num,
-#             beg_validity_date=beg_date,
-#             end_validity_date=end_date,
-#             cert_template=cert_template,
-#             pem_csr=pem_csr
-#         )
-        
-#         # Сохранение сертификата
-#         cert_filename = f"cert_{serial_num}.pem"
-#         cert_path = os.path.join(upload_dir, cert_filename)
-        
-#         with open(cert_path, 'wb') as f:
-#             f.write(cert_bytes)
-        
-#         # Отправка файла пользователю
 #         return send_file(
-#             cert_path,
+#             BytesIO(pem_data),
+#             mimetype='application/x-pem-file',
 #             as_attachment=True,
-#             download_name=cert_filename,
-#             mimetype='application/x-pem-file'
+#             download_name="certificate.pem"  # Сохраняем оригинальное имя файла
+#             # или можно использовать: download_name="certificate.pem"
 #         )
         
 #     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
+#         logger.error(f"Error downloading certificate: {str(e)}", exc_info=True)
+#         return render_template('error.html', 
+#                             error=f"Error downloading certificate: {str(e)}"), 500
 
+
+'''-------------------------------------------------------------------------------'''
 def create_app_folders():
     folders = [
         UPLOAD_FOLDER,

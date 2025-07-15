@@ -124,22 +124,22 @@ echo
 read -p "Имя базы данных: " db_name
 db_name=${db_name:-flower_db}
 
-while true; do
-    read -p "Имя базы данных: " db_name
-    db_name=${db_name:-flower_db}
+# while true; do
+#     read -p "Имя базы данных: " db_name
+#     db_name=${db_name:-flower_db}
 
-    if check_db_exists "$db_name"; then
-        echo "Ошибка: База данных '$db_name' уже существует!" >&2
-        read -p "Хотите ввести другое имя? (y/n) " choice
-        case "$choice" in
-            [yY]|[yY][eE][sS]) continue ;;
-            *) echo "Отмена операции"; exit 1 ;;
-        esac
-    else
-        break
-    fi
-done
-db_name=${db_name:-flower_db}
+#     if check_db_exists "$db_name"; then
+#         echo "Ошибка: База данных '$db_name' уже существует!" >&2
+#         read -p "Хотите ввести другое имя? (y/n) " choice
+#         case "$choice" in
+#             [yY]|[yY][eE][sS]) continue ;;
+#             *) echo "Отмена операции"; exit 1 ;;
+#         esac
+#     else
+#         break
+#     fi
+# done
+# db_name=${db_name:-flower_db}
 
 # Создание пользователя и БД с проверкой существования
 sudo -u postgres psql -c "DO \$$

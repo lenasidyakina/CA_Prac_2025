@@ -109,6 +109,8 @@ class DatabaseManager:
                 )
         return revoked_certificates
 
+    
+
     def close(self):
         """Закрывает соединение с базой данных"""
         if self._connection and not self._connection.closed:
