@@ -369,3 +369,161 @@
 2025-07-15 03:53:46,560 - __main__ - INFO - Successfully connected to data base
 2025-07-15 03:54:42,552 - __main__ - INFO - Successfully connected to data base
 2025-07-15 03:54:42,554 - __main__ - ERROR - Missing required field: organizationalUnitName ErrParamsTemplate 
+2025-07-15 13:53:47,657 - __main__ - INFO - start app
+2025-07-15 13:53:47,658 - __main__ - INFO - got templates
+2025-07-15 13:53:47,658 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:53:47,659 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:53:47,659 - __main__ - INFO - init_root_cert: start getting certsAsn1
+2025-07-15 13:53:47,823 - __main__ - INFO - init_root_cert: end
+2025-07-15 13:53:47,848 - __main__ - ERROR - Data base connection error: ВАЖНО:  пользователь "lusix" не прошёл проверку подлинности (по паролю)
+ВАЖНО:  пользователь "lusix" не прошёл проверку подлинности (по паролю)
+
+2025-07-15 13:53:47,849 - __main__ - ERROR - Failed to start application: ВАЖНО:  пользователь "lusix" не прошёл проверку подлинности (по паролю)
+ВАЖНО:  пользователь "lusix" не прошёл проверку подлинности (по паролю)
+
+2025-07-15 13:54:03,794 - __main__ - INFO - start app
+2025-07-15 13:54:03,794 - __main__ - INFO - got templates
+2025-07-15 13:54:03,795 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:54:03,795 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:54:03,796 - __main__ - INFO - init_root_cert: start getting certsAsn1
+2025-07-15 13:54:03,957 - __main__ - INFO - init_root_cert: end
+2025-07-15 13:54:03,978 - __main__ - INFO - Successfully connected to data base
+2025-07-15 13:54:04,619 - __main__ - INFO - start app
+2025-07-15 13:54:04,619 - __main__ - INFO - got templates
+2025-07-15 13:54:04,620 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:54:04,621 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:54:04,621 - __main__ - INFO - init_root_cert: start getting certsAsn1
+2025-07-15 13:54:04,794 - __main__ - INFO - init_root_cert: end
+2025-07-15 13:54:04,813 - __main__ - INFO - Successfully connected to data base
+2025-07-15 13:56:58,925 - __main__ - INFO - start app
+2025-07-15 13:56:58,925 - __main__ - INFO - got templates
+2025-07-15 13:56:58,926 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:56:58,927 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:56:58,927 - __main__ - INFO - init_root_cert: start getting certsAsn1
+2025-07-15 13:56:59,086 - __main__ - INFO - init_root_cert: end
+2025-07-15 13:56:59,106 - __main__ - INFO - Successfully connected to data base
+2025-07-15 13:57:11,928 - __main__ - INFO - start app
+2025-07-15 13:57:11,929 - __main__ - INFO - got templates
+2025-07-15 13:57:11,929 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:57:11,930 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:57:11,931 - __main__ - INFO - init_root_cert: start getting certsAsn1
+2025-07-15 13:57:12,082 - __main__ - INFO - init_root_cert: end
+2025-07-15 13:57:12,100 - __main__ - INFO - Successfully connected to data base
+2025-07-15 13:57:38,201 - __main__ - INFO - start app
+2025-07-15 13:57:38,201 - __main__ - INFO - got templates
+2025-07-15 13:57:38,202 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:57:38,203 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:57:38,203 - __main__ - INFO - init_root_cert: start getting certsAsn1
+2025-07-15 13:57:38,371 - __main__ - INFO - init_root_cert: end
+2025-07-15 13:57:38,396 - __main__ - INFO - Successfully connected to data base
+2025-07-15 13:57:39,156 - __main__ - INFO - start app
+2025-07-15 13:57:39,157 - __main__ - INFO - got templates
+2025-07-15 13:57:39,157 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:57:39,159 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:57:39,159 - __main__ - INFO - init_root_cert: start getting certsAsn1
+2025-07-15 13:57:39,337 - __main__ - INFO - init_root_cert: end
+2025-07-15 13:57:39,376 - __main__ - INFO - Successfully connected to data base
+2025-07-15 13:57:57,537 - __main__ - INFO - start app
+2025-07-15 13:57:57,537 - __main__ - INFO - got templates
+2025-07-15 13:57:57,538 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:57:57,539 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:57:57,539 - __main__ - INFO - init_root_cert: start getting certsAsn1
+2025-07-15 13:57:57,706 - __main__ - INFO - init_root_cert: end
+2025-07-15 13:57:57,725 - __main__ - INFO - Successfully connected to data base
+2025-07-15 13:57:58,214 - __main__ - INFO - start app
+2025-07-15 13:57:58,215 - __main__ - INFO - got templates
+2025-07-15 13:57:58,215 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:57:58,216 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:57:58,216 - __main__ - INFO - init_root_cert: start getting certsAsn1
+2025-07-15 13:57:58,393 - __main__ - INFO - init_root_cert: end
+2025-07-15 13:57:58,420 - __main__ - INFO - Successfully connected to data base
+2025-07-15 13:58:09,235 - __main__ - INFO - start app
+2025-07-15 13:58:09,236 - __main__ - INFO - got templates
+2025-07-15 13:58:09,237 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:58:09,239 - __main__ - ERROR - Error loading existing root certificate: unknown signature algorithm: 2
+2025-07-15 13:58:09,239 - __main__ - INFO - init_root_cert: start getting certsAsn1
+2025-07-15 13:58:09,395 - __main__ - INFO - init_root_cert: end
+2025-07-15 13:58:09,415 - __main__ - INFO - Successfully connected to data base
+2025-07-15 13:58:24,296 - __main__ - INFO - start app
+2025-07-15 13:58:24,297 - __main__ - INFO - got templates
+2025-07-15 13:58:24,297 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:58:24,303 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-15 13:58:24,304 - __main__ - INFO - init_root_cert: start getting certsAsn1
+2025-07-15 13:58:24,465 - __main__ - INFO - init_root_cert: end
+2025-07-15 13:58:24,487 - __main__ - INFO - Successfully connected to data base
+2025-07-15 13:58:51,516 - __main__ - INFO - start app
+2025-07-15 13:58:51,517 - __main__ - INFO - got templates
+2025-07-15 13:58:51,519 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:58:51,523 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-15 13:58:51,524 - __main__ - INFO - init_root_cert: start getting certsAsn1
+2025-07-15 13:58:51,698 - __main__ - INFO - init_root_cert: end
+2025-07-15 13:58:51,719 - __main__ - INFO - Successfully connected to data base
+2025-07-15 13:58:52,203 - __main__ - INFO - start app
+2025-07-15 13:58:52,204 - __main__ - INFO - got templates
+2025-07-15 13:58:52,205 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 13:58:52,209 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-15 13:58:52,209 - __main__ - INFO - init_root_cert: start getting certsAsn1
+2025-07-15 13:58:52,357 - __main__ - INFO - init_root_cert: end
+2025-07-15 13:58:52,377 - __main__ - INFO - Successfully connected to data base
+2025-07-15 13:59:33,947 - __main__ - INFO - start getting certsAsn1
+2025-07-15 13:59:33,949 - __main__ - INFO - created ParamsSelfSignedCert
+2025-07-15 13:59:33,968 - __main__ - INFO - Successfully connected to data base
+2025-07-15 13:59:33,980 - __main__ - INFO - created RootCert:
+2025-07-15 13:59:33,981 - __main__ - INFO - RootCert:
+	 serial_num=65607579842336361948954790082568371044891855864823405404743960792365911645804698181419
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15
+	 end_validity_date=2026-07-15
+
+2025-07-15 13:59:33,982 - __main__ - INFO - Root self signed certificate was successfully created
+2025-07-15 14:00:10,624 - __main__ - INFO - Successfully connected to data base
+2025-07-15 14:17:17,447 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 14:17:17,452 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-15 14:17:17,655 - __main__ - INFO - Successfully connected to data base
+2025-07-15 14:17:18,354 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 14:17:18,362 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-15 14:17:18,573 - __main__ - INFO - Successfully connected to data base
+2025-07-15 14:17:54,982 - __main__ - WARNING - RootCert = RootCert:
+	 serial_num=65607579842336361948954790082568371044891855864823405404743960792365911645804698181419
+	 alg_type=AlgTypes.a
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-15 14:17:55,000 - __main__ - INFO - Successfully connected to data base
+2025-07-15 14:17:55,012 - __main__ - INFO - RootCert:
+	 serial_num=75709268774953766753217646265093949909149848566459944367353282975581136553198473165183
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15
+	 end_validity_date=2026-07-15
+
+2025-07-15 14:17:55,013 - __main__ - INFO - Root self signed certificate was successfully created
+2025-07-15 14:53:02,885 - __main__ - INFO - start-----------
+2025-07-15 14:53:02,887 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 14:53:02,893 - __main__ - WARNING - RootCert = RootCert:
+	 serial_num=75709268774953766753217646265093949909149848566459944367353282975581136553198473165183
+	 alg_type=AlgTypes.a
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-15 14:53:02,894 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-15 14:53:03,054 - __main__ - WARNING - CertsAsn1.RootCert = RootCert:
+	 serial_num=75709268774953766753217646265093949909149848566459944367353282975581136553198473165183
+	 alg_type=AlgTypes.a
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-15 14:53:03,609 - __main__ - INFO - start-----------
+2025-07-15 14:53:03,610 - __main__ - INFO - Checking existance of root certificate...
+2025-07-15 14:53:03,615 - __main__ - WARNING - RootCert = RootCert:
+	 serial_num=75709268774953766753217646265093949909149848566459944367353282975581136553198473165183
+	 alg_type=AlgTypes.a
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-15 14:53:03,615 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-15 14:53:03,768 - __main__ - WARNING - CertsAsn1.RootCert = RootCert:
+	 serial_num=75709268774953766753217646265093949909149848566459944367353282975581136553198473165183
+	 alg_type=AlgTypes.a
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+

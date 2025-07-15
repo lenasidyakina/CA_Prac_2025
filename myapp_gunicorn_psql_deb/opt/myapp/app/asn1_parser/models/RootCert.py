@@ -41,7 +41,7 @@ def restore_root_cert(cert_bytes: bytes) -> RootCert:
     _, serial_num = decoder.read()
 
     decoder.enter()         # signature AlgorithmIdentifier
-    signAlgId = decoder.read()[-1][-1]
+    signAlgId = decoder.read()[-1]
     alg_type = None
     for char_alg, params_alg in ALL_ALG_PARAMS.items():
         if params_alg.signAlgId == signAlgId:

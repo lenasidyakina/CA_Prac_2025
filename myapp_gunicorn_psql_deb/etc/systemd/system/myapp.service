@@ -14,7 +14,7 @@ ExecStart=/bin/sh -c 'rm -f /opt/myapp/myapp.sock && \
     --bind unix:/opt/myapp/myapp.sock \
     --log-level debug \
     --preload \
-    wsgi:app'
+    wsgi:appl'
 Restart=always
 RestartSec=3
 Environment="PYTHONPATH=/opt/myapp/app"
