@@ -163,7 +163,7 @@ def init_root_cert():
                     
                     logger.info("Existing root certificate was successfully restored")
             except Exception as e:
-                logger.error(f"Error loading existing root certificate: {e}")
+                logger.error(f"Error while loading existing root certificate: {e}")
         else:
             logger.info("No existing root certificate was found at %s", cert_path)
 
@@ -292,10 +292,10 @@ def get_revoked_certificates(db_manager):
                 )
             )
     
-    logger.debug(f"Revoked certificates count: {len(revoked_certificates)}")
+    #logger.debug(f"Revoked certificates count: {len(revoked_certificates)}")
     #ОТЛАДОЧНАЯ ПЕЧАТЬ
-    for cert in revoked_certificates:
-        logger.debug(f"Serial: {cert.serialNumber}, Revocation Date: {cert.revocationDate}, Reason:{cert.crlReasonCode.name}, inv:{cert.invalidityDate}")
+    # for cert in revoked_certificates:
+    #     logger.debug(f"Serial: {cert.serialNumber}, Revocation Date: {cert.revocationDate}, Reason:{cert.crlReasonCode.name}, inv:{cert.invalidityDate}")
     
     
     return revoked_certificates
@@ -328,7 +328,7 @@ def insert_to_db(serial_number, source_serial_number, db_manager):
             )
         return True
     except Exception as e:
-        logger.error(f"Error inserting certificate to database: {str(e)}")
+        logger.error(f"Error while inserting certificate to database: {str(e)}")
         return False
 
 '''------------------------------------------------------------------------------------------------------'''
@@ -385,7 +385,7 @@ def create_selfsigned_certificate():
         serial_num = generate_serial_num() 
         serial_num = find_serial_number(serial_num, db_manager)  # проверка на уникальность серийного номера
         cert_bytes, private_key, password = certsAsn1.create_selfsigned_cert(params=p, serial_num=serial_num)
-        logger.info(certsAsn1.rootCert)
+        #logger.info(certsAsn1.rootCert)
         with open(ROOT_CERT_PATH, 'wb') as f:
             f.write(cert_bytes)
         # ENTRY_NAME = "cert_password"  # Название записи
@@ -421,12 +421,12 @@ def create_selfsigned_certificate():
         logger.error(f"Error while creating selfsigned certificate: {str(e)}")
         return render_template('error.html', error=str(e)), 500
 
-    except Exception as e:
-        logger.error(f"Error while creating selfsigned certificate: {str(e)}")
-        return jsonify({
-            "error": "Error while creating selfsigned certificate",
-            "details": str(e)
-        }), 500
+    # except Exception as e:
+    #     logger.error(f"Error while creating selfsigned certificate: {str(e)}")
+    #     return jsonify({
+    #         "error": "Error while creating selfsigned certificate",
+    #         "details": str(e)
+    #     }), 500
     
 @app.route('/certificate-created')
 def selfsigned_certificate_created():
@@ -657,7 +657,7 @@ def create_certificate_p10():
         cert_template = CertTemplate(rdn_template)  # пока не трогаем
 
         # TODO интерфейс для отправки запроса p10
-        serial_num = find_serial_number(generate_serial_num())
+        serial_num = find_serial_number(generate_serial_num(), db_manager)
         beg_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
         end_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
         cert_bytes = certsAsn1.create_cert(serial_num=serial_num, 
@@ -680,8 +680,8 @@ def create_certificate_p10():
             mimetype='application/x-pem-file'
         )
     except Exception as e:
-        logger.error(f"{str(e)}")
-        return jsonify({"error": f"Failed to send PEM: {str(e)}"}), 500 
+        logger.error(f"Error while sending .pem file: {str(e)}")
+        return jsonify({f"Error while sending .pem file: {str(e)}"}), 500 
     
 
 def create_app_folders():
@@ -696,37 +696,42 @@ def create_app_folders():
             os.makedirs(folder, exist_ok=True)
             #logger.info(f"Папка {folder} создана или уже существует")
         except Exception as e:
-            logger.error(f"Ошибка при создании папки {folder}: {str(e)}")
+            logger.error(f"Error while creating directory {folder}: {str(e)}")
             raise
+
+
 def initialize_application():
-    """Функция инициализации приложения, вызывается при старте"""
     try:
         logger.info("Application starting...")
         create_app_folders()
 
-        # Проверка шаблонов
         required_templates = ['index.html', 'revoke_certificate.html', 'create_selfsigned_certificate.html']
         for template in required_templates:
             if not os.path.exists(f'./templates/{template}'):
                 logger.error(f"Шаблон {template} не найден в директории templates")
 
-        # Инициализация корневого сертификата
         init_root_cert()
 
-        # Проверка отозванных сертификатов (для инициализации кэша и т.д.)
-        get_revoked_certificates(db_manager)
+       # get_revoked_certificates(db_manager)  # отладочный вывод
 
         logger.info("Application initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize application: {str(e)}")
         sys.exit(1)
 
-# Инициализация при создании приложения
+
 initialize_application()
 
 if __name__ == '__main__':
-    # Локальный запуск (только для разработки)
+    # Локальный запуск (только для запуска через python3
     app.run(host='0.0.0.0', port=5000, debug=True)
+
+
+
+
+
+
+
     '''
 if __name__ == '__main__':
     try:
