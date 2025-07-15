@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 # Получаем абсолютный путь к директории app
-app_dir = Path(__file__).parent.parent / "app"  # убрал "../", так как parent уже поднимается наверх
+app_dir = Path(__file__).parent.parent / "../app"  # убрал "../", так как parent уже поднимается наверх
 sys.path.insert(0, str(app_dir))  # insert(0) - приоритетнее append
 
 # Теперь можно импортировать напрямую

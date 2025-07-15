@@ -66,58 +66,82 @@
             display: block;
         }
         .form-unit {
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 15px;
-    margin-bottom: 20px;
-    background-color: #f9f9f9;
-}
-
-.unit-title {
-    margin-top: 0;
-    margin-bottom: 15px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #eee;
-    color: #333;
-    font-size: 1.1em;
-}
-
-.form-group {
-    margin: 10px 0;
-}
-.button {
-    padding: 12px 24px;
-    font-size: 20px;
-    background-color: #3b3832;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 20px;
-    transition: background-color 0.3s;
-}
-.button:hover {
-            background-color: #5a564c;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
         }
-        
 
-.home-link {
-    display: inline-block;
-    margin-top: 30px;
-    color: #8a2be2; 
-    text-decoration: underline;
-    font-size: 22px;
-    cursor: pointer;
-    transition: color 0.3s;
-    background: none;
-    border: none;
-    padding: 0;
-}
+        .unit-title {
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+            font-size: 1.1em;
+        }
 
-.home-link:hover {
-    color: #6a1b9a; 
-}
+        .form-group {
+            margin: 10px 0;
+        }
+        .button {
+            padding: 12px 24px;
+            font-size: 20px;
+            background-color: #3b3832;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+                    background-color: #5a564c;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                }
+                
+
+        .home-link {
+            display: inline-block;
+            margin-top: 30px;
+            color: #8a2be2; 
+            text-decoration: underline;
+            font-size: 22px;
+            cursor: pointer;
+            transition: color 0.3s;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .home-link:hover {
+            color: #6a1b9a; 
+        }
+
+ 
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            background: transparent;
+            bottom: 0;
+            color: transparent;
+            cursor: pointer;
+            height: auto;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: auto;
+        }
+        .date-input-container {
+            position: relative;
+        }
+        .date-input-container::after {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -197,7 +221,7 @@
                     </div>
                 </div>
 
-                <div class="form-unit">
+                <!-- <div class="form-unit">
                     <h3 class="unit-title">Дополнительные поля</h3>
                     <div class="form-group">
                         <label for="snils">Снилс:</label>
@@ -209,14 +233,42 @@
                         <input type="text" id="email" name="email" placeholder="">
                     </div>
                     
-                </div>
+                </div> -->
 
             </div>
             
             <!-- Вкладка "Прочие параметры" -->
-            <!-- <div id="other-tab" class="tab-content">
-                
-            </div> -->
+            <div id="other-tab" class="tab-content">
+                <div class="form-unit">
+                    <h3 class="unit-title">Срок действия сертификата</h3>
+                    <div class="form-group date-input-container">
+                        <label for="beg_validity_date">Дата начала действия:</label>
+                        <input type="date" id="beg_validity_date" name="beg_validity_date" required>
+                    </div>
+                    
+                    <div class="form-group date-input-container">
+                        <label for="end_validity_date">Дата окончания действия:</label>
+                        <input type="date" id="end_validity_date" name="end_validity_date" required>
+                    </div>
+                </div>
+
+                <div class="form-unit">
+                    <h3 class="unit-title">Параметры шифрования</h3>
+                    <div class="form-group">
+                        <label for="algorithm">Алгоритм шифрования:</label>
+                        <select id="algorithm" name="algorithm" required>
+                            <option value="a">Параметр А (хеш по ГОСТ 34.11-2012) по ГОСТ Р 34.10-2012</option>  
+                            <option value="b">Параметр В (хеш по ГОСТ 34.11-2012) по ГОСТ Р 34.10-2012</option>  
+                            <option value="c">Параметр C (хеш по ГОСТ 34.11-2012) по ГОСТ Р 34.10-2012</option>
+                            <option value="A">Параметр А по ГОСТ Р 34.10-2001*</option>
+                            <option value="B">Параметр B по ГОСТ Р 34.10-2001*</option>
+                            <option value="B">Параметр C по ГОСТ Р 34.10-2001*</option>
+                            <option value="D">Параметр А (хеш по ГОСТ 34.11-2012, 256 бит) по ГОСТ Р 34.10-2012</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
             
             <button type="submit" class="button">Создать сертификат</button>
         </form>
@@ -232,6 +284,23 @@
     </div>
 
     <script>
+        // Установка значений по умолчанию при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Установка текущей даты для начала действия
+            const today = new Date();
+            const begDateInput = document.getElementById('beg_validity_date');
+            begDateInput.valueAsDate = today;
+            
+            // Установка даты через 1 год для окончания действия
+            const endDate = new Date();
+            endDate.setFullYear(today.getFullYear() + 1);
+            const endDateInput = document.getElementById('end_validity_date');
+            endDateInput.valueAsDate = endDate;
+            
+            // Установка алгоритма по умолчанию
+            const algorithmSelect = document.getElementById('algorithm');
+            algorithmSelect.value = 'b'; // Параметр В по умолчанию
+        });
         // переключение вкладок
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
