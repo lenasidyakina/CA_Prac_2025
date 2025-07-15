@@ -23,6 +23,8 @@ from db.DatabaseManager import DatabaseManager
 
 # curl -X POST   -F "file=@./full.p10"   http://localhost/api/create_certificate_p10   --output received_cert.pem
 # cp /opt/myapp/app/root_certs/root_cert.der ./myapp_gunicorn_psql_deb/opt/myapp/app/root_certs/root_cert.der
+# cp /opt/myapp/app/private.key ./myapp_gunicorn_psql_deb/opt/myapp/app/private.key
+# cp /opt/myapp/app/password.txt ./myapp_gunicorn_psql_deb/opt/myapp/app/password.txt
 
 BASE_DIR = Path(__file__).parent
 # UPLOAD_FOLDER = BASE_DIR / 'uploads'

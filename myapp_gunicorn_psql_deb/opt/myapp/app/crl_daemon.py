@@ -88,6 +88,7 @@ class NumberLogger:
                 root = restore_root_cert(cert_bytes)
                 # print(root)
                 certsAsn1 = CertsAsn1(rootCert=root)
+                self.logger.info(certsAsn1.rootCert)
 
                 
                 crl_bytes = certsAsn1.create_crl(

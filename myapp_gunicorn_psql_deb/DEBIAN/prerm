@@ -24,7 +24,7 @@ echo "Checking for remaining processes..."
 pkill -f "/opt/myapp/venv/bin/python3 /opt/myapp/app/crl_daemon.py" || true
 pkill -f "gunicorn.*wsgi:app" || true
 
-rm -rf /opt/myapp/app/root_certs
+# rm -rf /opt/myapp/app/root_certs
 rm -rf /opt/myapp/app/__pycache__
 
 echo "Cleanup complete"
