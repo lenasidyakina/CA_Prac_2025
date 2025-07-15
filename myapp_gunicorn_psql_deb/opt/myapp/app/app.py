@@ -707,6 +707,33 @@ def download_certificate_p10():
 #                             error=f"Error downloading certificate: {str(e)}"), 500
 
 
+'''------------------------CRL КНОПО4КА ------------'''
+@app.route('/download-crl') 
+def download_crl():
+    res_filename = os.path.join(CREATED_FILES_FOLDER, "empty.der")
+    with open(res_filename, 'w') as file:
+        pass 
+    
+    try:
+        # Отправляем файл для скачивания
+        # return send_file(
+        #     res_filename,  # Путь к файлу
+        #     mimetype='application/x-pem-file',  # MIME-тип для PEM-файлов
+        #     as_attachment=True,  # Принудительное скачивание
+        #     download_name='certificate.pem'  # Имя файла при скачивании
+        # )
+        return send_file(
+        res_filename,
+        mimetype='application/x-x509-ca-cert', # указывает тип содержимого
+        as_attachment=True,  # указание браузеру, что файл должен быть скачан (а не открыт в браузере)
+        # download_name=f'certificate_{cert_data["serial_num"]}.der'
+        download_name="empty.der"
+    )
+    
+    except Exception as e:
+        logger.error(f"Error creatinf empty file: {str(e)}")
+        return redirect(url_for('index'))
+
 '''-------------------------------------------------------------------------------'''
 def create_app_folders():
     folders = [
