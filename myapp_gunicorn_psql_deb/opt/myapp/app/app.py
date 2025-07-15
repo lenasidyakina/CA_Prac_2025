@@ -22,17 +22,80 @@ from io import BytesIO
 import subprocess
 
 
-app = Flask(__name__)
-app.config['ROOT_CERT_INIT_LOCK'] = Lock()
 
+BASE_DIR = Path(__file__).parent
+# UPLOAD_FOLDER = BASE_DIR / 'uploads'
+# CREATED_FILES_FOLDER = BASE_DIR / 'created_files'
+# ROOT_CERT_FOLDER = BASE_DIR / 'root_certs'
+# ROOT_CERT_PATH = ROOT_CERT_FOLDER / 'root_cert.der'
+# app.config['UPLOAD_FOLDER'] = str(UPLOAD_FOLDER)
 UPLOAD_FOLDER = 'uploads' #дир-рия для хранения загруженных файлов (полученных из запроса файлов)
 CREATED_FILES_FOLDER = 'created_files'
 ROOT_CERT_FOLDER = 'root_certs'  # для корневых сертификатов
 ROOT_CERT_PATH = os.path.join(ROOT_CERT_FOLDER, 'root_cert.der')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 KEEPASS_DB_PATH = "/var/lib/myapp/secrets.kdbx"  # Путь к базе
-
 CERTSASN1 = 'CertsAsn1'
+
+
+def setup_logging():
+    logger = logging.getLogger(__name__)
+    
+    # Убедимся, что логгер не дублирует сообщения
+    logger.propagate = False
+    
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    # Основной обработчик - вывод в консоль
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    
+    try:
+        # Основной путь для логов (для deb-пакета)
+        log_dir = Path('/var/log/myapp')
+        log_file = log_dir / 'app.log'
+        
+        # Fallback путь (для разработки или если нет прав на /var/log)
+        fallback_log_dir = BASE_DIR / 'logs'
+        fallback_log_file = fallback_log_dir / 'app.log'
+        
+        # Пытаемся использовать основной путь
+        try:
+            log_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
+            log_file.touch(mode=0o644, exist_ok=True)
+            file_handler = RotatingFileHandler(
+                log_file, maxBytes=1_000_000, backupCount=3, encoding='utf-8'
+            )
+            logger.info(f"Logging to system directory: {log_file}")
+        except (PermissionError, OSError) as e:
+            # Fallback на локальную директорию
+            fallback_log_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
+            fallback_log_file.touch(mode=0o644, exist_ok=True)
+            file_handler = RotatingFileHandler(
+                fallback_log_file, maxBytes=1_000_000, backupCount=3, encoding='utf-8'
+            )
+            logger.warning(f"Using fallback log location: {fallback_log_file}")
+        
+        file_handler.setFormatter(formatter)
+        handlers = [console_handler, file_handler]
+    except Exception as e:
+        # Если вообще ничего не получилось - используем только консоль
+        handlers = [console_handler]
+        logger.error(f"Failed to setup file logging: {str(e)}")
+    
+    # Очищаем существующие обработчики и добавляем новые
+    logger.handlers.clear()
+    for handler in handlers:
+        logger.addHandler(handler)
+    
+    return logger
+
+# Глобальная инициализация логгера
+logger = setup_logging()
+app = Flask(__name__)
+app.config['ROOT_CERT_INIT_LOCK'] = Lock()
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 
 # logging.basicConfig(level=logging.INFO)
 # logger = logging.getLogger(__name__)
@@ -48,37 +111,38 @@ CERTSASN1 = 'CertsAsn1'
 
 
 
-log_path = Path('/var/log/myapp/app.log')
-fallback_path = Path.home() / 'myapp_logs/app.log'
+# log_path = Path('/var/log/myapp/app.log')
+# fallback_path = Path.home() / 'myapp_logs/app.log'
 
-try:
-    log_path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
-    log_path.touch(mode=0o644, exist_ok=True)
-    current_log = log_path
-except (PermissionError, OSError):
-    fallback_path.parent.mkdir(parents=True, exist_ok=True)
-    fallback_path.touch(exist_ok=True)
-    current_log = fallback_path
-    logging.warning(f"Using fallback log location: {fallback_path}")
+# try:
+#     log_path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+#     log_path.touch(mode=0o644, exist_ok=True)
+#     current_log = log_path
+# except (PermissionError, OSError):
+#     fallback_path.parent.mkdir(parents=True, exist_ok=True)
+#     fallback_path.touch(exist_ok=True)
+#     current_log = fallback_path
+#     logging.warning(f"Using fallback log location: {fallback_path}")
 
-handlers = [
-    logging.StreamHandler(sys.stdout),
-    RotatingFileHandler(
-        str(current_log),
-        maxBytes=1_000_000,
-        backupCount=3,
-        encoding='utf-8'
-    )
-]
+# handlers = [
+#     logging.StreamHandler(sys.stdout),
+#     RotatingFileHandler(
+#         str(current_log),
+#         maxBytes=1_000_000,
+#         backupCount=3,
+#         encoding='utf-8'
+#     )
+# ]
 
-# Инициализация логгера
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=handlers
-)
+# # Инициализация логгера
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+#     handlers=handlers
+# )
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
+
 
 
 '''------------------------------- ПРОВЕРКА НА СУЩЕСТВ-НИЕ КОРНЕВОГО СЕРТИФИКАТА ПРИ ЗАПУСКЕ ПРИЛОЖЕНИЯ--------------------------------'''
@@ -99,9 +163,9 @@ def init_root_cert():
                     
                     logger.info("Existing root certificate was successfully restored")
             except Exception as e:
-                logger.error(f"Error loading certificate: {e}")
+                logger.error(f"Error loading existing root certificate: {e}")
         else:
-            logger.warning("No existing root certificate found at %s", cert_path)
+            logger.info("No existing root certificate was found at %s", cert_path)
 
         app.config[CERTSASN1] = CertsAsn1(rootCert=rootCert)
 
@@ -162,6 +226,57 @@ def get_db_connection():
     except psycopg2.Error as e:
         logger.error(f"Data base connection error: {str(e)}")
         raise
+
+def get_revoked_certificates():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT serial_number, revoke_date, revoke_reason, invalidity_date FROM certificates WHERE is_revoked = TRUE")
+    revoked_certificates = []
+    for row in cursor.fetchall():
+        serialNumber=int(row[0])
+        revocationDate=row[1]
+        if (len(row[2]) > 0 ):
+            crlReasonCode=CRLReasonCode[row[2]]
+        else:
+            clReasonCode=CRLReasonCode.unspecified
+        invalidityDate=row[3]
+        revoked_certificates.append(RevokedCertificates(serialNumber=serialNumber, revocationDate=revocationDate,
+                                  crlReasonCode=crlReasonCode, invalidityDate = invalidityDate))
+        # s(
+        #     serialNumber=int(row[0]),  
+        #     revocationDate=row[1],
+        #     crlReasonCode=CRLReasonCode.cACompromise,   # TODO брать из БД (CRLReasonCode - это enum)
+        #     invalidityDate=datetime(1900, 7, 10, tzinfo=timezone.utc)   # TODO брать из БД. Дата признания недействительным
+        
+    conn.close()
+
+    # ОТЛАДОЧНАЯ ПЕЧАТЬ
+    # print("Revoked certificates:", len(revoked_certificates))
+    # for cert in revoked_certificates:
+    #     print(f"Serial: {cert.serialNumber}, Revocation Date: {cert.revocationDate}, Reason:{cert.crlReasonCode.name}, inv:{cert.invalidityDate}")
+    
+    
+    return revoked_certificates
+
+def insert_to_db(serial_number, source_serial_number):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute(
+            """INSERT INTO certificates 
+            VALUES (%s, false, null, null, null, %s)""",
+            (serial_number, source_serial_number)
+        )
+        conn.commit()
+        return True  
+    except Exception as e:
+        logger.error(f"Error inserting certificate to database: {str(e)}")
+        return False  
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
 '''------------------------------------------------------------------------------------------------------'''
 # главная страница
 @app.route('/')
@@ -193,9 +308,13 @@ def create_selfsigned_certificate():
         org_unit_name = req_data.get('department', '').strip()
         title = req_data.get('position', '').strip()
         
-        # # дополнительные поля
-        # snils = req_data.get('snils', '').strip()
-        # email = req_data.get('email', '').strip()
+        # дополнительные поля
+        algorithm_value = request.form.get('algorithm')
+        alg_type = AlgTypes[algorithm_value]
+        beg_date = request.form.get('beg_validity_date')
+        end_date = request.form.get('end_validity_date')
+        beg_date = datetime.strptime(beg_date, '%Y-%m-%d').date()  # TODO проверка даты
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
     
         certsAsn1 = app.config[CERTSASN1]
         prdn = ParamsRDN(surname= surname, givenName=given_name, 
@@ -203,12 +322,10 @@ def create_selfsigned_certificate():
                             commonName=common_name, organizationName=org_name,
                             countryName=org_country, stateOrProvinceName=org_region, 
                             streetAddress=org_address, localityName=org_locality)
-        current_date_utc = datetime.now(timezone.utc)   # TODO interface
-        next_year_date = datetime.now(timezone.utc) + timedelta(days=365)   # TODO interface
-        alg_type=AlgTypes.b # TODO interface
+        
         p = ParamsSelfSignedCert(alg_type=alg_type, 
-                                beg_validity_date=current_date_utc,
-                                end_validity_date=next_year_date,
+                                beg_validity_date=beg_date,
+                                end_validity_date=end_date,
                                 paramsRDN=prdn)
 
         serial_num = generate_serial_num() 
@@ -276,7 +393,8 @@ def download_certificate():
         BytesIO(cert_data['cert_bytes']),
         mimetype='application/x-x509-ca-cert', # указывает тип содержимого
         as_attachment=True,  # указание браузеру, что файл должен быть скачан (а не открыт в браузере)
-        download_name=f'certificate_{cert_data["serial_num"]}.der'
+        # download_name=f'certificate_{cert_data["serial_num"]}.der'
+        download_name="certificate.der"
     )
 
 @app.route('/download-private-key')
@@ -291,7 +409,8 @@ def download_private_key():
     return send_file(
         key_file,
         as_attachment=True,    
-        download_name=f'private_key{cert_data["serial_num"]}.key',
+        #download_name=f'private_key{cert_data["serial_num"]}.key',
+        download_name="private.key",
         mimetype="application/octet-stream"  # Указывает, что это бинарный файл
     )
 
@@ -322,15 +441,17 @@ def revoke_certificate_page():
         
         cursor.close()
         conn.close()
-        
-        # преобр. данные для отображения
+
         certs_data = []
         for cert in certificates:
             certs_data.append({
                 'serial_number': cert['serial_number'],
                 'status': "Отозван" if cert['is_revoked'] else "Не отозван",
                 'revoke_date': cert['revoke_date'].strftime('%Y-%m-%d') if cert['revoke_date'] else None,
-                'send_to_ocsp': "Да" if cert['send_to_ocsp'] else "Нет"
+                'invalidity_date': cert['invalidity_date'].strftime('%Y-%m-%d') if cert['revoke_date'] else None,
+                'revoke_reason': cert['revoke_reason'],
+                'source_serial_number': cert['source_serial_number']
+                #'send_to_ocsp': "Да" if cert['send_to_ocsp'] else "Нет"
             })
         
         return render_template('revoke_certificate.html', certificates=certs_data)
@@ -338,61 +459,59 @@ def revoke_certificate_page():
     except Exception as e:
         return render_template('error.html', error=str(e)), 500
 
+
 @app.route('/api/revoke-certificate', methods=['POST'])
 def revoke_certificate():
     try:
-        # Получаем список сертификатов для отзыва из формы
-        certs_to_revoke = request.form.getlist('revoke_cert')
+        data = request.get_json()
+        if not data or 'certificates' not in data:
+            return jsonify({"error": "Неверный формат данных"}), 400
+        
+        certs_to_revoke = data['certificates']
         if not certs_to_revoke:
             return jsonify({"error": "Не выбраны сертификаты для отзыва"}), 400
+        
+        for cert_data in certs_to_revoke:
+            if not cert_data.get('invalidity_date'):
+                return jsonify({
+                    "error": f"Для сертификата {cert_data['serial_number']} не указана дата признания недействительным",
+                    "serial_number": cert_data['serial_number']
+                }), 400
         
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
-            # Обновляем статус выбранных сертификатов
-            for cert_serial in certs_to_revoke:
+            for cert_data in certs_to_revoke:
                 cursor.execute(
-                    "UPDATE certificates SET is_revoked = TRUE, revoke_date = NOW() WHERE serial_number = %s",
-                    (cert_serial,)
+                    """UPDATE certificates 
+                    SET is_revoked = TRUE, 
+                        revoke_date = NOW(), 
+                        invalidity_date = %s,
+                        revoke_reason = %s
+                    WHERE serial_number = %s""",
+                    (
+                        cert_data['invalidity_date'],
+                        cert_data.get('revoke_reason', 'unspecified'),  
+                        cert_data['serial_number']
+                    )
                 )
             
             conn.commit()
-            cursor.close()
-            conn.close()
-            
             return jsonify({
                 "status": "success",
                 "message": f"Успешно отозвано {len(certs_to_revoke)} сертификатов"
             })
-        
+            
         except Exception as e:
             conn.rollback()
-            raise e
+            return jsonify({"error": f"Ошибка базы данных: {str(e)}"}), 500
+        finally:
+            cursor.close()
+            conn.close()
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-def get_revoked_certificates():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT serial_number, revoke_date FROM certificates WHERE is_revoked = TRUE")
-    revoked_certificates = [
-        RevokedCertificates(
-            serialNumber=int(row[0]),  
-            revocationDate=row[1],
-            crlReasonCode=CRLReasonCode.cACompromise,   # TODO брать из БД (CRLReasonCode - это enum)
-            invalidityDate=datetime(1900, 7, 10, tzinfo=timezone.utc)   # TODO брать из БД. Дата признания недействительным
-        )
-        for row in cursor.fetchall()
-    ]
-    conn.close()
-
-    print("Revoked certificates:")
-    for cert in revoked_certificates:
-        print(f"Serial: {cert.serialNumber}, Revocation Date: {cert.revocationDate}")
-    
-    return revoked_certificates
-
 '''------------------------------------------------ СОЗДАНИЕ СЕРТИФИКАТА ПО ЗАПРОСУ -------------------------------------'''
 # прием запроса на создание сертификата (файла .p10)
 @app.route('/api/create_certificate_p10', methods=['POST'])
@@ -423,6 +542,7 @@ def create_certificate_p10():
         rdn_template.surname = rdn_template.givenName = rdn_template.streetAddress = False  
         cert_template = CertTemplate(rdn_template)  # пока не трогаем
 
+        # TODO интерфейс для отправки запроса p10
         serial_num = find_serial_number(generate_serial_num())
         beg_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
         end_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
@@ -431,11 +551,14 @@ def create_certificate_p10():
                                        end_validity_date=end_validity_date,
                                        cert_template=cert_template, 
                                        pem_csr=pem_csr)
-
+        
+        rc = insert_to_db(serial_num, app.config['CERT_DATA']['serial_num']) # TODO проверка на то, что  app.config['CERT_DATA']['serial_num'] не none
+        if not rc:
+            raise Exception("Не удалось добавить сертификат в БД")
         res_filename =  f"./created_files/res{serial_num}.pem"
         with open(res_filename, 'w') as f:
             f.write(bytes_to_pem(cert_bytes, pem_type="CERTIFICATE")) # !!! pem_type - НЕ МЕНЯТЬ
-
+        
         return send_file(
             res_filename,
             as_attachment=True,
@@ -443,6 +566,7 @@ def create_certificate_p10():
             mimetype='application/x-pem-file'
         )
     except Exception as e:
+        logger.error(f"{str(e)}")
         return jsonify({"error": f"Failed to send PEM: {str(e)}"}), 500 
     
 
@@ -456,9 +580,9 @@ def create_app_folders():
     for folder in folders:
         try:
             os.makedirs(folder, exist_ok=True)
-            print(f"Папка {folder} создана или уже существует")
+            #logger.info(f"Папка {folder} создана или уже существует")
         except Exception as e:
-            print(f"Ошибка при создании папки {folder}: {str(e)}")
+            logger.error(f"Ошибка при создании папки {folder}: {str(e)}")
             raise
 
 if __name__ == '__main__':
@@ -476,8 +600,7 @@ if __name__ == '__main__':
         #     logger.info("Database connection test successful")
         # except Exception as e:
         #     logger.error(f"Database connection test failed: {str(e)}")
-        #get_revoked_certificates()
-        
+        get_revoked_certificates()
         app.run(host='0.0.0.0', port=5000, debug=True)
     except Exception as e:
         logger.error(f"Failed to start application: {str(e)}")
