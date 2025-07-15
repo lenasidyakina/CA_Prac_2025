@@ -22,7 +22,7 @@ from io import BytesIO
 import subprocess
 from db.DatabaseManager import DatabaseManager
 
-
+# curl -X POST   -F "file=@./full.p10"   http://localhost/api/create_certificate_p10   --output received_cert.pem
 BASE_DIR = Path(__file__).parent
 # UPLOAD_FOLDER = BASE_DIR / 'uploads'
 # CREATED_FILES_FOLDER = BASE_DIR / 'created_files'
@@ -159,9 +159,11 @@ def init_root_cert():
                 with open(cert_path, 'rb') as f:
                     cert_data = f.read()
                     
-                    rootCert = restore_root_cert(cert_data)
-                    
-                    logger.info("Existing root certificate was successfully restored")
+                    if cert_data is None:
+                        rootCert = None 
+                    else:
+                        rootCert = restore_root_cert(cert_data)
+                        logger.info("Existing root certificate was successfully restored")
             except Exception as e:
                 logger.error(f"Error while loading existing root certificate: {e}")
         else:
@@ -407,13 +409,6 @@ def create_selfsigned_certificate():
         #     logger.info("Пароль успешно сохранён!")
         # except subprocess.CalledProcessError as e:
         #     logger.error(f"Ошибка: {e.stderr}")
-        
-        app.config['CERT_DATA'] = {
-            'password': password,
-            'private_key': private_key,
-            'cert_bytes': cert_bytes,
-            'serial_num': serial_num
-        }
         logger.info("Root self signed certificate was successfully created")
         return redirect(url_for('selfsigned_certificate_created'))
 
@@ -430,21 +425,21 @@ def create_selfsigned_certificate():
     
 @app.route('/certificate-created')
 def selfsigned_certificate_created():
-    cert_data = app.config.get('CERT_DATA', {})
-    if not cert_data:
+    certsAsn1 = app.config[CERTSASN1]
+    if certsAsn1.rootCert is None:
         return redirect(url_for('create_certificate_page'))
     
     return render_template('selfsigned_certificate_created.html',
-                         serial_num=cert_data['serial_num'])
+                         serial_num=certsAsn1.rootCert.serial_num)
 
-@app.route('/download-certificate')
+@app.route('/download-certificate') # Только для самоподписанного!!!
 def download_certificate():
-    cert_data = app.config.get('CERT_DATA')
-    if not cert_data or 'cert_bytes' not in cert_data:
+    certsAsn1 = app.config[CERTSASN1]
+    if certsAsn1.rootCert is None:
         return "Self signed certificate not found", 404
     
     return send_file(
-        BytesIO(cert_data['cert_bytes']),
+        BytesIO(certsAsn1.rootCert.cert_bytes),
         mimetype='application/x-x509-ca-cert', # указывает тип содержимого
         as_attachment=True,  # указание браузеру, что файл должен быть скачан (а не открыт в браузере)
         # download_name=f'certificate_{cert_data["serial_num"]}.der'
@@ -453,13 +448,11 @@ def download_certificate():
 
 @app.route('/download-private-key')
 def download_private_key():
-    cert_data = app.config.get('CERT_DATA')
-    if not cert_data or 'private_key' not in cert_data:
+    certsAsn1 = app.config[CERTSASN1]
+    if certsAsn1.rootCert is None or certsAsn1.rootCert.private_key is None:
         return "Private key not found", 404
     
-
-    key_file = BytesIO(cert_data['private_key']) 
-    
+    key_file = BytesIO(certsAsn1.rootCert.private_key) 
     return send_file(
         key_file,
         as_attachment=True,    
@@ -468,20 +461,13 @@ def download_private_key():
         mimetype="application/octet-stream"  # Указывает, что это бинарный файл
     )
 
-    # return send_file(
-    #     BytesIO(cert_data['private_key']),
-    #     mimetype='application/x-pem-file',
-    #     as_attachment=True,
-    #     download_name=f'private_key_{cert_data["serial_num"]}.pem'
-    # )
-
 @app.route('/show-password')
 def show_password():
-    cert_data = app.config.get('CERT_DATA')
-    if not cert_data or 'password' not in cert_data:
+    certsAsn1 = app.config[CERTSASN1]
+    if certsAsn1.rootCert is None or certsAsn1.rootCert.password is None:
         return "Password not found", 404
     
-    return render_template('show_password.html', password=cert_data['password'])
+    return render_template('show_password.html', password=certsAsn1.rootCert.password)
 
 '''------------------------------------------------ ОТЗЫВ СЕРТИФИКАТОВ ------------------------------------'''
 @app.route('/revoke-certificate')
@@ -666,7 +652,7 @@ def create_certificate_p10():
                                        cert_template=cert_template, 
                                        pem_csr=pem_csr)
         
-        rc = insert_to_db(serial_num, app.config['CERT_DATA']['serial_num'], db_manager) # TODO проверка на то, что  app.config['CERT_DATA']['serial_num'] не none
+        rc = insert_to_db(serial_num, certsAsn1.rootCert.serial_num, db_manager) 
         if not rc:
             raise Exception("Не удалось добавить сертификат в БД")
         res_filename =  f"./created_files/res{serial_num}.pem"
@@ -679,6 +665,7 @@ def create_certificate_p10():
             download_name=res_filename , 
             mimetype='application/x-pem-file'
         )
+    # TODO отдельно обработать ошибку ErrNoRootCert
     except Exception as e:
         logger.error(f"Error while sending .pem file: {str(e)}")
         return jsonify({f"Error while sending .pem file: {str(e)}"}), 500 
@@ -772,6 +759,8 @@ def create_app_folders():
 def initialize_application():
     try:
         logger.info("Application starting...")
+        current_dir = os.getcwd()
+        logger.info(f"current_dir: {current_dir}")
         create_app_folders()
 
         required_templates = ['index.html', 'revoke_certificate.html', 'create_selfsigned_certificate.html']
