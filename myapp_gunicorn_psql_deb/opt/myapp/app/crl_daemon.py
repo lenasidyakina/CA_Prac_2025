@@ -6,10 +6,6 @@ import signal
 import sys
 from pathlib import Path
 
-# Получаем абсолютный путь к директории app
-app_dir = Path(__file__).parent.parent / "app"  # убрал "../", так как parent уже поднимается наверх
-sys.path.insert(0, str(app_dir))  # insert(0) - приоритетнее append
-
 # Теперь можно импортировать напрямую
 from asn1_parser.asn1_parse import bytes_to_pem
 from datetime import datetime, timezone, timedelta
@@ -18,7 +14,7 @@ from asn1_parser.cert_parse import CertsAsn1
 from db.DatabaseManager import DatabaseManager
 
 CONFIG_FILE = '../../../etc/myapp/crl_daemon.conf'
-ROOT_CERT_FOLDER = '../app/root_certs'  # для корневых сертификатов
+ROOT_CERT_FOLDER = 'root_certs'  # для корневых сертификатов
 ROOT_CERT_PATH = os.path.join(ROOT_CERT_FOLDER, 'root_cert.der')
 
 

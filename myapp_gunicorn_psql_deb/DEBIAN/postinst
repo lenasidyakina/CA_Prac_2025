@@ -251,7 +251,7 @@ WantedBy=multi-user.target
 EOL
 
 # Сервис логгера
-cat > /etc/systemd/system/number_logger.service <<'EOL'
+cat > /etc/systemd/system/crl_daemon.service <<'EOL'
 [Unit]
 Description=CRL Daemon Service
 After=network.target
@@ -259,9 +259,9 @@ After=network.target
 [Service]
 User=www-data
 Group=www-data
-WorkingDirectory=/opt/myapp/crl_daemon
+WorkingDirectory=/opt/myapp/app
 Environment="PATH=/opt/myapp/venv/bin"
-ExecStart=/opt/myapp/venv/bin/python3 /opt/myapp/crl_daemon/crl_daemon.py
+ExecStart=/opt/myapp/venv/bin/python3 /opt/myapp/app/crl_daemon.py
 Restart=always
 RestartSec=10
 StandardOutput=syslog
@@ -276,12 +276,12 @@ EOL
 echo "=== Запуск сервисов ==="
 systemctl daemon-reload
 systemctl enable myapp.service
-# systemctl enable crl_daemon.service
+systemctl enable crl_daemon.service
 
 systemctl restart postgresql
 systemctl start myapp
 sleep 3  # Даем время основному приложению запуститься
-# systemctl start crl_daemon
+systemctl start crl_daemon
 systemctl restart nginx
 
 # 10. Проверка установки
@@ -300,7 +300,7 @@ check_service() {
 
 check_service postgresql
 check_service myapp
-# check_service crl_daemon
+check_service crl_daemon
 check_service nginx
 
 # Проверка доступности приложения
