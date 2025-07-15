@@ -49,6 +49,7 @@
     <div class="error-details">
         {{ error }}
     </div>
-    <a href="/" class="home-link">На главную страницу</a>
+    <!-- <a href="/" class="home-link">Вернуться на главную страницу</a> -->
+    <a href="{{ url_for('create_certificate_page') }}" class="home-link">Назад</a>
 </body>
 </html>

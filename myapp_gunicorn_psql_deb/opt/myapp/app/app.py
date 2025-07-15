@@ -9,24 +9,20 @@ import logging
 from logging.handlers import RotatingFileHandler
 import sys
 from datetime import datetime, timezone,  timedelta
-from asn1_parser.cert_parse import CertsAsn1
+from asn1_parser.cert_parse import CertsAsn1, ErrNoRootCert
 from asn1_parser.asn1_parse import bytes_to_pem, generate_serial_num
 from asn1_parser.models.RootCert import RootCert, restore_root_cert
 from asn1_parser.models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN
-from asn1_parser.models.CertTemplate import CertTemplate, RDNTemplate
+from asn1_parser.models.CertTemplate import CertTemplate, RDNTemplate, ErrParamsTemplate
 from asn1_parser.models.AlgParams import AlgTypes
 from threading import Lock
 from pathlib import Path
 from io import BytesIO
 import subprocess
 from db.DatabaseManager import DatabaseManager
+from cert_templates.parse import file_to_dict
 
 BASE_DIR = Path(__file__).parent
-# UPLOAD_FOLDER = BASE_DIR / 'uploads'
-# CREATED_FILES_FOLDER = BASE_DIR / 'created_files'
-# ROOT_CERT_FOLDER = BASE_DIR / 'root_certs'
-# ROOT_CERT_PATH = ROOT_CERT_FOLDER / 'root_cert.der'
-# app.config['UPLOAD_FOLDER'] = str(UPLOAD_FOLDER)
 UPLOAD_FOLDER = 'uploads' #дир-рия для хранения загруженных файлов (полученных из запроса файлов)
 CREATED_FILES_FOLDER = 'created_files'
 ROOT_CERT_FOLDER = 'root_certs'  # для корневых сертификатов
@@ -121,41 +117,6 @@ def init_root_cert():
 '''-----------------------------------------------------------------------------------------------------------------------------'''
 
 '''------------------------------------------------ РАБОТА С БД -------------------------------------------------------------------'''
-# def get_db_config():
-#     config = ConfigParser()
-#     try:
-#         config.read('../../../etc/myapp/db.env')
-#         if not config.has_section('postgresql'):
-#             raise ValueError("Section [postgresql] not found in config file")
-            
-#         return {
-#             'host': config.get('postgresql', 'DB_HOST'),
-#             'port': config.getint('postgresql', 'DB_PORT'),  
-#             'database': config.get('postgresql', 'DB_NAME'),
-#             'user': config.get('postgresql', 'DB_USER'),
-#             'password': config.get('postgresql', 'DB_PASS')
-#         }
-#     except Exception as e:
-#         logger.error(f"Error reading data bases's configuration file: {str(e)}")
-#         raise
-
-# def get_db_connection():
-#     config = get_db_config()
-#     try:
-#         conn = psycopg2.connect(
-#             host=config['host'],
-#             port=config['port'],
-#             dbname=config['database'],
-#             user=config['user'],
-#             password=config['password'],
-#             connect_timeout=10  # Таймаут подключения 10 секунд
-#         )
-#         logger.info("Successfully connected to data base")
-#         return conn
-#     except psycopg2.Error as e:
-#         logger.error(f"Data base connection error: {str(e)}")
-#         raise
-
 def insert_to_db(serial_number, source_serial_number, db_manager):
     # try:
     #     conn = get_db_connection()
@@ -270,7 +231,7 @@ def create_selfsigned_certificate():
 
     except Exception as e:
         logger.error(f"Error while creating selfsigned certificate: {str(e)}")
-        return render_template('error.html', error=str(e)), 500
+        return render_template('error_self.html', error=str(e)), 500
 
     # except Exception as e:
     #     logger.error(f"Error while creating selfsigned certificate: {str(e)}")
@@ -536,21 +497,21 @@ def upload_p10_form():
 def create_certificate_p10():
     try:
         if 'file' not in request.files:
-            return render_template('error.html', error="No file was sent to server"), 400
+            return render_template('error_p10.html', error="No file was sent to server"), 400
         
         file = request.files['file']
         if file.filename == '':
-            return render_template('error.html', error="Empty filename"), 400
+            return render_template('error_p10.html', error="Empty filename"), 400
         
         template = request.form.get('template')
         if not template:
-            return render_template('error.html', error="No template was selected"), 400
+            return render_template('error_p10.html', error="No template was selected"), 400
         
         beg_date_str = request.form.get('beg_validity_date')
         end_date_str = request.form.get('end_validity_date')
         
         if not beg_date_str or not end_date_str:
-            return render_template('error.html', 
+            return render_template('error_p10.html', 
                                 error="Please specify both start and end validity dates"), 400
         
         try:
@@ -558,11 +519,11 @@ def create_certificate_p10():
             end_validity_date = datetime.strptime(end_date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
             
             if end_validity_date <= beg_validity_date:
-                return render_template('error.html', 
+                return render_template('error_p10.html', 
                                     error="End date must be after start date"), 400
                 
         except ValueError as e:
-            return render_template('error.html', 
+            return render_template('error_p10.html', 
                                 error=f"Invalid date format: {str(e)}"), 400
 
     
@@ -584,31 +545,58 @@ def create_certificate_p10():
         rdn_template = RDNTemplate()    
         # TODO заполнить поля rdn_template на основе файла-шаблона от пользователя (если файл не поступил, то поля не трогаем)
         #rdn_template.surname = rdn_template.givenName = rdn_template.streetAddress = False
-        if template == "user":
-            rdn_template.surname = False
-            rdn_template.givenName = False
-            rdn_template.commonName = False
-        elif template == "server":
-            rdn_template.organization = False
-            rdn_template.organizationalUnit = False
-            rdn_template.commonName = False
-        elif template == "device":
-            rdn_template.deviceID = False
-            rdn_template.serialNumber = False
 
+        template_file = f"./cert_templates/{template}.txt"
+        if not os.path.exists(template_file):
+            error_msg = f"Certificate template file '{template}' not found"
+            logger.error(error_msg)
+            return render_template('error_p10.html', error=error_msg), 404
 
+        temp_dir = file_to_dict(template_file)
+        # logger.info(f"{temp_dir}")
 
+        value_0 = [key for key, value in temp_dir.items() if value == '0']
+        for values in value_0:
+            setattr(rdn_template, values, False)
+        value_1 = [key for key, value in temp_dir.items() if value == '1']
+        for values in value_1:
+            setattr(rdn_template, values, True)
+        
+        logger.info(
+    f"RDNTemplate fields: "
+    f"surname={rdn_template.surname}, "
+    f"givenName={rdn_template.givenName}, "
+    f"organizationalUnitName={rdn_template.organizationalUnitName}, "
+    f"title={rdn_template.title}, "
+    f"commonName={rdn_template.commonName}, "
+    f"organizationName={rdn_template.organizationName}, "
+    f"countryName={rdn_template.countryName}, "
+    f"stateOrProvinceName={rdn_template.stateOrProvinceName}, "
+    f"localityName={rdn_template.localityName}, "
+    f"streetAddress={rdn_template.streetAddress}"
+)
+        #TODO тут бы еще такой фор сделать для тех параметров у которых стоит в шаблоне НЕОБЯЗАТЕЛЬНО
+            
         cert_template = CertTemplate(rdn_template)  # пока не трогаем
 
-        # TODO интерфейс для отправки запроса p10
+        
         serial_num = db_manager.find_serial_number(generate_serial_num())
         # beg_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
         # end_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
-        cert_bytes = certsAsn1.create_cert(serial_num=serial_num, 
+
+        try:
+            cert_bytes = certsAsn1.create_cert(serial_num=serial_num, 
                                        beg_validity_date=beg_validity_date,
                                        end_validity_date=end_validity_date,
                                        cert_template=cert_template, 
                                        pem_csr=pem_csr)
+        except ErrNoRootCert as e:
+            return render_template('error_p10.html', 
+                            error=f"{str(e)}"), 400
+        except ErrParamsTemplate as e:
+            return render_template('error_p10.html', 
+                            error=f"{str(e)}"), 400
+
         if CERTSASN1 not in app.config:
             raise Exception("Configuration 'CERTASN1' not found in app.config")
             
@@ -631,7 +619,7 @@ def create_certificate_p10():
 
     except Exception as e:
         logger.error(f"Error while creating certificate: {str(e)}")
-        return render_template('error.html', 
+        return render_template('error_p10.html', 
                             error=f"Error while creating certificate: {str(e)}"), 500
 
 @app.route('/certificate-created-request')
