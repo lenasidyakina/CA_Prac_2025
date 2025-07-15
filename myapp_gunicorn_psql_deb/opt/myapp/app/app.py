@@ -14,7 +14,6 @@ from asn1_parser.asn1_parse import bytes_to_pem, generate_serial_num
 from asn1_parser.models.RootCert import RootCert, restore_root_cert
 from asn1_parser.models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN
 from asn1_parser.models.CertTemplate import CertTemplate, RDNTemplate
-from asn1_parser.models.RevokedCertificates import RevokedCertificates, CRLReasonCode
 from asn1_parser.models.AlgParams import AlgTypes
 from threading import Lock
 from pathlib import Path
@@ -23,6 +22,8 @@ import subprocess
 from db.DatabaseManager import DatabaseManager
 
 # curl -X POST   -F "file=@./full.p10"   http://localhost/api/create_certificate_p10   --output received_cert.pem
+# cp /opt/myapp/app/root_certs/root_cert.der ./myapp_gunicorn_psql_deb/opt/myapp/app/root_certs/root_cert.der
+
 BASE_DIR = Path(__file__).parent
 # UPLOAD_FOLDER = BASE_DIR / 'uploads'
 # CREATED_FILES_FOLDER = BASE_DIR / 'created_files'
@@ -158,12 +159,13 @@ def init_root_cert():
             try:
                 with open(cert_path, 'rb') as f:
                     cert_data = f.read()
-                    
+
                     if cert_data is None:
                         rootCert = None 
                     else:
                         rootCert = restore_root_cert(cert_data)
                         logger.info("Existing root certificate was successfully restored")
+                        logger.info(f"{rootCert}")
             except Exception as e:
                 logger.error(f"Error while loading existing root certificate: {e}")
         else:
@@ -172,41 +174,6 @@ def init_root_cert():
         app.config[CERTSASN1] = CertsAsn1(rootCert=rootCert)
 
 '''-----------------------------------------------------------------------------------------------------------------------------'''
-
-def find_serial_number(number, db_manager):
-    # conn = get_db_connection()
-    # cursor = conn.cursor()
-    # number_str = str(number)
-    # while True:
-    #     cursor.execute(
-    #         "SELECT 1 FROM certificates WHERE serial_number = %s",
-    #         (number_str,)
-    #     )
-        
-    #     if not cursor.fetchone():
-    #         conn.close()
-    #         return number
-        
-    #     number = generate_serial_num()
-    #     number_str = str(number)
-    
-    # conn.close()
-    # return number
-    with db_manager.get_cursor() as cursor:
-        number_str = str(number)
-        while True:
-            cursor.execute(
-                "SELECT 1 FROM certificates WHERE serial_number = %s",
-                (number_str,)
-            )
-            
-            if not cursor.fetchone():
-                return number
-            
-            number = generate_serial_num()
-            number_str = str(number)
-        
-    return number
 
 '''------------------------------------------------ РАБОТА С БД -------------------------------------------------------------------'''
 # def get_db_config():
@@ -243,64 +210,6 @@ def find_serial_number(number, db_manager):
 #     except psycopg2.Error as e:
 #         logger.error(f"Data base connection error: {str(e)}")
 #         raise
-
-def get_revoked_certificates(db_manager):
-    # conn = get_db_connection()
-    # cursor = conn.cursor()
-    # cursor.execute("SELECT serial_number, revoke_date, revoke_reason, invalidity_date FROM certificates WHERE is_revoked = TRUE")
-    # revoked_certificates = []
-    # for row in cursor.fetchall():
-    #     serialNumber=int(row[0])
-    #     revocationDate=row[1]
-    #     if (len(row[2]) > 0 ):
-    #         crlReasonCode=CRLReasonCode[row[2]]
-    #     else:
-    #         clReasonCode=CRLReasonCode.unspecified
-    #     invalidityDate=row[3]
-    #     revoked_certificates.append(RevokedCertificates(serialNumber=serialNumber, revocationDate=revocationDate,
-    #                               crlReasonCode=crlReasonCode, invalidityDate = invalidityDate))
-    #     # s(
-    #     #     serialNumber=int(row[0]),  
-    #     #     revocationDate=row[1],
-    #     #     crlReasonCode=CRLReasonCode.cACompromise,   # TODO брать из БД (CRLReasonCode - это enum)
-    #     #     invalidityDate=datetime(1900, 7, 10, tzinfo=timezone.utc)   # TODO брать из БД. Дата признания недействительным
-        
-    # conn.close()
-
-    # #ОТЛАДОЧНАЯ ПЕЧАТЬ
-    # print("Revoked certificates:", len(revoked_certificates))
-    # for cert in revoked_certificates:
-    #     print(f"Serial: {cert.serialNumber}, Revocation Date: {cert.revocationDate}, Reason:{cert.crlReasonCode.name}, inv:{cert.invalidityDate}")
-    
-    
-    # return revoked_certificates
-
-    revoked_certificates = []
-    with db_manager.get_cursor() as cursor:
-        cursor.execute("SELECT serial_number, revoke_date, revoke_reason, invalidity_date FROM certificates WHERE is_revoked = TRUE")
-        
-        for row in cursor.fetchall():
-            serialNumber = int(row[0])
-            revocationDate = row[1]
-            crlReasonCode = CRLReasonCode[row[2]] if row[2] else CRLReasonCode.unspecified
-            invalidityDate = row[3]
-            
-            revoked_certificates.append(
-                RevokedCertificates(
-                    serialNumber=serialNumber,
-                    revocationDate=revocationDate,
-                    crlReasonCode=crlReasonCode,
-                    invalidityDate=invalidityDate
-                )
-            )
-    
-    #logger.debug(f"Revoked certificates count: {len(revoked_certificates)}")
-    #ОТЛАДОЧНАЯ ПЕЧАТЬ
-    # for cert in revoked_certificates:
-    #     logger.debug(f"Serial: {cert.serialNumber}, Revocation Date: {cert.revocationDate}, Reason:{cert.crlReasonCode.name}, inv:{cert.invalidityDate}")
-    
-    
-    return revoked_certificates
 
 def insert_to_db(serial_number, source_serial_number, db_manager):
     # try:
@@ -385,7 +294,7 @@ def create_selfsigned_certificate():
                                 paramsRDN=prdn)
 
         serial_num = generate_serial_num() 
-        serial_num = find_serial_number(serial_num, db_manager)  # проверка на уникальность серийного номера
+        serial_num = db_manager.find_serial_number(serial_num)  # проверка на уникальность серийного номера
         cert_bytes, private_key, password = certsAsn1.create_selfsigned_cert(params=p, serial_num=serial_num)
         #logger.info(certsAsn1.rootCert)
         with open(ROOT_CERT_PATH, 'wb') as f:
@@ -643,7 +552,7 @@ def create_certificate_p10():
         cert_template = CertTemplate(rdn_template)  # пока не трогаем
 
         # TODO интерфейс для отправки запроса p10
-        serial_num = find_serial_number(generate_serial_num(), db_manager)
+        serial_num = db_manager.find_serial_number(generate_serial_num())
         beg_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
         end_validity_date = datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc)  # TODO interface
         cert_bytes = certsAsn1.create_cert(serial_num=serial_num, 
@@ -763,14 +672,12 @@ def initialize_application():
         logger.info(f"current_dir: {current_dir}")
         create_app_folders()
 
-        required_templates = ['index.html', 'revoke_certificate.html', 'create_selfsigned_certificate.html']
-        for template in required_templates:
-            if not os.path.exists(f'./templates/{template}'):
-                logger.error(f"Шаблон {template} не найден в директории templates")
+        # required_templates = ['index.html', 'revoke_certificate.html', 'create_selfsigned_certificate.html']
+        # for template in required_templates:
+        #     if not os.path.exists(f'./templates/{template}'):
+        #         logger.error(f"Шаблон {template} не найден в директории templates")
 
         init_root_cert()
-
-       # get_revoked_certificates(db_manager)  # отладочный вывод
 
         logger.info("Application initialized successfully")
     except Exception as e:
@@ -784,32 +691,3 @@ if __name__ == '__main__':
     # Локальный запуск (только для запуска через python3
     app.run(host='0.0.0.0', port=5000, debug=True)
 
-
-
-
-
-
-
-    '''
-if __name__ == '__main__':
-    try:
-        logger.info("Application starting...")
-        create_app_folders()
-        required_templates = ['index.html', 'revoke_certificate.html', 'create_selfsigned_certificate.html']
-        for template in required_templates:
-            if not os.path.exists(f'./templates/{template}'):
-                logger.error(f"Шаблон {template} не найден в директории templates")
-
-        init_root_cert()
-        # try:
-        #     conn = get_db_connection()
-        #     conn.close()
-        #     logger.info("Database connection test successful")
-        # except Exception as e:
-        #     logger.error(f"Database connection test failed: {str(e)}")
-        get_revoked_certificates(db_manager)
-        app.run(host='0.0.0.0', port=5000, debug=True)
-    except Exception as e:
-        logger.error(f"Failed to start application: {str(e)}")
-        sys.exit(1)
-    '''

@@ -3,6 +3,9 @@ from psycopg2 import sql
 from psycopg2.extras import DictCursor
 from configparser import ConfigParser
 from contextlib import contextmanager
+from asn1_parser.asn1_parse import generate_serial_num
+from asn1_parser.models.RevokedCertificates import RevokedCertificates, CRLReasonCode
+
 
 class DatabaseManager:
     def __init__(self, logger):
@@ -68,6 +71,44 @@ class DatabaseManager:
             if cursor:
                 cursor.close()
     
+    def find_serial_number(self, number):
+        with self.get_cursor() as cursor:
+            number_str = str(number)
+            while True:
+                cursor.execute(
+                    "SELECT 1 FROM certificates WHERE serial_number = %s",
+                    (number_str,)
+                )
+                
+                if not cursor.fetchone():
+                    return number
+                
+                number = generate_serial_num()
+                number_str = str(number)
+            
+        return number
+
+    def get_revoked_certificates(self):
+        revoked_certificates = []
+        with self.get_cursor() as cursor:
+            cursor.execute("SELECT serial_number, revoke_date, revoke_reason, invalidity_date FROM certificates WHERE is_revoked = TRUE")
+            
+            for row in cursor.fetchall():
+                serialNumber = int(row[0])
+                revocationDate = row[1]
+                crlReasonCode = CRLReasonCode[row[2]] if row[2] else CRLReasonCode.unspecified
+                invalidityDate = row[3]
+                
+                revoked_certificates.append(
+                    RevokedCertificates(
+                        serialNumber=serialNumber,
+                        revocationDate=revocationDate,
+                        crlReasonCode=crlReasonCode,
+                        invalidityDate=invalidityDate
+                    )
+                )
+        return revoked_certificates
+
     def close(self):
         """Закрывает соединение с базой данных"""
         if self._connection and not self._connection.closed:
@@ -100,20 +141,3 @@ class DatabaseManager:
 
 #     def get_db_connection(self):
 #         return self.connection
-    
-#     def find_serial_number(self, number):
-#         cursor = self.connection.cursor()
-#         number_str = str(number)
-#         while True:
-#             cursor.execute(
-#                 "SELECT 1 FROM certificates WHERE serial_number = %s",
-#                 (number_str,)
-#             )
-            
-#             if not cursor.fetchone():
-#                 return number
-            
-#             number = generate_serial_num()
-#             number_str = str(number)
-        
-#         return number
