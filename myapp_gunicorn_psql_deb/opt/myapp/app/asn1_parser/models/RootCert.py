@@ -46,14 +46,6 @@ def restore_root_cert(cert_bytes: bytes) -> RootCert:
     decoder.enter()         # signature AlgorithmIdentifier
     # signAlgId = decoder.read()[-1][-1]
     signAlgId = decoder.read()[-1]
-    alg_type = None
-    for char_alg, params_alg in ALL_ALG_PARAMS.items():
-        if params_alg.signAlgId == signAlgId:
-            alg_type = char_alg
-            break
-    if alg_type is None:
-        e = f"unknown signature algorithm: {signAlgId}"
-        raise Exception(e)
     decoder.leave()         # out signature AlgorithmIdentifier
 
     issuer_rdn_der = block_to_raw_bytes(cert_bytes[decoder._get_current_position():])
@@ -72,7 +64,22 @@ def restore_root_cert(cert_bytes: bytes) -> RootCert:
     assert subject_rdn_der == issuer_rdn_der
 
     decoder.enter()         # subjectPKinfo
-    decoder.read()  # AlgId
+    # decoder.read()  # AlgId
+    decoder.enter() # AlgId
+    decoder.read()
+    decoder.enter() # params
+    subjPKAlgIdParam1 = decoder.read()[-1]  # subjPKAlgIdParam1
+    alg_type = None
+    for char_alg, params_alg in ALL_ALG_PARAMS.items():
+        if params_alg.signAlgId == signAlgId and params_alg.subjPKAlgIdParam1 == subjPKAlgIdParam1:
+            alg_type = char_alg
+            break
+    if alg_type is None:
+        e = f"unknown signature algorithm: {signAlgId}"
+        raise Exception(e)
+    decoder.read()  # subjPKAlgIdParam2
+    decoder.leave() # out params
+    decoder.leave() # out AlgId
     decoderPK = asn1.Decoder()
     decoderPK.start(decoder.read()[-1])
     public_key = decoderPK.read()[-1]
