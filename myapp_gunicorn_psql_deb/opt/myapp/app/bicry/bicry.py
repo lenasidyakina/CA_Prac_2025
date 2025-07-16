@@ -4,14 +4,17 @@ import logging
 import traceback
 
 # Настройка логирования
-logging.basicConfig(
-    filename='nikita.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    filemode='a',
-    encoding='utf-8'
-)
 logger = logging.getLogger('BicryWrapper')
+logger.setLevel(logging.INFO)
+
+# Создаем обработчик с UTF-8 кодировкой
+file_handler = logging.FileHandler('nikita.log', mode='a', encoding='utf-8')
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+# Отключаем дублирование в корневой логгер
+logger.propagate = False
 
 class BicryWrapper:
     def __init__(self, lib_path='./libbicry_openkey.so', param=None):
