@@ -102,6 +102,25 @@ class BicryWrapper:
             ctypes.c_int
         ]
 
+        self.lib.change_active_cert.restype = ctypes.c_int
+        self.lib.change_active_cert.argtypes = [
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_char),
+            ctypes.POINTER(ctypes.c_ubyte),
+            ctypes.POINTER(ctypes.c_ubyte),
+            ctypes.c_size_t,
+            ctypes.POINTER(ctypes.c_bool),
+            ctypes.POINTER(ctypes.c_bool)
+        ]
+
+        self.lib.electronic_signature.restype = ctypes.c_int
+        self.lib.electronic_signature.argtypes = [
+            ctypes.POINTER(ctypes.c_ubyte),
+            ctypes.POINTER(ctypes.c_ubyte),
+            ctypes.c_size_t,
+            ctypes.c_int
+        ]
+
         # Инициализация библиотеки
         try:
             result = self.lib.init_bicr()
@@ -140,7 +159,7 @@ class BicryWrapper:
 
     def generate_temp_keypair(self, userid: str, param: int) -> tuple:
         """
-        Генерация ключевой пары
+        Генерация временной ключевой пары
         """
         logger.info(f"Generating keypair for userid='{userid}', param={param}")
         try:
@@ -170,6 +189,7 @@ class BicryWrapper:
             # Создание буфера под public key
             key_size = 128 if param in {49, 50, 51} else 64
             key_buffer = (ctypes.c_ubyte * key_size)()
+
             userid_bytes = userid.encode('utf-8')
             
             # Вызов C-функции
@@ -194,7 +214,7 @@ class BicryWrapper:
 
     def temp_electronic_signature(self, cert_data: bytes) -> bytes:
         """
-        Создание электронной подписи
+        Создание электронной подписи для временного корневого
         """
         logger.info("Creating temp electronic signature")
         try:
@@ -230,6 +250,136 @@ class BicryWrapper:
             logger.error(f"Error in temp_electronic_signature: {e}\n{traceback.format_exc()}")
             raise
         
+    def change_active_cert(self, param: int, password, private_key: bytes, public_key: bytes):
+        """
+        Сделать корневой сертификат активным (сохранение private_key, проверка параметров алгоритма, проверка открытого ключа)
+        """
+        logger.info(f"Активировать корневой сертификат for param={param}")
+        try:
+            if not self._initialized:
+                logger.error("Library not initialized during change_active_certivicate")
+                raise RuntimeError("Library not initialized")
+
+            # Проверка параметра
+            valid_params = {49, 50, 51, 65, 66, 67, 68, 97, 98, 99}
+            if param not in valid_params:
+                error_msg = f"Invalid crypto parameter: {param}, must be one of {valid_params}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+
+            # Валидация пароля
+            if not isinstance(password, str):
+                raise TypeError("Password must be a string")
+            
+            # Преобразование пароля в байты (UTF-8)
+            password_bytes = password.encode('utf-8')
+            
+            # Максимальная длина пароля - 6 байт (буфер 7 байт включает нуль-терминатор)
+            if len(password_bytes) > 6:
+                error_msg = "Password too long, max 6 characters"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+            
+            # Запрет нулевых байтов в пароле (иначе C-строка обрежется)
+            if b'\x00' in password_bytes:
+                error_msg = "Password must not contain null bytes"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+
+            # Создание буфера под пароль (7 байт с нуль-терминатором)
+            pw_buffer = ctypes.create_string_buffer(7)  # Инициализирован нулями
+
+            # Копируем байты пароля (без нуль-терминатора)
+            ctypes.memmove(pw_buffer, password_bytes, len(password_bytes))
+            # После копирования в конце остаётся 0 (нуль-терминатор из инициализации)
+
+            # Создание буфера под private key
+            if len(private_key) != 69:
+                error_msg = f"Private key must be 69 bytes, got {len(private_key)}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+            private_key_buffer = (ctypes.c_ubyte * 69)(*private_key)
+
+            # Создание буфера под открытый ключ
+            public_key_buffer = (ctypes.c_ubyte * len(public_key))(*public_key)
+
+            # Переменная для проверка параметра алгоритма
+            check_param_flag = ctypes.c_bool(False)
+
+            # Переменная для проверка соответсвия открытого ключа
+            check_openkey_flag = ctypes.c_bool(False)
+            
+            logger.debug(f"Calling change_active_cert with param={param}")
+            result = self.lib.change_active_cert(
+                param,
+                pw_buffer,
+                private_key_buffer,
+                public_key_buffer,
+                len(public_key_buffer),
+                ctypes.byref(check_param_flag),
+                ctypes.byref(check_openkey_flag)
+            )
+
+            if result != 0:
+                error_msg = f"change_active_cert failed with error: {result}"
+                logger.error(error_msg)
+                raise RuntimeError(error_msg)
+
+            if not check_param_flag.value:
+                logger.error(f"Invalid parameter: {param}")
+                raise RuntimeError(f"incorrect param: {param}")
+            elif not check_openkey_flag.value:
+                logger.error(f"Incorrect openkey")
+                raise RuntimeError(f"incorrect openkey")
+            else:
+                logger.info(f"Parameter validated: {param}")
+                logger.info(f"Open_key validated")
+                self.param = param
+                
+            logger.info(f"Change active certificate done successfully")
+
+        except Exception as e:
+            logger.error(f"Error in change_active_cert: {e}\n{traceback.format_exc()}")
+            raise
+
+    def electronic_signature(self, cert_data: bytes) -> bytes:
+        """
+        Создание электронной подписи
+        """
+        logger.info("Creating electronic signature")
+        try:
+            if not self._initialized:
+                logger.error("Library not initialized during signature creation")
+                raise RuntimeError("Library not initialized")
+
+            if not self.param:
+                logger.error("Keypair not created, cannot create signature")
+                raise RuntimeError("Keypair not created")
+
+            signature_size = 128 if self.param in {49, 50, 51} else 64
+            es_buffer = (ctypes.c_ubyte * signature_size)()
+            cert_buffer = (ctypes.c_ubyte * len(cert_data)).from_buffer_copy(cert_data)
+
+            logger.debug(f"Calling electronic_signature with data size={len(cert_data)} bytes")
+            result = self.lib.electronic_signature(
+                es_buffer,
+                cert_buffer,
+                len(cert_data),
+                self.param 
+            )
+            
+            if result != 0:
+                error_msg = f"electronic_signature failed with error: {result}"
+                logger.error(error_msg)
+                raise RuntimeError(error_msg)
+
+            signature = bytes(es_buffer)
+            logger.info(f"Signature created successfully, size={len(signature)} bytes")
+            return signature
+        except Exception as e:
+            logger.error(f"Error in electronic_signature: {e}\n{traceback.format_exc()}")
+            raise    
+
 
 # Пример использования
 if __name__ == "__main__":
@@ -247,6 +397,14 @@ if __name__ == "__main__":
         
         es = wrapper.temp_electronic_signature(cert_data)
         #print(f"Signature: {es.hex()}")
+
+        wrapper.change_active_cert(param=98, password=password, private_key=private_key, public_key=public_key)
+        print(f"Ok")
+
+        with open('tbs.der', 'rb') as f:
+            cert_data = f.read()
+        
+        es = wrapper.electronic_signature(cert_data)
         
         wrapper.close()   
         

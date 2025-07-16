@@ -8,7 +8,7 @@ from asn1_parse import pem_to_bytes, tbsCertificate_encode, rdn_encode, \
 from models.paramsSelfSignedCert import ParamsSelfSignedCert
 from models.CertTemplate import CertTemplate
 from models.RevokedCertificates import RevokedCertificates
-from models.RootCert import RootCert
+from models.RootCert import RootCert, restore_root_cert
 from models.AlgParams import ALL_ALG_PARAMS, AlgTypes, AlgParams
 from bicry.bicry import BicryWrapper
 
@@ -57,16 +57,23 @@ class CertsAsn1:
             tbs_bytes=tbsCertificate_bytes, 
             signature_bytes=signature_bytes)
         
-        self.rootCert = RootCert(serial_num=serial_num,
-                                 issuer_rdn_bytes=rdn_bytes,
-                                 alg_type=params.alg_type,
-                                 beg_validity_date=params.beg_validity_date, 
-                                 end_validity_date=params.end_validity_date,
-                                 public_key=public_key, cert_bytes=cert_bytes)
-        self.rootCert.password = password
-        self.rootCert.private_key = private_key
+        # self.rootCert = RootCert(serial_num=serial_num,
+        #                          issuer_rdn_bytes=rdn_bytes,
+        #                          alg_type=params.alg_type,
+        #                          beg_validity_date=params.beg_validity_date, 
+        #                          end_validity_date=params.end_validity_date,
+        #                          public_key=public_key, cert_bytes=cert_bytes)
+        # self.rootCert.password = password
+        # self.rootCert.private_key = private_key
         return cert_bytes, private_key, password
-    
+
+    def change_active_root_cert(self, cert_bytes: bytes, private_key: bytes, password: str):
+        self.rootCert = restore_root_cert(cert_bytes)
+        self.bicrypt.change_active_cert(param=self.rootCert.alg_type.value,
+                                            password=password,
+                                            private_key=private_key,
+                                            public_key=self.rootCert.public_key)
+
     ''' Создает сертификат на основе запроса на сертификат'''
     def create_cert(self, serial_num: int, 
                     beg_validity_date: datetime, end_validity_date: datetime, 

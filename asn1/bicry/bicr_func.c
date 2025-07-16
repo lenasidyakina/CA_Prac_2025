@@ -162,3 +162,155 @@ int temp_electronic_signature(unsigned char* es, unsigned char* cert_data,
     cr_elgkey_close(init_handle, user_handle);
     return 0;
 }
+
+int change_active_cert(int param, unsigned char* pw, unsigned char* private_key, unsigned char* public_key, size_t len_public_key, bool* check_param_flag, bool* check_openkey_flag) {
+    *check_param_flag = false;
+    *check_openkey_flag = false;
+    // 1. Сохранение ключевой информации в файл private.key
+    FILE *file = fopen("private.key", "wb");
+    if (!file) {
+        syslog(LOG_ERR, "Failed to open private.key for writing");
+        return ERR_OPEN_FILE;
+    }
+
+    size_t private_key_len = 69;
+    size_t written = fwrite(private_key, 1, private_key_len, file);
+    if (written != private_key_len) {
+        syslog(LOG_ERR, "Failed to write private key completely");
+        fclose(file);
+        return ERR_OPEN_FILE;
+    }
+
+    fclose(file);
+    
+    // 2. Сохранение пароля в ОП
+    memcpy(password, pw, 6);
+    //password[6] = '\0';  // Явно добавляем нуль-терминатор
+
+    syslog(LOG_DEBUG, "Checking parameter: %d", param);
+
+    int pass_blen = 6;
+    char userid[33];
+    int userid_blen = 33;
+    H_USER user_handle;
+
+    // 3. Загрузка из файла закрытого ключа ЭП с паролем
+    int result = cr_read_skey(init_handle, password, pass_blen, "private.key", 
+                             userid, &userid_blen, &user_handle);
+    if (result != ERR_OK) {
+        syslog(LOG_ERR, "Failed to load private key: error %d", result);
+        return result;
+    }
+
+    // 4. Получение параметров библиотеки
+    int option = 1;
+    int value;
+    result = cr_get_param(user_handle, option, &value);
+    if (result != ERR_OK) {
+        syslog(LOG_ERR, "Failed to get crypto parameter: error %d", result);
+        cr_elgkey_close(init_handle, user_handle);
+        return result;
+    }
+
+    if (value == param) {
+        *check_param_flag = true;
+        syslog(LOG_INFO, "Parameter validated: %d", param);
+    } else {
+        syslog(LOG_WARNING, "Invalid parameter: expected %d, got %d", param, value);
+        cr_elgkey_close(init_handle, user_handle);
+        return ERR_OK;
+    }
+
+    // 5. Генерация открытого ключа
+    H_PKEY pkey_handle;
+    result = cr_gen_pubkey(init_handle, user_handle, &pkey_handle);
+    if (result != ERR_OK) {
+        syslog(LOG_ERR, "Public key generation failed: error %d", result);
+        cr_elgkey_close(init_handle, user_handle);
+        return result;
+    }
+
+    // 6. Экспортирование открытого ключа
+    char pkbuf[256] = {};
+    int pkbuf_blen = sizeof(pkbuf);
+    result =  cr_pkey_getinfo (
+        pkey_handle,
+        NULL,
+        0,
+        pkbuf,
+        &pkbuf_blen);
+
+    if (result != ERR_OK) {
+        syslog(LOG_ERR, "Failed to export public key for comparison: error %d", result);
+        cr_pkey_close(pkey_handle);
+        cr_elgkey_close(init_handle, user_handle);
+        return result;
+    }
+    
+    int match = 0;
+    if (len_public_key == 128) {
+        match = memcmp(public_key, pkbuf, 128) == 0;
+    } else {
+        match = (memcmp(public_key, pkbuf, 32) == 0) && 
+                (memcmp(public_key + 32, pkbuf + 64, 32) == 0);
+    }
+
+    if (!match) {
+        syslog(LOG_WARNING, "Key mismatch detected");
+    } else {
+        syslog(LOG_INFO, "Keys match");
+        *check_openkey_flag = true;
+    }
+
+    cr_pkey_close(pkey_handle);
+    cr_elgkey_close(init_handle, user_handle);
+    return result;
+}
+
+int electronic_signature(unsigned char* es, unsigned char* cert_data, size_t cert_data_len, int param) {
+    // 1. Загрузка из файла закрытого ключа ЭП с паролем
+    int pass_blen = 6;
+    char userid[33];
+    int userid_blen = 33;
+
+    H_USER user_handle;
+    int result = cr_read_skey(
+        init_handle, password, pass_blen, "private.key", userid, &userid_blen, &user_handle
+    );
+
+    if (result != ERR_OK) {
+        printf("Ошибка загрузки из файла закрытого ключа ЭП с паролем: %d\n", result);
+        return result;
+    }
+
+    // 2. Используем переданный буфер с сертификатом
+    void* dataBuffer = cert_data;
+    int dataBufferLength = (int)cert_data_len;
+
+    // 3. Формирование ЭП для блока памяти
+    int sign_size = (param >= 49 && param <= 51) ? 128 : 64;
+    char sign[sign_size];
+    int sign_blen = sizeof(sign);
+    result = cr_sign_buf(
+        init_handle,
+        user_handle,
+        dataBuffer,
+        dataBufferLength,
+        sign,
+        &sign_blen);
+
+    if (result != ERR_OK) {
+        printf("Ошибка формирования ЭП для блока памяти: %d\n", result);
+        cr_elgkey_close(init_handle, user_handle);
+        return result;
+    }  
+    
+    // 4. Переворачиваем буфер
+    reverse_buffer(sign, sign_blen);
+
+    memcpy(es, sign, sign_size);    //sign_size
+
+    cr_elgkey_close(init_handle, user_handle);
+
+    return 0;
+}

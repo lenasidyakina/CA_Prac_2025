@@ -5,6 +5,7 @@ tmp*
 *.cer
 *.bin
 *.pem
+*.key
 password.txt
 prnd.key
 private.key

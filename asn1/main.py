@@ -11,16 +11,7 @@ from models.AlgParams import AlgTypes
 ROOT_CERT_PATH = './tmp/root_cert.der'
     
 '''Пример создания списка отозванных сертификатов'''
-def crl_test():
-    # root_cert.der - файл в котором хранится корневой сертификат 
-    # Если его нет (корневой серт еще не создали), то надо обработать ошибку
-    # Так же может быть ошибка если корневой серт просрочен
-    with open(ROOT_CERT_PATH, 'rb') as f:  
-        cert_bytes = f.read()
-    root = restore_root_cert(cert_bytes)
-    print(root)
-    certsAsn1 = CertsAsn1(rootCert=root)
-
+def crl_test(certsAsn1: CertsAsn1):
     # получаем из БД:
     reasons = [CRLReasonCode.cACompromise, CRLReasonCode.unspecified, CRLReasonCode.affiliationChanged]
     rlist = []
@@ -42,16 +33,7 @@ def crl_test():
         f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL")) # !!! pem_type - НЕ МЕНЯТЬ
 
 '''Пример создания сертификата'''
-def create_cert_test():
-    # root_cert.der - файл в котором хранится корневой сертификат 
-    # Если его нет (корневой серт еще не создали), то надо обработать ошибку
-    # Так же может быть ошибка если корневой серт просрочен
-    with open(ROOT_CERT_PATH, 'rb') as f:  
-        cert_bytes = f.read()
-    root = restore_root_cert(cert_bytes)
-    print(root)
-    certsAsn1 = CertsAsn1(rootCert=root)
-
+def create_cert_test(certsAsn1: CertsAsn1):
     with open('./csr/full.p10', 'r') as pem_file:
         pem_csr = pem_file.read()
 
@@ -72,7 +54,7 @@ def create_cert_test():
 
 '''Пример создания самоподписанного сертификата'''
 # TODO
-def create_selfsigned_cert_test():
+def create_selfsigned_cert_test() -> CertsAsn1:
     certsAsn1 = CertsAsn1()
 
     prdn = ParamsRDN(surname="Tsurname", givenName="TgivenName", 
@@ -89,18 +71,29 @@ def create_selfsigned_cert_test():
     # !!! проверка на уникальность serial_num(для этого обращение к БД: find serial_num)
     cert_bytes, private_key, password = certsAsn1.create_selfsigned_cert(params=p, serial_num=serial_num)
     # Пережать пользователю cert_bytes, private_key, password
-    print(certsAsn1.rootCert)
-    print(f"save to {ROOT_CERT_PATH}, './tmp/root_cert.pem'")
+
+    print(f"saved to {ROOT_CERT_PATH}, './tmp/root_cert.pem'")
     with open(ROOT_CERT_PATH, 'wb') as f:
         f.write(cert_bytes)
     with open('./tmp/root_cert.pem', 'w') as f:
         f.write(bytes_to_pem(cert_bytes, "CERTIFICATE"))
 
+
+    # Сделать самоподписанный серт корневым
+    certsAsn1.change_active_root_cert(cert_bytes=cert_bytes,
+                                      private_key=private_key,
+                                      password=password)
+    print(certsAsn1.rootCert)
+    return certsAsn1
+    
+    
+
+
 if __name__ == '__main__':
 
-    create_selfsigned_cert_test() 
-    # create_cert_test()
-    # crl_test()
+    certsAsn1 = create_selfsigned_cert_test() 
+    create_cert_test(certsAsn1)
+    crl_test(certsAsn1)
 
     
 
