@@ -5,12 +5,12 @@ from .AlgParams import ALL_ALG_PARAMS, AlgTypes
 from ..asn1_parse import block_to_raw_bytes, UTC_DATETIME_FORMAT
 
 class RootCert:
-    _instance = None  # Классовый атрибут для хранения экземпляра
+    # _instance = None  # Классовый атрибут для хранения экземпляра
 
-    def __new__(cls, *args, **kwargs):
-        if not hasattr(cls, 'instance'):
-            cls.instance = super(RootCert, cls).__new__(cls)
-        return cls.instance
+    # def __new__(cls, *args, **kwargs):
+    #     if not hasattr(cls, 'instance'):
+    #         cls.instance = super(RootCert, cls).__new__(cls)
+    #     return cls.instance
 
     '''при повторной инициализации будет перезапись атрибутов во всех экземплярах
     т к RootCert может быть только один'''

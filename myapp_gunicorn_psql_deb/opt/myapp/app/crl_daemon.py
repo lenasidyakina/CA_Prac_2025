@@ -95,7 +95,7 @@ class NumberLogger:
                     revokedCerts=array_of_revoked_certificate,
                     thisUpdate=datetime.now(tz=timezone.utc),
                     nextUpdate=datetime.now(tz=timezone.utc) + timedelta(seconds=self.interval))
-
+                certsAsn1.bicrypt.close()
                 
                 with open('/opt/myapp/app/crl.pem', 'w') as f:
                     f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL"))
