@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -138,7 +139,34 @@
         .serial-number {
             cursor: help;
         }
+        .copy-serial {
+            cursor: pointer;
+            position: relative;
+            text-decoration: underline dotted;
+            color: #0066cc;
+        }
         
+        .copy-serial:hover {
+            color: #004499;
+        }
+        
+        .copy-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .copy-notification.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -165,7 +193,10 @@
                         <input type="checkbox" name="revoke_cert" value="{{ cert.serial_number }}" class="cert-checkbox">
                         {% endif %}
                     </td>
-                    <td class="serial-number" title="{{ cert.serial_number }}">
+                    <!-- <td class="serial-number" title="{{ cert.serial_number }}">
+                        {{ cert.serial_number[:10] }}{% if cert.serial_number|length > 10 %}...{% endif %}
+                    </td> -->
+                    <td class="copy-serial" onclick="copyToClipboard('{{ cert.serial_number }}')" title="Кликните для копирования">
                         {{ cert.serial_number[:10] }}{% if cert.serial_number|length > 10 %}...{% endif %}
                     </td>
                     <td class="{% if cert.status == 'Отозван' %}revoked{% else %}not-revoked{% endif %}">
@@ -206,7 +237,10 @@
                             </select>
                         </div>
                     </td>
-                    <td class="serial-number" title="{{ cert.source_serial_number }}">
+                    <!-- <td class="serial-number" title="{{ cert.source_serial_number }}">
+                        {{ cert.source_serial_number[:10] }}{% if cert.source_serial_number|length > 10 %}...{% endif %}
+                    </td> -->
+                    <td class="copy-serial" onclick="copyToClipboard('{{ cert.source_serial_number }}')" title="Кликните для копирования">
                         {{ cert.source_serial_number[:10] }}{% if cert.source_serial_number|length > 10 %}...{% endif %}
                     </td>
                 </tr>
@@ -293,10 +327,27 @@
                 }
             });
         });
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showCopyNotification('Скопировано в буфер обмена: ' + text);
+            }).catch(err => {
+                showCopyNotification('Ошибка копирования: ' + err);
+            });
+        }
+        
+        function showCopyNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'copy-notification show';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 2000);
+        }
+
     </script>
 </body>
 </html>
-
-
-
-
