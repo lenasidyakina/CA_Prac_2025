@@ -1052,3 +1052,176 @@
 2025-07-16 01:48:12,163 - __main__ - INFO - array_of_revoked_certificate: [<asn1_parser.models.RevokedCertificates.RevokedCertificates object at 0x70654c8a5470>, <asn1_parser.models.RevokedCertificates.RevokedCertificates object at 0x70654c8a5fd0>]
 2025-07-16 01:48:12,165 - __main__ - INFO - crl created
 2025-07-16 01:48:12,165 - __main__ - INFO - saving to: created_files/crl.der
+2025-07-16 15:21:24,521 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:21:24,527 - __main__ - INFO - Application starting...
+2025-07-16 15:21:24,527 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:21:24,528 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:21:24,533 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:21:24,534 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:21:24,626 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:21:25,020 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:21:25,035 - __main__ - INFO - Application starting...
+2025-07-16 15:21:25,035 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:21:25,036 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:21:25,046 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:21:25,048 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:21:25,206 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:25:15,801 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:25:15,808 - __main__ - INFO - Application starting...
+2025-07-16 15:25:15,809 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:25:15,809 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:25:15,816 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:25:15,816 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:25:15,921 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:25:16,301 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:25:16,310 - __main__ - INFO - Application starting...
+2025-07-16 15:25:16,310 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:25:16,311 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:25:16,316 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:25:16,317 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:25:16,436 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:28:07,829 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:28:07,837 - __main__ - INFO - Application starting...
+2025-07-16 15:28:07,838 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:28:07,838 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:28:07,844 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:28:07,845 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:28:07,937 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:28:08,207 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:28:08,212 - __main__ - INFO - Application starting...
+2025-07-16 15:28:08,213 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:28:08,213 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:28:08,220 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:28:08,221 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:28:08,314 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:32:16,139 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:32:16,147 - __main__ - INFO - Application starting...
+2025-07-16 15:32:16,148 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:32:16,148 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:32:16,153 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:32:16,153 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:32:16,248 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:32:16,507 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:32:16,514 - __main__ - INFO - Application starting...
+2025-07-16 15:32:16,514 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:32:16,515 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:32:16,520 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:32:16,521 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:32:16,610 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:35:52,249 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:35:52,258 - __main__ - INFO - Application starting...
+2025-07-16 15:35:52,258 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:35:52,259 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:35:52,264 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:35:52,264 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:35:52,356 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:35:52,633 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:35:52,662 - __main__ - INFO - Application starting...
+2025-07-16 15:35:52,662 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:35:52,662 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:35:52,669 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:35:52,669 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:35:52,776 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:37:14,628 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:37:14,636 - __main__ - INFO - Application starting...
+2025-07-16 15:37:14,637 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:37:14,638 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:37:14,643 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:37:14,643 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:37:14,733 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:37:15,008 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:37:15,014 - __main__ - INFO - Application starting...
+2025-07-16 15:37:15,015 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:37:15,015 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:37:15,022 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:37:15,022 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:37:15,121 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:44:42,294 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:44:42,304 - __main__ - INFO - Application starting...
+2025-07-16 15:44:42,304 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:44:42,304 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:44:42,309 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:44:42,309 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:44:42,412 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:44:42,764 - __main__ - INFO - Successfully connected to database
+2025-07-16 15:44:42,771 - __main__ - INFO - Application starting...
+2025-07-16 15:44:42,772 - __main__ - INFO - current_dir: /home/lusix/prac/main/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 15:44:42,773 - __main__ - INFO - Checking existance of root certificate...
+2025-07-16 15:44:42,780 - __main__ - INFO - Existing root certificate was successfully restored
+2025-07-16 15:44:42,780 - __main__ - INFO - RootCert:
+	 serial_num=99793926370801192600152579326946242012381670136052222504037175358930133640590476749223
+	 alg_type=AlgTypes.b
+	 beg_validity_date=2025-07-15 00:00:00
+	 end_validity_date=2026-07-15 00:00:00
+
+2025-07-16 15:44:42,871 - __main__ - INFO - Application initialized successfully
+2025-07-16 15:45:00,077 - __main__ - INFO - template - t_all_worker
+2025-07-16 15:45:00,078 - __main__ - INFO - RDNTemplate fields: surname=True, givenName=True, organizationalUnitName=True, title=True, commonName=False, organizationName=False, countryName=False, stateOrProvinceName=False, localityName=False, streetAddress=False
+2025-07-16 15:45:00,105 - __main__ - INFO - Certificate was successfully created
+2025-07-16 15:45:16,401 - __main__ - INFO - template - t_all_worker
+2025-07-16 15:45:16,401 - __main__ - INFO - RDNTemplate fields: surname=True, givenName=True, organizationalUnitName=True, title=True, commonName=False, organizationName=False, countryName=False, stateOrProvinceName=False, localityName=False, streetAddress=False

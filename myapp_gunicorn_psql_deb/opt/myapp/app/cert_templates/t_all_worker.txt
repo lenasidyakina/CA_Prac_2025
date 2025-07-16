@@ -1,0 +1,10 @@
+countryName=0
+stateOrProvinceName=0
+localityName=0
+streetAddress=0
+commonName=0
+organizationName=0
+countryName=0
+stateOrProvinceName=0
+localityName=0
+streetAddress=0
