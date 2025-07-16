@@ -1,5 +1,7 @@
+import asn1
 from pyasn1_modules import rfc5280
 from datetime import datetime
+from typing import List
 from models.CertTemplate import RDNTemplate, ErrParamsTemplate
 from models.AlgParams import AlgTypes
 
@@ -134,20 +136,71 @@ class ParamsRDN:
         
         return [(self.params[oid], oid) for oid in fields_order if self.params[oid]]
 
+''' Как заполнять
+Есnm вид расширения, 
+и если расширение этого типа пользователь хочет добавить то ставит self.тип_расширения - True 
+и опредеояет value этого расширения (оно помечается как self.тип_расширения_что-то)
+
+'''
+class ExtentionsCert:
+    def __init__(self):
+        self.basicConstraints = False
+        self.basicConstraints_subject_is_CA = True      # является ли subject (для самоподписанного всегда True!!!) сертификата центром сертификации
+        self.basicConstraints_max_depth_certs = None    # макс число сертификатов которые могут быть в цепочке дальше
+
+    def extentions_cert_encode(self) -> List[bytes]:
+        extentions_bytes_list = []
+        if self.basicConstraints:
+            if self.basicConstraints_max_depth_certs is None:
+                raise Exception('error basicConstraints: max_depth_certs is None')
+            extentions_bytes_list.append(self._basicConstraints_encode())
+        return extentions_bytes_list
+
+    
+    def _basicConstraints_encode(self) -> bytes:
+        encoder = asn1.Encoder()
+        encoder.start()
+        encoder.enter(asn1.Numbers.Sequence)    # Extention
+        encoder.write(str(rfc5280.id_ce_basicConstraints), asn1.Numbers.ObjectIdentifier)
+        # critical = false
+
+        val_encoder = asn1.Encoder()
+        val_encoder.start()
+        val_encoder.enter(asn1.Numbers.Sequence)
+        val_encoder.write(self.basicConstraints_subject_is_CA, asn1.Numbers.Boolean)
+        val_encoder.write(self.basicConstraints_max_depth_certs, asn1.Numbers.Integer)
+        val_encoder.leave()
+        val_bytes = val_encoder.output()
+
+        encoder.write(val_bytes, asn1.Numbers.OctetString)
+        encoder.leave()                         # out Extention
+
+        extention_bytes = encoder.output()
+        return extention_bytes
+
+    def __str__(self):
+        res = ""
+        res += f"basicConstraints: {self.basicConstraints}"
+        if not self.basicConstraints:
+            res += f"basicConstraints_subject_is_CA={self.basicConstraints_subject_is_CA}\nbasicConstraints_max_depth_certs={self.basicConstraints_max_depth_certs}\n"
+        return res
 
 class ParamsSelfSignedCert:
     def __init__(self, beg_validity_date: datetime, end_validity_date: datetime, 
                  alg_type: AlgTypes,
-                 paramsRDN: ParamsRDN):
+                 paramsRDN: ParamsRDN, 
+                 extentions: ExtentionsCert):
         self.beg_validity_date = beg_validity_date  # время начала действия сертификата
         self.end_validity_date = end_validity_date  # время ококнчания действия сертификата
         self.alg_type = alg_type                    # тип алгоритмов шифрования ("b", "a") # TODO пока только "b"
         self.paramsRDN = paramsRDN
+        self.extentions = extentions
 
     def __str__(self):
         res = f"validity: {self.beg_validity_date.strftime('%y%m%d%H%M%SZ')}---{self.end_validity_date.strftime('%y%m%d%H%M%SZ')}\n"
         res += f"alg_type: {self.alg_type}\n"
         res += str(self.paramsRDN)
+        res += str(self.extentions)
         return res
 
     def validate() -> bool:

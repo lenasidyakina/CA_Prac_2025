@@ -3,7 +3,8 @@ import asn1
 from datetime import datetime, timezone
 import os
 from typing import List
-from models.paramsSelfSignedCert import ParamsRDN
+from models.paramsSelfSignedCert import ParamsRDN, ExtentionsCert
+from pyasn1_modules import rfc5280
 
 UTC_DATETIME_FORMAT = "%y%m%d%H%M%SZ"
 GENERALIZED_TIME_FORMAT = "%Y%m%d%H%M%SZ"
@@ -163,3 +164,27 @@ def rdn_decode(rdn_bytes: bytes) -> ParamsRDN:
 
     return resRDN
 
+'''
+subject_is_CA - является ли subject (для самоподписанного всегда да) сертификата центром сертификации
+max_depth_certs - макс число сертификатов которые могут быть в цепочке дальше
+'''
+def basicConstraints_encode(subject_is_CA: bool, max_depth_certs: int) -> bytes:
+    encoder = asn1.Encoder()
+    encoder.start()
+    encoder.enter() # Extention
+    encoder.write(str(rfc5280.id_ce_basicConstraints), asn1.Numbers.ObjectIdentifier)
+    # critical = false
+
+    val_encoder = asn1.Encoder()
+    val_encoder.start()
+    val_encoder.enter()
+    val_encoder.write(subject_is_CA, asn1.Numbers.Boolean)
+    val_encoder.write(max_depth_certs, asn1.Numbers.Integer)
+    val_encoder.leave()
+    val_bytes = encoder.output()
+
+    encoder.write(val_bytes, asn1.Numbers.OctetString)
+    encoder.leave()
+
+    extention_bytes = encoder.output()
+    return extention_bytes

@@ -2,8 +2,7 @@ from datetime import datetime, timezone
 
 from cert_parse import CertsAsn1
 from asn1_parse import bytes_to_pem, generate_serial_num
-from models.RootCert import RootCert, restore_root_cert
-from models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN
+from models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN, ExtentionsCert
 from models.CertTemplate import CertTemplate, RDNTemplate
 from models.RevokedCertificates import RevokedCertificates, CRLReasonCode
 from models.AlgParams import AlgTypes
@@ -62,10 +61,14 @@ def create_selfsigned_cert_test() -> CertsAsn1:
                         commonName="TcommonName", organizationName="TorganizationName",
                         countryName="TcountryName", stateOrProvinceName="TstateOrProvinceName", 
                         streetAddress="TstreetAddress", localityName="TlocalityName")
+    extentions = ExtentionsCert()
+    extentions.basicConstraints = True
+    extentions.basicConstraints_subject_is_CA = True
+    extentions.basicConstraints_max_depth_certs = 3
     p = ParamsSelfSignedCert(alg_type=AlgTypes.a, 
                              beg_validity_date=datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
                              end_validity_date=datetime(2026, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
-                             paramsRDN=prdn)
+                             paramsRDN=prdn, extentions=extentions)
 
     serial_num = generate_serial_num() 
     # !!! проверка на уникальность serial_num(для этого обращение к БД: find serial_num)
