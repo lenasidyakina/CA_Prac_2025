@@ -69,7 +69,6 @@ def restore_root_cert(cert_bytes: bytes) -> RootCert:
     decoder.read()
     decoder.enter() # params
     subjPKAlgIdParam1 = decoder.read()[-1]  # subjPKAlgIdParam1
-    print(f"subjPKAlgIdParam1 = {subjPKAlgIdParam1}")
     alg_type = None
     for char_alg, params_alg in ALL_ALG_PARAMS.items():
         if params_alg.signAlgId == signAlgId and params_alg.subjPKAlgIdParam1 == subjPKAlgIdParam1:

@@ -8,7 +8,7 @@ from models.CertTemplate import CertTemplate, RDNTemplate
 from models.RevokedCertificates import RevokedCertificates, CRLReasonCode
 from models.AlgParams import AlgTypes
 
-ROOT_CERT_PATH = 'root_cert.der'
+ROOT_CERT_PATH = './tmp/root_cert.der'
     
 '''Пример создания списка отозванных сертификатов'''
 def crl_test():
@@ -88,16 +88,18 @@ def create_selfsigned_cert_test():
     serial_num = generate_serial_num() 
     # !!! проверка на уникальность serial_num(для этого обращение к БД: find serial_num)
     cert_bytes, private_key, password = certsAsn1.create_selfsigned_cert(params=p, serial_num=serial_num)
+    # Пережать пользователю cert_bytes, private_key, password
     print(certsAsn1.rootCert)
+    print(f"save to {ROOT_CERT_PATH}, './tmp/root_cert.pem'")
     with open(ROOT_CERT_PATH, 'wb') as f:
         f.write(cert_bytes)
-    # with open('root_cert.pem', 'w') as f:
-    #     f.write(bytes_to_pem(cert_bytes, "CERTIFICATE"))
+    with open('./tmp/root_cert.pem', 'w') as f:
+        f.write(bytes_to_pem(cert_bytes, "CERTIFICATE"))
 
 if __name__ == '__main__':
 
     create_selfsigned_cert_test() 
-    create_cert_test()
+    # create_cert_test()
     # crl_test()
 
     
