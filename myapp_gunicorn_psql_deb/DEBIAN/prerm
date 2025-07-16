@@ -21,7 +21,7 @@ rm -f /opt/myapp/myapp.sock || true
 
 # Проверка что процессы завершились
 echo "Checking for remaining processes..."
-pkill -f "/opt/myapp/venv/bin/python3 /opt/myapp/crl_daemon/crl_daemon.py" || true
+pkill -f "/opt/myapp/venv/bin/python3 /opt/myapp/app/crl_daemon.py" || true
 pkill -f "gunicorn.*wsgi:app" || true
 
 rm -rf /opt/myapp/app/__pycache__
