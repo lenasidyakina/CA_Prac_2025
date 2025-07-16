@@ -12,11 +12,22 @@ from models.RootCert import RootCert
 from models.AlgParams import ALL_ALG_PARAMS, AlgTypes
 from bicry.bicry import BicryWrapper
 
+class ErrNoRootCert(Exception):
+    def __init__(self, message, *args):
+        message += " ErrNoRootCert "
+        super().__init__(message, *args)
+
 class CertsAsn1:
     def __init__(self, rootCert: RootCert =None):
         self.rootCert = rootCert
-        # TODO где то здесь функция проверки что открытый ключ rootCert соответствует закрытом ключу
-        self.bicrypt = BicryWrapper(lib_path='./bicry/libbicry_openkey.so')
+        if self.rootCert is None:
+            self.bicrypt = BicryWrapper(lib_path='libbicry_openkey.so', param=None)
+        else:
+            self.bicrypt = BicryWrapper(lib_path='libbicry_openkey.so', param=self.rootCert.alg_type.value)
+            self.bicrypt.compare_keys(self.rootCert.public_key)
+            pwd, privkey = self.bicrypt.get_private_key_with_password()
+            self.rootCert.password = pwd
+            self.rootCert.private_key = privkey
 
     '''Создает самопоодписанный сертификат  на основе ParamsSelfSignedCert.get_list.get_list()
     return самоподписанный сертификат, открытый ключ, пароль'''
@@ -24,6 +35,7 @@ class CertsAsn1:
         version = 2
         rdn_bytes = rdn_encode(params.paramsRDN)
         alg_type = ALL_ALG_PARAMS[params.alg_type]
+        print(f"value = {params.alg_type.value}")
         public_key = self.bicrypt.generate_keypair("Ivanov", param=params.alg_type.value)   
         tbsCertificate_bytes = tbsCertificate_encode(
             serial_num=serial_num, version=version, 
@@ -48,7 +60,9 @@ class CertsAsn1:
                                  alg_type=params.alg_type,
                                  beg_validity_date=params.beg_validity_date, 
                                  end_validity_date=params.end_validity_date,
-                                 public_key=public_key)
+                                 public_key=public_key, cert_bytes=cert_bytes)
+        self.rootCert.password = password
+        self.rootCert.private_key = private_key
         return cert_bytes, private_key, password
     
     ''' Создает сертификат на основе запроса на сертификат'''
@@ -57,7 +71,7 @@ class CertsAsn1:
                     cert_template: CertTemplate,
                     pem_csr: str) -> bytes:
         if self.rootCert is None:
-            raise Exception("no root cert created")
+            raise ErrNoRootCert("no root cert created")
         der_csr = pem_to_bytes(pem_csr)
 
         decoder = asn1.Decoder()
@@ -124,7 +138,7 @@ class CertsAsn1:
     def create_crl(self, revokedCerts: List[RevokedCertificates], 
                 thisUpdate: datetime, nextUpdate: datetime) -> bytes:
         if self.rootCert is None:
-            raise Exception("no root cert created")
+            raise ErrNoRootCert("no root cert created")
         encoder = asn1.Encoder()
         encoder.start()
         encoder.enter(asn1.Numbers.Sequence)    # TBSCertList 

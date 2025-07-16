@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
+
 
 H_INIT init_handle;
 char password[7] = {0}; // 6 символов + '\0'
@@ -49,6 +51,47 @@ int init_bicr() {
 
     return result;
 }
+
+int check_param(int param, bool* check_flag) {
+    *check_flag = false;
+
+    // 1. Загрузка из файла закрытого ключа ЭП с паролем
+    int pass_blen = 6;
+    char userid[33];
+    int userid_blen = 33;
+
+    H_USER user_handle;
+    int result = cr_read_skey(
+        init_handle, password, pass_blen, "private.key", userid, &userid_blen, &user_handle
+    );
+
+    if (result != ERR_OK) {
+        printf("Ошибка загрузки из файла закрытого ключа ЭП с паролем: %d\n", result);
+        return result;
+    }
+
+    // 3. Получаем параметр криптографиеского алгоритма закрытого ключа
+    int option = 1;
+    int value;
+    result = cr_get_param (
+        user_handle,
+        option,
+        &value);
+
+    if (result != ERR_OK) {
+        printf("Ошибка получения параметров библиотеки: %d\n", result);
+        cr_elgkey_close(init_handle, user_handle);
+        return result;
+    }
+    printf("value = %d, param = %d\n", value, param);
+    if (value == param)
+        *check_flag = true;
+        
+    cr_elgkey_close(init_handle, user_handle);
+
+    return result;
+}
+
 
 int uninit_bicr() {
     int result = cr_uninit(init_handle);
@@ -115,8 +158,13 @@ int generate_keypair(int param, char* userid, unsigned char* public_key) {
         return 1;
     }
 
-    memcpy(public_key, pkbuf, 32);          // Первые 32 байта
-    memcpy(public_key + 32, pkbuf + 64, 32); // Байты 64-95
+    if (param == 49 || param == 50 || param == 51) {
+        memcpy(public_key, pkbuf, 128);
+    }
+    else {
+        memcpy(public_key, pkbuf, 32);
+        memcpy(public_key + 32, pkbuf + 64, 32);
+    }
 
     // 4. Очистка ресурсов
     cr_pkey_close(pkey_handle);
@@ -137,7 +185,7 @@ void reverse_buffer(char* buffer, int length) {
     }
 }
 
-int electronic_signature(unsigned char* es, unsigned char* cert_data, size_t cert_data_len) {
+int electronic_signature(unsigned char* es, unsigned char* cert_data, size_t cert_data_len, int param) {
     // 1. Загрузка из файла закрытого ключа ЭП с паролем
     int pass_blen = 6;
     char userid[33];
@@ -158,7 +206,8 @@ int electronic_signature(unsigned char* es, unsigned char* cert_data, size_t cer
     int dataBufferLength = (int)cert_data_len;
 
     // 3. Формирование ЭП для блока памяти
-    char sign[64];
+    int sign_size = (param >= 49 && param <= 51) ? 128 : 64;
+    char sign[sign_size];
     int sign_blen = sizeof(sign);
     result = cr_sign_buf(
         init_handle,
@@ -177,7 +226,7 @@ int electronic_signature(unsigned char* es, unsigned char* cert_data, size_t cer
     // 4. Переворачиваем буфер
     reverse_buffer(sign, sign_blen);
 
-    memcpy(es, sign, 64);
+    memcpy(es, sign, sign_size);    //sign_size
 
     cr_elgkey_close(init_handle, user_handle);
 
@@ -209,4 +258,83 @@ int get_elgkey_with_password(unsigned char* pw, unsigned char* private_key) {
     pw[6] = '\0';  // Явно добавляем нуль-терминатор
 
     return 0;
+}
+
+int compare_keys(unsigned char* public_key, size_t len_public_key) {
+    // 1. Загрузка из файла закрытого ключа ЭП с паролем
+    int pass_blen = 6;
+    char userid[33];
+    int userid_blen = 33;
+
+    H_USER user_handle;
+    int result = cr_read_skey(
+        init_handle, password, pass_blen, "private.key", userid, &userid_blen, &user_handle
+    );
+
+    if (result != ERR_OK) {
+        printf("Ошибка загрузки из файла закрытого ключа ЭП с паролем: %d\n", result);
+        return result;
+    }
+
+    // 2. Генерация открытого ключа
+    H_PKEY pkey_handle;
+    result = cr_gen_pubkey( 
+        init_handle,
+        user_handle,
+        &pkey_handle
+    );
+
+     if (result != ERR_OK) {
+        printf("Ошибка генерации открытого ключа: %d\n", result);
+        cr_elgkey_close(init_handle, user_handle);
+        return result;
+    }
+
+    // 3. Экспортирование открытого ключа
+    char pkbuf[256] = {};
+    int pkbuf_blen = sizeof(pkbuf);
+    result =  cr_pkey_getinfo (
+        pkey_handle,
+        NULL,
+        0,
+        pkbuf,
+        &pkbuf_blen);
+
+    if (result != ERR_OK)
+    {
+        printf("Ошибка экспортирования открытого ключа: %d\n", result);
+        cr_pkey_close(pkey_handle);
+        cr_elgkey_close(init_handle, user_handle);
+        return result;
+    }
+
+    if (len_public_key == 128) {
+        if (memcmp(public_key, pkbuf, len_public_key) != 0) {
+            printf("Открытый ключ не соответсвует закрытому\n");
+            cr_pkey_close(pkey_handle);
+            cr_elgkey_close(init_handle, user_handle);
+            return 1;  // Не совпали
+        }
+    }
+    else {
+        // Сравнение первых 32 байт
+        if (memcmp(public_key, pkbuf, 32) != 0) {
+            printf("Открытый ключ не соответсвует закрытому\n");
+            cr_pkey_close(pkey_handle);
+            cr_elgkey_close(init_handle, user_handle);
+            return 1;  // Не совпали
+        }
+
+        // Сравнение вторых 32 байт
+        if (memcmp(public_key + 32, pkbuf + 64, 32) != 0) {
+            printf("Открытый ключ не соответсвует закрытому\n");
+            cr_pkey_close(pkey_handle);
+            cr_elgkey_close(init_handle, user_handle);
+            return 1;  // Не совпали
+    }
+    }
+
+    cr_pkey_close(pkey_handle);
+    cr_elgkey_close(init_handle, user_handle);
+    return 0;  // Ключи совпали
 }
