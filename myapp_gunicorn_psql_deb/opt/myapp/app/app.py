@@ -26,9 +26,12 @@ BASE_DIR = Path(__file__).parent
 UPLOAD_FOLDER = 'uploads' #дир-рия для хранения загруженных файлов (полученных из запроса файлов)
 CREATED_FILES_FOLDER = 'created_files'
 ROOT_CERT_FOLDER = 'root_certs'  # для корневых сертификатов
-ROOT_CERT_PATH = os.path.join(ROOT_CERT_FOLDER, 'root_cert.der')
+# ROOT_CERT_PATH = os.path.join(ROOT_CERT_FOLDER, 'root_cert.der') # надо удалить
 KEEPASS_DB_PATH = "/var/lib/myapp/secrets.kdbx"  # Путь к базе
 CERTSASN1 = 'CertsAsn1'
+ROOT_CERT_TO_SEND = 'root cert bytes to send'
+PRIV_KEY_TO_SEND = 'private key bytes to send'
+PWD_TO_SEND = 'password to send'
 
 
 def setup_logging():
@@ -83,41 +86,42 @@ def setup_logging():
 # Глобальная инициализация логгера
 logger = setup_logging()
 app = Flask(__name__)
-app.config['ROOT_CERT_INIT_LOCK'] = Lock()
+# app.config['ROOT_CERT_INIT_LOCK'] = Lock()
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 db_manager = DatabaseManager(logger)
 
 
 '''------------------------------- ПРОВЕРКА НА СУЩЕСТВ-НИЕ КОРНЕВОГО СЕРТИФИКАТА ПРИ ЗАПУСКЕ ПРИЛОЖЕНИЯ--------------------------------'''
-def init_root_cert():
-    cert_path = Path('./root_certs/root_cert.der')
+# def init_root_cert():
+#     cert_path = Path('./root_certs/root_cert.der')
     
-    logger.info("Checking existance of root certificate...")
+#     logger.info("Checking existance of root certificate...")
     
-    with app.config['ROOT_CERT_INIT_LOCK']:
-        rootCert = None
-        if cert_path.exists():
-            try:
-                with open(cert_path, 'rb') as f:
-                    cert_data = f.read()
+#     with app.config['ROOT_CERT_INIT_LOCK']:
+#         rootCert = None
+#         if cert_path.exists():
+#             try:
+#                 with open(cert_path, 'rb') as f:
+#                     cert_data = f.read()
 
-                    if cert_data is None:
-                        rootCert = None 
-                    else:
-                        rootCert = restore_root_cert(cert_data)
-                        logger.info("Existing root certificate was successfully restored")
-                        logger.info(f"{rootCert}")
-            except Exception as e:
-                logger.error(f"Error while loading existing root certificate: {e}")
-        else:
-            logger.info("No existing root certificate was found at %s", cert_path)
+#                     if cert_data is None:
+#                         rootCert = None 
+#                     else:
+#                         rootCert = restore_root_cert(cert_data)
+#                         logger.info("Existing root certificate was successfully restored")
+#                         logger.info(f"{rootCert}")
+#             except Exception as e:
+#                 logger.error(f"Error while loading existing root certificate: {e}")
+#         else:
+#             logger.info("No existing root certificate was found at %s", cert_path)
 
-        app.config[CERTSASN1] = CertsAsn1(rootCert=rootCert)
+#         app.config[CERTSASN1] = CertsAsn1(rootCert=rootCert)
 
 '''-----------------------------------------------------------------------------------------------------------------------------'''
 
 '''------------------------------------------------ РАБОТА С БД -------------------------------------------------------------------'''
 def insert_to_db(serial_number, source_serial_number, db_manager):
+    '''
     # try:
     #     conn = get_db_connection()
     #     cursor = conn.cursor()
@@ -134,7 +138,7 @@ def insert_to_db(serial_number, source_serial_number, db_manager):
     #     return False  
     # finally:
     #     if 'conn' in locals():
-    #         conn.close()
+    #         conn.close()'''
 
     try:
         with db_manager.get_cursor() as cursor:
@@ -203,9 +207,11 @@ def create_selfsigned_certificate():
         serial_num = db_manager.find_serial_number(serial_num)  # проверка на уникальность серийного номера
         
         cert_bytes, private_key, password = certsAsn1.create_selfsigned_cert(params=p, serial_num=serial_num)
-        
-        with open(ROOT_CERT_PATH, 'wb') as f:
-            f.write(cert_bytes)
+        app.config[ROOT_CERT_TO_SEND] = cert_bytes
+        app.config[PRIV_KEY_TO_SEND] = private_key
+        app.config[PWD_TO_SEND] = password
+        logger.info("Root self signed certificate was successfully created")
+        '''
         # ENTRY_NAME = "cert_password"  # Название записи
         # # Команда для добавления пароля
         # cmd = [
@@ -224,8 +230,7 @@ def create_selfsigned_certificate():
         #     )
         #     logger.info("Пароль успешно сохранён!")
         # except subprocess.CalledProcessError as e:
-        #     logger.error(f"Ошибка: {e.stderr}")
-        logger.info("Root self signed certificate was successfully created")
+        #     logger.error(f"Ошибка: {e.stderr}")'''
         
         return redirect(url_for('selfsigned_certificate_created'))
 
@@ -240,6 +245,22 @@ def create_selfsigned_certificate():
     #         "details": str(e)
     #     }), 500
     
+# TODO сделай из этого кнопку на главной. 
+# Когда ее нажимают, переходят на страницу в которой надо передать: 
+# 1-файл с сертификатом (.der) 
+# 2-файл c private.key 
+# 3-ввести пароль 
+# эти данные передаются сюда и считываются в строки байт и пароль
+# результат выполнения слова что активный корневой серт изменен
+# отсюда могут выпасть ошибки разного рода, связанне с невалидностью файлов 
+# (сама ты можешь только провалижировать что пароль не пуст и что файлы не пусты)
+def change_active_root_cert():
+    cert_bytes, private_key, password = bytes(), bytes(), '1234'
+    certsAsn1 = app.config[CERTSASN1]
+    certsAsn1.change_active_root_cert(cert_bytes=cert_bytes,
+                                      private_key=private_key,
+                                      password=password)
+
 @app.route('/certificate-created')
 def selfsigned_certificate_created():
     certsAsn1 = app.config[CERTSASN1]
@@ -247,16 +268,15 @@ def selfsigned_certificate_created():
         return redirect(url_for('create_certificate_page'))
     
     return render_template('selfsigned_certificate_created.html',
-                         serial_num=certsAsn1.rootCert.serial_num)
+                         serial_num=certsAsn1.rootCert.serial_num)  # TODO
 
 @app.route('/download-certificate') # Только для самоподписанного!!!
 def download_certificate():
-    certsAsn1 = app.config[CERTSASN1]
-    if certsAsn1.rootCert is None:
-        return "Self signed certificate not found", 404
+    if app.config[ROOT_CERT_TO_SEND] is None:
+        return "Self signed certificate not found (root_cert_bytes)", 404
     
     return send_file(
-        BytesIO(certsAsn1.rootCert.cert_bytes),
+        BytesIO(app.config[ROOT_CERT_TO_SEND]),
         mimetype='application/x-x509-ca-cert', # указывает тип содержимого
         as_attachment=True,  # указание браузеру, что файл должен быть скачан (а не открыт в браузере)
         # download_name=f'certificate_{cert_data["serial_num"]}.der'
@@ -265,11 +285,10 @@ def download_certificate():
 
 @app.route('/download-private-key')
 def download_private_key():
-    certsAsn1 = app.config[CERTSASN1]
-    if certsAsn1.rootCert is None or certsAsn1.rootCert.private_key is None:
+    if app.config[PRIV_KEY_TO_SEND] is None:
         return "Private key not found", 404
     
-    key_file = BytesIO(certsAsn1.rootCert.private_key) 
+    key_file = BytesIO(app.config[PRIV_KEY_TO_SEND]) 
     return send_file(
         key_file,
         as_attachment=True,    
@@ -280,15 +299,15 @@ def download_private_key():
 
 @app.route('/show-password')
 def show_password():
-    certsAsn1 = app.config[CERTSASN1]
-    if certsAsn1.rootCert is None or certsAsn1.rootCert.password is None:
+    if app.config[PWD_TO_SEND]:
         return "Password not found", 404
     
-    return render_template('show_password.html', password=certsAsn1.rootCert.password)
+    return render_template('show_password.html', password=app.config[PWD_TO_SEND])
 
 '''------------------------------------------------ ОТЗЫВ СЕРТИФИКАТОВ ------------------------------------'''
 @app.route('/revoke-certificate')
 def revoke_certificate_page():
+    '''
     # try:
     #     conn = get_db_connection()
     #     cursor = conn.cursor(cursor_factory=DictCursor)
@@ -314,7 +333,7 @@ def revoke_certificate_page():
     #     return render_template('revoke_certificate.html', certificates=certs_data)
     
     # except Exception as e:
-    #     return render_template('error.html', error=str(e)), 500
+    #     return render_template('error.html', error=str(e)), 500'''
     try:
         revoked_certs = []
         with db_manager.get_cursor() as cursor:
@@ -336,10 +355,9 @@ def revoke_certificate_page():
     except Exception as e:
         return render_template('error.html', error=str(e)), 500
 
-
-
 @app.route('/api/revoke-certificate', methods=['POST'])
 def revoke_certificate():
+    '''
     # try:
     #     data = request.get_json()
     #     if not data or 'certificates' not in data:
@@ -388,7 +406,7 @@ def revoke_certificate():
     #         conn.close()
     
     # except Exception as e:
-    #     return jsonify({"error": str(e)}), 500
+    #     return jsonify({"error": str(e)}), 500'''
     try:
         data = request.get_json()
         if not data or 'certificates' not in data:
@@ -433,7 +451,7 @@ def revoke_certificate():
 @app.route('/send-p10')
 def upload_p10_form():
     return render_template('send_p10.html')
-
+'''
 # --------------------------------------------------- ВЕРСИЯ БЕЗ ИНТЕРФЕЙСА ---------------------------------------------
 # # прием запроса на создание сертификата (файла .p10)
 # @app.route('/api/create_certificate_p10', methods=['POST'])
@@ -490,9 +508,8 @@ def upload_p10_form():
 #     except Exception as e:
 #         logger.error(f"Error while sending .pem file: {str(e)}")
 #         return jsonify({f"Error while sending .pem file: {str(e)}"}), 500 
-
+'''
  
-
 @app.route('/api/create_certificate_p10', methods=['POST'])
 def create_certificate_p10():
     try:
@@ -668,6 +685,7 @@ def download_certificate_p10():
         logger.error(f"Error downloading certificate: {str(e)}")
         return redirect(url_for('upload_p10_form'))
 
+'''
 # @app.route('/download-certificate-p10')
 # def download_certificate_p10(filename):
 #     try:
@@ -692,10 +710,7 @@ def download_certificate_p10():
 #     except Exception as e:
 #         logger.error(f"Error downloading certificate: {str(e)}", exc_info=True)
 #         return render_template('error.html', 
-#                             error=f"Error downloading certificate: {str(e)}"), 500
-
-
-
+#                             error=f"Error downloading certificate: {str(e)}"), 500'''
 
 '''------------------------CRL КНОПО4КА ------------'''
 @app.route('/download-crl') 
@@ -756,12 +771,11 @@ def initialize_application():
         logger.info(f"current_dir: {current_dir}")
         create_app_folders()
 
-        # required_templates = ['index.html', 'revoke_certificate.html', 'create_selfsigned_certificate.html']
-        # for template in required_templates:
-        #     if not os.path.exists(f'./templates/{template}'):
-        #         logger.error(f"Шаблон {template} не найден в директории templates")
-
-        init_root_cert()
+        # init_root_cert()
+        app.config[CERTSASN1] = CertsAsn1()
+        app.config[ROOT_CERT_TO_SEND] = None
+        app.config[PRIV_KEY_TO_SEND] = None
+        app.config[PWD_TO_SEND] = None
 
         logger.info("Application initialized successfully")
     except Exception as e:
