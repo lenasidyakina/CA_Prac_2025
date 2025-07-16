@@ -260,7 +260,7 @@ def download_certificate():
         mimetype='application/x-x509-ca-cert', # указывает тип содержимого
         as_attachment=True,  # указание браузеру, что файл должен быть скачан (а не открыт в браузере)
         # download_name=f'certificate_{cert_data["serial_num"]}.der'
-        download_name="certificate.der"
+        download_name="root_certificate.der"
     )
 
 @app.route('/download-private-key')

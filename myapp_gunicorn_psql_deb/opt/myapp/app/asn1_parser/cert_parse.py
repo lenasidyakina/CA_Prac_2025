@@ -146,10 +146,10 @@ class CertsAsn1:
         version = 1
         encoder.write(version, asn1.Numbers.Integer) 
 
-        encoder.enter(asn1.Numbers.Sequence)    # AlgorithmIdentifier
+        # encoder.enter(asn1.Numbers.Sequence)    # AlgorithmIdentifier
         alg_type = ALL_ALG_PARAMS[self.rootCert.alg_type]
         encoder._emit(self._signAlgId_encode(alg_type))
-        encoder.leave()                         # out AlgorithmIdentifier   
+        # encoder.leave()                         # out AlgorithmIdentifier   
 
         issuer_rdn_bytes = self.rootCert.issuer_rdn_bytes
         encoder._emit(issuer_rdn_bytes)
