@@ -134,9 +134,17 @@
             pointer-events: none;
         }
         
-        /* Стиль для усеченных серийных номеров */
         .serial-number {
             cursor: help;
+        }
+
+        .sent {
+            color: green;
+            font-weight: bold;
+        }
+
+        .not-sent {
+            color: #888;
         }
         
     </style>
@@ -155,6 +163,7 @@
                     <th>Дата признания недействительным</th>
                     <th>Причина отзыва</th>
                     <th>Серийный номер сертификата-источника</th>
+                    <th>Отправка в цс</th>
                 </tr>
             </thead>
             <tbody>
@@ -208,6 +217,9 @@
                     </td>
                     <td class="serial-number" title="{{ cert.source_serial_number }}">
                         {{ cert.source_serial_number[:10] }}{% if cert.source_serial_number|length > 10 %}...{% endif %}
+                    </td>
+                    <td class="{% if cert.send_to_ca == 'Отправлен в цс' %}sent{% else %}not-sent{% endif %}">
+                        {{ cert.send_to_ca }}
                     </td>
                 </tr>
                 {% endfor %}

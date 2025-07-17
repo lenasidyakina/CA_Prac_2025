@@ -175,6 +175,24 @@ DB_USER=$db_user
 DB_PASS=$db_pass
 EOL
 
+cat <<EOF >> "$DB_CONFIG"
+[app]
+UPLOAD_FOLDER=uploads
+CREATED_FILES_FOLDER=created_files
+ROOT_CERT_FOLDER=root_certs
+CERTSASN1=CertsAsn1
+ROOT_CERT_TO_SEND=rootcertbytestosend
+PRIV_KEY_TO_SEND=privatekeybytestosend
+PWD_TO_SEND=passwordtosend
+APP_LOG_DIR=/var/log/myapp
+APP_LOG_FILE=/var/log/myapp/app.log
+FILENAME_SELF_SIGNED=root_certificate.der
+FILENAME_PRIVATE_KEY=private.key
+FILENAME_CERTIFICATE_P10=certificate.der
+FILENAME_CRL=crl.der
+EOF
+
+
 # Настройка прав доступа к конфигу
 chown www-data:www-data "$DB_CONFIG"
 chmod 640 "$DB_CONFIG"

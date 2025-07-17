@@ -4,12 +4,21 @@
     <meta charset="UTF-8">
     <title>Ошибка</title>
     <style>
+         html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
             max-width: 800px;
             margin: 0 auto;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
         h1 {
             color: #d32f2f;
@@ -21,7 +30,7 @@
             border-radius: 5px;
             margin: 20px auto;
             border: 2px solid #d32f2f;
-            font-size: 18px;
+            font-size: 22px;
             max-width: 600px;
             text-align: left;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -31,14 +40,13 @@
             margin-top: 30px;
             color: #8a2be2; 
             text-decoration: underline;
-            font-size: 22px;
+            font-size: 25px;
             cursor: pointer;
             transition: color 0.3s;
             background: none;
             border: none;
             padding: 0;
         }
-
         .home-link:hover {
             color: #6a1b9a; 
         }

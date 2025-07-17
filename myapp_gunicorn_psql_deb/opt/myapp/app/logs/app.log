@@ -1225,3 +1225,7 @@
 2025-07-16 15:45:00,105 - __main__ - INFO - Certificate was successfully created
 2025-07-16 15:45:16,401 - __main__ - INFO - template - t_all_worker
 2025-07-16 15:45:16,401 - __main__ - INFO - RDNTemplate fields: surname=True, givenName=True, organizationalUnitName=True, title=True, commonName=False, organizationName=False, countryName=False, stateOrProvinceName=False, localityName=False, streetAddress=False
+2025-07-16 22:45:47,105 - __main__ - INFO - Successfully connected to database
+2025-07-16 22:45:47,110 - __main__ - INFO - Application starting...
+2025-07-16 22:45:47,110 - __main__ - INFO - current_dir: /home/lusix/prac/changing_rootcert/myapp_gunicorn_psql_deb/opt/myapp/app
+2025-07-16 22:45:47,136 - __main__ - ERROR - Failed to initialize application: /lib/libbicry_openkey.so: undefined symbol: generate_temp_keypair

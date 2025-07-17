@@ -9,13 +9,11 @@ from asn1_parser.models.RevokedCertificates import RevokedCertificates, CRLReaso
 
 class DatabaseManager:
     def __init__(self, logger):
-        """Инициализация менеджера базы данных с логгером"""
         self._connection = None
         self.logger = logger
         self._connect()
         
     def _connect(self):
-        """Устанавливает соединение с базой данных"""
         config = self._get_db_config()
         try:
             self._connection = psycopg2.connect(
@@ -32,7 +30,6 @@ class DatabaseManager:
             raise
             
     def _get_db_config(self):
-        """Получает конфигурацию базы данных"""
         config = ConfigParser()
         try:
             config.read('../../../etc/myapp/db.env')
@@ -53,7 +50,6 @@ class DatabaseManager:
     
     @contextmanager
     def get_cursor(self):
-        """Предоставляет курсор для работы с базой данных"""
         cursor = None
         try:
             if self._connection.closed:
@@ -88,58 +84,95 @@ class DatabaseManager:
             
         return number
 
+    # def get_revoked_certificates(self):
+    #     revoked_certificates = []
+    #     with self.get_cursor() as cursor:
+    #         # cursor.execute("SELECT serial_number, revoke_date, revoke_reason, invalidity_date FROM certificates WHERE is_revoked = TRUE")
+    #         cursor.execute("SELECT serial_number, revoke_date, revoke_reason, invalidity_date FROM certificates WHERE is_revoked = TRUE and send_to_ca = FALSE")
+            
+    #         for row in cursor.fetchall():
+    #             serialNumber = int(row[0])
+    #             revocationDate = row[1]
+    #             crlReasonCode = CRLReasonCode[row[2]] if row[2] else CRLReasonCode.unspecified
+    #             invalidityDate = row[3]
+                
+    #             revoked_certificates.append(
+    #                 RevokedCertificates(
+    #                     serialNumber=serialNumber,
+    #                     revocationDate=revocationDate,
+    #                     crlReasonCode=crlReasonCode,
+    #                     invalidityDate=invalidityDate
+    #                 )
+    #             )
+    #     return revoked_certificates
     def get_revoked_certificates(self):
         revoked_certificates = []
         with self.get_cursor() as cursor:
-            cursor.execute("SELECT serial_number, revoke_date, revoke_reason, invalidity_date FROM certificates WHERE is_revoked = TRUE")
+            cursor.execute("""
+                SELECT serial_number, revoke_date, revoke_reason, invalidity_date 
+                FROM certificates 
+                WHERE is_revoked = TRUE AND send_to_ca = FALSE
+            """)
             
+            serial_numbers = []
             for row in cursor.fetchall():
-                serialNumber = int(row[0])
-                revocationDate = row[1]
-                crlReasonCode = CRLReasonCode[row[2]] if row[2] else CRLReasonCode.unspecified
-                invalidityDate = row[3]
-                
-                revoked_certificates.append(
-                    RevokedCertificates(
-                        serialNumber=serialNumber,
-                        revocationDate=revocationDate,
-                        crlReasonCode=crlReasonCode,
-                        invalidityDate=invalidityDate
+                serial_str = row[0]
+                try:
+                    serialNumber = int(serial_str)
+                    
+                    revoked_certificates.append(
+                        RevokedCertificates(
+                            serialNumber=serialNumber,
+                            revocationDate=row[1],
+                            crlReasonCode=CRLReasonCode[row[2]] if row[2] else CRLReasonCode.unspecified,
+                            invalidityDate=row[3]
+                        )
                     )
-                )
+                    serial_numbers.append(serial_str)
+                except ValueError:
+                    self.logger.error(f"Invalid serial number format: {serial_str}")
+                    continue
+            
+            # Обновляем каждый сертификат по отдельности
+            if serial_numbers:
+                updated_count = 0
+                for serial in serial_numbers:
+                    try:
+                        cursor.execute("""
+                            UPDATE certificates 
+                            SET send_to_ca = TRUE 
+                            WHERE serial_number = %s
+                        """, (serial,))
+                        updated_count += 1
+                    except Exception as e:
+                        self.logger.error(f"Failed to update certificate {serial}: {str(e)}")
+                
+                
         return revoked_certificates
-
+    
+    
     
 
+
+    def insert_to_db(self, serial_number, source_serial_number):
+        try:
+            with self.get_cursor() as cursor:
+                cursor.execute(
+                    """INSERT INTO certificates 
+                    VALUES (%s, false, null, null, null, %s, false)""",
+                    (serial_number, source_serial_number)
+                )
+            return True
+        except Exception as e:
+            self.logger.error(f"Error while inserting certificate to database: {str(e)}")
+            return False
+
+
     def close(self):
-        """Закрывает соединение с базой данных"""
         if self._connection and not self._connection.closed:
             self._connection.close()
             self.logger.info("Database connection closed")
     
     def __del__(self):
-        """Деструктор - закрывает соединение при уничтожении объекта"""
+        #Деструктор
         self.close()
-
-
-# class Storage:
-#     def __init__(self, logger: Logger):
-#         config = get_db_config(logger=logger)
-#         try:
-#             conn = psycopg2.connect(
-#                 host=config['host'],
-#                 port=config['port'],
-#                 dbname=config['database'],
-#                 user=config['user'],
-#                 password=config['password'],
-#                 # connect_timeout=10  # Таймаут подключения 10 секунд
-#             )
-#             # logger.info("Successfully connected to data base")
-#             self.connection = conn
-#         except psycopg2.Error as e:
-#             errtext = f"Data base connection error: {str(e)}"
-#             logger.error(errtext)
-#             raise Exception(errtext)
-
-#     def get_db_connection(self):
-#         return self.connection

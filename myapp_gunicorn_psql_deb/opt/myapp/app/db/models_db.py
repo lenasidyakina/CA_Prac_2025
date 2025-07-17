@@ -43,18 +43,19 @@ class Certificate(Base):
     revoke_reason = Column(Text)
     #revoke_reason = Column(Integer)
 
-    # send_to_ocsp = Column(
-    #     Boolean,
-    #     server_default="false",
-    #     nullable=False
-    # )
-
+    
     invalidity_date = Column(Date)
 
     source_serial_number = Column(
         String(100), nullable=False
     )
     
+    send_to_ca = Column(
+        Boolean,
+        server_default="false",
+        nullable=False
+    )
+
     
     # Валидация на уровне Python
     @validates('serial_number')
@@ -70,6 +71,7 @@ class Certificate(Base):
         if value and value > datetime.now().date():
             raise ValueError("Дата отзыва сертификата не может быть в будущем")
         return value
+    
     
     # @validates('revoke_reason')
     # def validate_revoke_reason(self, key, value):
@@ -103,7 +105,7 @@ class Certificate(Base):
         if not value.isdigit():
             raise ValueError("Серийный номер самоподписанного сертификата должен содержать только цифры")
         if len(value) > 100:
-            raise ValueError("Серийный номер самоподписанного сертификата не может быть длиннее 20 символов")
+            raise ValueError("Серийный номер самоподписанного сертификата не может быть длиннее 100 символов")
         return value
 
     @validates('is_revoked')
@@ -111,6 +113,14 @@ class Certificate(Base):
         if value and not self.revoke_date:
             raise ValueError("Дата отзыва обязательна при отзыве сертификата")
         return value
+    
+
+    @validates('send_to_ca')
+    def validate_is_revoked(self, key, value):
+        if value and not self.revoke_date:
+            raise ValueError("Сертификат имеет статус 'отправлен в цс', только если он уже является отозванным")
+        return value
+    
 
     # Ограничения уровня БД
     __table_args__ = (
@@ -141,6 +151,10 @@ class Certificate(Base):
     CheckConstraint(
         "(is_revoked = false) OR (is_revoked = true AND revoke_date IS NOT NULL AND invalidity_date IS NOT NULL)",
         name="ck_certificates_revoke_date_required_when_revoked"
+    ),
+    CheckConstraint(
+        "(send_to_ca = false) OR (send_to_ca = true AND is_revoked = true)",
+        name="ck_certificates_sendtoca_true_when_revoked"
     ),
 )
 
