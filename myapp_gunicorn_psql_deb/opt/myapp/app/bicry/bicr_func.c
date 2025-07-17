@@ -43,14 +43,13 @@ int init_bicr() {
     if (!log_file) return ERR_OPEN_FILE;
     
     write_log("DEBUG", "Initializing BICRY library");
-    write_log("INFO", "------- 1");
     int result = cr_load_bicr_dll("");
     if (result != ERR_OK) {
         write_log("ERROR", "Failed to load BICRY DLL");
         close_log();
         return result;
     }
-    write_log("INFO", "------- 2");
+
     int init_mode = 0;
     result = cr_init(0, "", "", "", NULL, NULL, &init_mode, &init_handle);
     if (result != ERR_OK) {
@@ -58,7 +57,7 @@ int init_bicr() {
         close_log();
         return result;
     }
-    write_log("INFO", "------- 3");
+
     int flag_init_grn = 1;
     result = cr_init_prnd(init_handle, PATH "prnd.key", flag_init_grn);
     if (result != ERR_OK) {

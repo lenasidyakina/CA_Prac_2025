@@ -273,13 +273,6 @@ def update_rootcert():
         logger.error(f"Error updating root certificate: {str(e)}")
         return render_template('error_update_rootcert.html', error=str(e)), 500
 
-def change_active_root_cert():
-    cert_bytes, private_key, password = bytes(), bytes(), '1234'
-    certsAsn1 = app.config[CERTSASN1]
-    certsAsn1.change_active_root_cert(cert_bytes=cert_bytes,
-                                      private_key=private_key,
-                                      password=password)
-
 '''------------------------------------------------ ОТЗЫВ СЕРТИФИКАТОВ ------------------------------------'''
 @app.route('/revoke-certificate')
 def revoke_certificate_page():

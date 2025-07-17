@@ -30,15 +30,21 @@ class NumberLogger:
         self._running = False
 
         # Настройка логирования
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(self.log_file),
-                logging.StreamHandler(sys.stdout)
-            ]
-        )
+        # logging.basicConfig(
+        #     level=logging.INFO,
+        #     format='%(asctime)s - %(levelname)s - %(message)s',
+        #     handlers=[
+        #         logging.FileHandler(self.log_file),
+        #         logging.StreamHandler(sys.stdout)
+        #     ]
+        # )
         self.logger = logging.getLogger('NumberLogger')
+        self.logger.setLevel(logging.INFO)
+        file_handler = logging.FileHandler(self.log_file)
+        file_handler.setFormatter(
+            logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        )
+        self.logger.addHandler(file_handler)
 
         # Инициализация файла
         try:
@@ -53,18 +59,18 @@ class NumberLogger:
         self.db_manager = DatabaseManager(logger=self.logger)
         self.logger.info(f"inited db_manager")
 
-        self.certAsn1 = CertsAsn1()
+        self.certsAsn1 = CertsAsn1()
         self.logger.info(f"inited CertsAsn1 + Bicry")
         try:
-            with open('./root_cert_daemon/root_certificate.der', 'rn') as f:
+            with open('/opt/myapp/app/root_cert_daemon/root_certificate.der', 'rb') as f:
                 cert_bytes = f.read()
-            self.logger.info(f"read root_cert_daemon/cert_bytes")
-            with open('./root_cert_daemon/private.key', 'rn') as f:
+            self.logger.info(f"read root_cert_daemon/cert_bytes {cert_bytes.hex()}")
+            with open('/opt/myapp/app/root_cert_daemon/private.key', 'rb') as f:
                 private_key = f.read()
-            self.logger.info(f"read root_cert_daemon/private.key")
-            with open('./root_cert_daemon/pwd.txt', 'r') as f:
-                password = f.read()
-            self.logger.info(f"read root_cert_daemon/pwd.txt")
+            self.logger.info(f"read root_cert_daemon/private.key  {private_key.hex()}")
+            with open('/opt/myapp/app/root_cert_daemon/pwd.txt', 'r') as f:
+                password = f.read().strip()
+            self.logger.info(f"read root_cert_daemon/pwd.txt: {password}")
             self.certsAsn1.change_active_root_cert(cert_bytes=cert_bytes,
                                                     private_key=private_key,
                                                     password=password)

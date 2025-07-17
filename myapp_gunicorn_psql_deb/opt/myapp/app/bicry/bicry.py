@@ -22,15 +22,21 @@ import sys
 log_dir = '/var/log/myapp/'
 os.makedirs(log_dir, exist_ok=True)
 lof_file = os.path.join(log_dir, 'bicry.log')
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(lof_file),
-        logging.StreamHandler(sys.stdout)
-    ]
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format='%(asctime)s - %(levelname)s - %(message)s',
+#     handlers=[
+#         logging.FileHandler(lof_file),
+#         logging.StreamHandler(sys.stdout)
+#     ]
+# )
+logger = logging.getLogger('Bicry')
+logger.setLevel(logging.INFO)
+file_handler = logging.FileHandler(lof_file)
+file_handler.setFormatter(
+    logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 )
-logger = logging.getLogger('NumberLogger')
+logger.addHandler(file_handler)
 
 '''
 #При запуске просто приложения:
