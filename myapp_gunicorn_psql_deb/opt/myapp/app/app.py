@@ -261,21 +261,6 @@ def update_rootcert():
             return render_template('error_update_rootcert.html',
                                 error="Private key file is empty"), 400
 
-        # ДЛЯ ОТЛАДКИ ################
-        # test_cert_bytes = None
-        # testfilecert="./test.der"
-        # testfilekey="./test.key"
-        # if os.path.exists(testfilecert) and os.path.exists(testfilekey):
-        #     with open(testfilecert, 'rb') as test_file:
-        #         test_cert_bytes = test_file.read()
-        #     if not test_cert_bytes:
-        #         return render_template('error_update_rootcert.html',
-        #                             error="Тестовый файл сертификата пустой"), 400
-        # else:
-        #     return render_template('error_update_rootcert.html',
-        #                         error=f"Тестовые файлын не найдены"), 400
-        ###############################
-
         certsAsn1 = app.config[CERTSASN1]
         certsAsn1.change_active_root_cert(cert_bytes=cert_bytes,
                                         private_key=private_key,
@@ -288,18 +273,6 @@ def update_rootcert():
         logger.error(f"Error updating root certificate: {str(e)}")
         return render_template('error_update_rootcert.html', error=str(e)), 500
 
-
-
-
-# TODO сделай из этого кнопку на главной.
-# Когда ее нажимают, переходят на страницу в которой надо передать:
-# 1-файл с сертификатом (.der)
-# 2-файл c private.key
-# 3-ввести пароль
-# эти данные передаются сюда и считываются в строки байт и пароль
-# результат выполнения слова что активный корневой серт изменен
-# отсюда могут выпасть ошибки разного рода, связанне с невалидностью файлов
-# (сама ты можешь только провалижировать что пароль не пуст и что файлы не пусты)
 def change_active_root_cert():
     cert_bytes, private_key, password = bytes(), bytes(), '1234'
     certsAsn1 = app.config[CERTSASN1]
@@ -570,7 +543,6 @@ def download_crl():
         # return redirect(url_for('index'))
         return render_template('error.html',
                             error=f"Error create crl: {str(e)}"), 500
-
 
 '''-------------------------------------------------------------------------------'''
 def create_app_folders():

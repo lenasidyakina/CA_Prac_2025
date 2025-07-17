@@ -14,8 +14,6 @@ from asn1_parser.cert_parse import CertsAsn1
 from db.DatabaseManager import DatabaseManager
 
 CONFIG_FILE = '../../../etc/myapp/crl_daemon.conf'
-ROOT_CERT_FOLDER = 'root_certs'  # для корневых сертификатов
-ROOT_CERT_PATH = os.path.join(ROOT_CERT_FOLDER, 'root_cert.der')
 
 
 class NumberLogger:
@@ -36,7 +34,7 @@ class NumberLogger:
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
             handlers=[
-                logging.FileHandler(self.error_file),
+                logging.FileHandler(self.log_file),
                 logging.StreamHandler(sys.stdout)
             ]
         )
@@ -53,6 +51,26 @@ class NumberLogger:
             self.logger.error(f"Failed to initialize log file: {str(e)}")
 
         self.db_manager = DatabaseManager(logger=self.logger)
+        self.logger.info(f"inited db_manager")
+
+        self.certAsn1 = CertsAsn1()
+        self.logger.info(f"inited CertsAsn1 + Bicry")
+        try:
+            with open('./root_cert_daemon/root_certificate.der', 'rn') as f:
+                cert_bytes = f.read()
+            self.logger.info(f"read root_cert_daemon/cert_bytes")
+            with open('./root_cert_daemon/private.key', 'rn') as f:
+                private_key = f.read()
+            self.logger.info(f"read root_cert_daemon/private.key")
+            with open('./root_cert_daemon/pwd.txt', 'r') as f:
+                password = f.read()
+            self.logger.info(f"read root_cert_daemon/pwd.txt")
+            self.certsAsn1.change_active_root_cert(cert_bytes=cert_bytes,
+                                                    private_key=private_key,
+                                                    password=password)
+            self.logger.info(f"change_active_root_cert end")
+        except Exception as e:
+            self.logger.error(f"ERROR: read files root_cert or change_active_root_cert")
 
     def _read_interval_from_config(self):
         """Чтение интервала из конфигурационного файла"""
@@ -82,24 +100,14 @@ class NumberLogger:
             try:
                 array_of_revoked_certificate = self.db_manager.get_revoked_certificates()
                 current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-                with open(ROOT_CERT_PATH, 'rb') as f:  
-                    cert_bytes = f.read()
-                root = restore_root_cert(cert_bytes)
-                # print(root)
-                certsAsn1 = CertsAsn1(rootCert=root)
-
                 
-                crl_bytes = certsAsn1.create_crl(
+                crl_bytes = self.certsAsn1.create_crl(
                     revokedCerts=array_of_revoked_certificate,
                     thisUpdate=datetime.now(tz=timezone.utc),
                     nextUpdate=datetime.now(tz=timezone.utc) + timedelta(seconds=self.interval))
-                certsAsn1.bicrypt.close()
                 
                 with open('/opt/myapp/app/crl.pem', 'w') as f:
-                    f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL"))
-            
-                
+                    f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL"))    
                 self.logger.info(f"Updated numbers at {current_time}")
 
             except Exception as e:
@@ -110,6 +118,7 @@ class NumberLogger:
 
     def stop(self):
         self._running = False
+        self.certsAsn1.bicrypt.close()
         self.logger.info("Number logger stopped")
 
 
