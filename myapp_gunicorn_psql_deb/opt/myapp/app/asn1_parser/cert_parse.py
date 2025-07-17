@@ -47,7 +47,7 @@ class CertsAsn1:
             sign_algid_bytes=self._signAlgId_encode(alg_param=alg_param),
             beg_date=params.beg_validity_date, end_date=params.end_validity_date,
             subjectPKinfo_bytes=self._subjPKInfo_encode(alg_param=alg_param, public_key=public_key),
-            attr_bytes_list=params.extentions.extentions_cert_encode()
+            attr_bytes_list=params.extentions.extentions_cert_encode(public_key)
         )
 
         signature_bytes = self.bicrypt.temp_electronic_signature(tbsCertificate_bytes)

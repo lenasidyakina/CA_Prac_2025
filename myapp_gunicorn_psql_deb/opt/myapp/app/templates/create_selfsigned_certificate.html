@@ -162,7 +162,7 @@
         }
 
         #basicConstraintsParams {
-            padding-left: 28px; /* Отступ равный чекбоксу */
+            padding-left: 28px; 
             transition: all 0.3s ease;
         }
 
@@ -311,12 +311,105 @@
                         basicConstraints
                     </label>
                     <div class="extension-params" data-extension="basicConstraints" style="display: none; margin-top: 10px;">
-                        <label>Максимальная глубина цепочки:</label>
-                        <input type="number" name="basicConstraints_max_depth" min="1" value="1" style="width: 100px; margin-left: 10px;">
+                    
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="basicConstraints_critical" value="true">
+                                Является критичным
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Максимальное число сертификатов, которые могут быть в цепочке дальше:</label>
+                            <input type="number" name="basicConstraints_max_depth" min="1" value="1" style="width: 100px; margin-left: 10px;">
+                        </div>
                     </div>
                 </div>
+
+
+                <!-- Key Usage -->
+                <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="extensions" value="keyUsage" class="extension-checkbox">
+                    keyUsage
+                </label>
+                <div class="extension-params" data-extension="keyUsage" style="display: none; margin-top: 10px;">
+                   
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="keyUsage_critical" value="true">
+                            Является критичным
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="keyUsage_digitalSignature" value="true">
+                            digitalSignature (ключ используется для проверки цифровых подписей (кроме подписей на сертификатах и CRL))
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="keyUsage_nonRepudiation" value="true">
+                            nonRepudiation (ключ используется для проверки подписей, обеспечивающих неотказуемость (защита от отказа от подписи))
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="keyUsage_keyEncipherment" value="true">
+                            keyEncipherment (ключ применяется для шифрования других ключей)
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="keyUsage_dataEncipherment" value="true">
+                            dataEncipherment (ключ напрямую шифрует пользовательские данные)
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="keyUsage_keyAgreement" value="true">
+                            keyAgreement (ключ используется для согласования ключей)
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="keyUsage_keyCertSign" value="true">
+                            keyCertSign (ключ применяется для подписи сертификатов)
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="keyUsage_cRLSign" value="true">
+                            cRLSign (ключ проверяет подписи списков отзыва (CRL))
+                        </label>
+                    </div>
+
+                    <div class="form-group" id="keyAgreementParams" style="display: none; margin-left: 20px;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="keyUsage_encipherOnly" value="true">
+                            encipherOnly (ключ может только шифровать данные при согласовании ключей)
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="keyUsage_decipherOnly" value="true">
+                            decipherOnly (люч может только расшифровывать данные при согласовании ключей.)
+                        </label>
+                    </div>
+                </div>
+            </div>
                 
-                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="extensions" value="subjectKeyIdentifier" class="extension-checkbox">
+                        subjectKeyIdentifier 
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -325,7 +418,6 @@
             <button type="submit" class="button">Создать сертификат</button>
         </form>
         
-        <!-- ОТЛАДОЧНЫЙ ВЫВОД -->
         <div id="result" class="result" style="display: none;">
             <h3>Результат:</h3>
             <p id="resultText"></p>
@@ -336,7 +428,6 @@
     </div>
 
     <script>
-        // Установка значений по умолчанию при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
             // Установка текущей даты для начала действия
             const today = new Date();
@@ -353,8 +444,6 @@
             const algorithmSelect = document.getElementById('algorithm');
             algorithmSelect.value = 'b'; // Параметр В по умолчанию
 
-            // const extensionSelect = document.getElementById('extension');
-            // extensionSelect.value = 'basicConstraints';
         });
         // переключение вкладок
         document.querySelectorAll('.tab').forEach(tab => {
@@ -367,20 +456,73 @@
             });
         });
 
-        
-        // обработчик для всех чекбоксов расширений
+        // обработка чек боксов
         document.querySelectorAll('.extension-checkbox').forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 const extensionName = this.value;
                 const paramsDiv = document.querySelector(`.extension-params[data-extension="${extensionName}"]`);
-                paramsDiv.style.display = this.checked ? 'block' : 'none';
                 
-                // Делаем поля обязательными, если чекбокс отмечен
-                paramsDiv.querySelectorAll('input, select').forEach(field => {
-                    field.required = this.checked;
-                });
+                if (paramsDiv) {
+                    paramsDiv.style.display = this.checked ? 'block' : 'none';
+                }
+                
+                if (extensionName === 'keyUsage' && !this.checked) {
+                    const allKeyUsageInputs = document.querySelectorAll('.extension-params[data-extension="keyUsage"] input[type="checkbox"]');
+                    allKeyUsageInputs.forEach(input => {
+                        input.checked = false;
+                    });
+                    document.getElementById('keyAgreementParams').style.display = 'none';
+                }
             });
         });
+
+            
+       // Обработчик для keyUsage
+        const keyUsageCheckbox = document.querySelector('input[name="extensions"][value="keyUsage"]');
+        if (keyUsageCheckbox) {
+            keyUsageCheckbox.addEventListener('change', function() {
+                const paramsDiv = document.querySelector('.extension-params[data-extension="keyUsage"]');
+                if (paramsDiv) {
+                    paramsDiv.style.display = this.checked ? 'block' : 'none';
+                    
+                    if (!this.checked) {
+                        const allKeyUsageInputs = paramsDiv.querySelectorAll('input[type="checkbox"]');
+                        allKeyUsageInputs.forEach(input => {
+                            input.checked = false;
+                        });
+                        
+                        const keyAgreementParams = document.getElementById('keyAgreementParams');
+                        if (keyAgreementParams) keyAgreementParams.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+       // Обработчик для keyAgreement (дополнительные параметры)
+        const keyAgreementCheckbox = document.querySelector('input[name="keyUsage_keyAgreement"]');
+        if (keyAgreementCheckbox) {
+            keyAgreementCheckbox.addEventListener('change', function() {
+                const keyAgreementParams = document.getElementById('keyAgreementParams');
+                if (keyAgreementParams) {
+                    keyAgreementParams.style.display = this.checked ? 'block' : 'none';
+                    
+                    if (!this.checked) {
+                        const agreementInputs = keyAgreementParams.querySelectorAll('input[type="checkbox"]');
+                        agreementInputs.forEach(input => {
+                            input.checked = false;
+                        });
+                    }
+                }
+            });
+        }
+
+        // Обработчик для чекбокса subjectKeyIdentifier
+        const subjectKeyIdentifierCheckbox = document.querySelector('input[name="extensions"][value="subjectKeyIdentifier"]');
+        if (subjectKeyIdentifierCheckbox) {
+            subjectKeyIdentifierCheckbox.addEventListener('change', function() {
+                console.log('subjectKeyIdentifier checked:', this.checked);
+            });
+        }
 
         // отправка формы 
         document.getElementById('certForm').addEventListener('submit', async (e) => {
@@ -403,17 +545,14 @@
                 return;
             }
 
-            // Проверяем тип ответа
             const contentType = response.headers.get('content-type');
             
-            // Если это HTML (например error.html)
             if (contentType && contentType.includes('text/html')) {
                 const html = await response.text();
                 document.body.innerHTML = html; // Заменяем всю страницу
                 return;
             }
             
-            // Если это JSON (альтернативный вариант обработки ошибок)
             if (contentType && contentType.includes('application/json')) {
                 const data = await response.json();
                 if (!response.ok) {
@@ -421,11 +560,9 @@
                 }
             }
 
-            // Другие случаи
             throw new Error(`Неожиданный ответ сервера: ${response.status}`);
             
         } catch (error) {
-            // Красивое отображение ошибки вместо alert
             const errorDiv = document.createElement('div');
             errorDiv.style.cssText = `
                 position: fixed;
@@ -442,7 +579,6 @@
             errorDiv.textContent = `Ошибка: ${error.message}`;
             document.body.appendChild(errorDiv);
             
-            // Автоскрытие через 5 секунд
             setTimeout(() => errorDiv.remove(), 5000);
             
         } finally {

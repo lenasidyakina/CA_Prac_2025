@@ -112,7 +112,6 @@ class DatabaseManager:
                     self.logger.error(f"Invalid serial number format: {serial_str}")
                     continue
             
-            # Обновляем каждый сертификат по отдельности
             if serial_numbers:
                 updated_count = 0
                 for serial in serial_numbers:

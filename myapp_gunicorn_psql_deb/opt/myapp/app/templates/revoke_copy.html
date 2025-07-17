@@ -258,7 +258,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             const checkboxes = document.querySelectorAll('.cert-checkbox');
             
-            // Функция для обновления состояния полей
             function updateFields(checkbox) {
                 const row = checkbox.closest('tr');
                 const dateInput = row.querySelector('.date-input');
@@ -279,17 +278,14 @@
                 }
             }
             
-            // Инициализация при загрузке
             checkboxes.forEach(checkbox => {
                 updateFields(checkbox);
                 
-                // Обработчик изменений
                 checkbox.addEventListener('change', function() {
                     updateFields(this);
                 });
             });
             
-            // Обработчик формы
             document.getElementById('revokeForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 

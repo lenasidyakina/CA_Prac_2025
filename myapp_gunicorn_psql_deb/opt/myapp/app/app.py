@@ -26,7 +26,7 @@ from cert_templates.parse import file_to_dict
 def setup_logging():
     logger = logging.getLogger(__name__)
 
-    # тобы логгер не дублировал сообщения
+    # чтобы логгер не дублировал сообщения
     logger.propagate = False
 
     logger.setLevel(logging.DEBUG)
@@ -65,7 +65,6 @@ def setup_logging():
         handlers = [console_handler]
         logger.error(f"Failed to setup file logging: {str(e)}")
 
-    # Очищаем существующие обработчики и добавляем новые
     logger.handlers.clear()
     for handler in handlers:
         logger.addHandler(handler)
@@ -93,6 +92,7 @@ FILENAME_SELF_SIGNED = get_config_value('app', 'FILENAME_SELF_SIGNED')
 FILENAME_PRIVATE_KEY = get_config_value('app', 'FILENAME_PRIVATE_KEY')
 FILENAME_CERTIFICATE_P10 = get_config_value('app', 'FILENAME_CERTIFICATE_P10')
 FILENAME_CRL = get_config_value('app', 'FILENAME_CRL')
+ROOT_CERT_DAEMON = get_config_value('app', 'ROOT_CERT_DAEMON')
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -112,7 +112,7 @@ def create_certificate_page():
 @app.route('/api/create-selfsigned-certificate', methods=['POST'])
 def create_selfsigned_certificate():
     try:
-        req_data = request.form # объект, который содержит данные формы, отправленные POST-запросом (аналог словаря python)
+        req_data = request.form 
 
         # организация
         common_name = req_data.get('common_name', '').strip()
@@ -149,33 +149,38 @@ def create_selfsigned_certificate():
                             streetAddress=org_address, localityName=org_locality)
         
         selected_extensions = request.form.getlist('extensions')
-        extensions_data = {}
         extentions = ExtentionsCert()
         for ext in selected_extensions:
-            ext_params = {}
-            
             if ext == 'basicConstraints':
-                ext_params['max_depth'] = request.form.get('basicConstraints_max_depth', type=int)
-                if ext_params['max_depth'] is None or ext_params['max_depth'] <= 0:
-                    logger.error(f"Максимальная длина цепочки не должна быть целым числом большим 0!")
-                    return render_template('error_self.html', error="Максимальная длина цепочки не должна быть целым числом большим 0!"), 500
+                max_depth = request.form.get('basicConstraints_max_depth', type=int)
+                if max_depth is None or max_depth <= 0:
+                    logger.error(f"Максимальное число сертификатов, которые могут быть в цепочке дальше, должно быть целым числом большим 0!")
+                    return render_template('error_self.html', error="Максимальное число сертификатов, которые могут быть в цепочке дальше, должно быть целым числом большим 0!"), 400
                 extentions.basicConstraints = True
                 extentions.basicConstraints_subject_is_CA = True
-                extentions.basicConstraints_max_depth_certs = ext_params['max_depth'] 
-                logger.info(f"ENTENT :{ext_params['max_depth']}")
-            # # Обработка keyUsage
-            # elif ext == 'keyUsage':
-            #     ext_params['mask'] = request.form.get('keyUsage_mask', type=int)
-            #     if ext_params['mask'] is None:
-            #         return "Некорректная битовая маска", 400
-            
-            # # Обработка extKeyUsage
-            # elif ext == 'extKeyUsage':
-            #     ext_params['types'] = request.form.getlist('extKeyUsage_types')
-            #     if not ext_params['types']:
-            #         return "Выберите хотя бы один тип использования", 400
-            
-            extensions_data[ext] = ext_params
+                extentions.basicConstraints_max_depth_certs = max_depth
+                extentions.basicConstraints_critical = 'basicConstraints_critical' in request.form
+            elif ext == 'keyUsage':
+                extentions.keyUsage = True
+                extentions.keyUsage_critical = 'keyUsage_critical' in request.form
+                extentions.keyUsage_digitalSignature = 'keyUsage_digitalSignature' in request.form
+                extentions.keyUsage_nonRepudiation = 'keyUsage_nonRepudiation' in request.form
+                extentions.keyUsage_keyEncipherment = 'keyUsage_keyEncipherment' in request.form
+                extentions.keyUsage_dataEncipherment = 'keyUsage_dataEncipherment' in request.form
+                extentions.keyUsage_keyAgreement = 'keyUsage_keyAgreement' in request.form
+                extentions.keyUsage_keyCertSign = 'keyUsage_keyCertSign' in request.form
+                extentions.keyUsage_cRLSign = 'keyUsage_cRLSign' in request.form
+                
+                if extentions.keyUsage_keyAgreement:
+                    extentions.keyUsage_encipherOnly = 'keyUsage_encipherOnly' in request.form
+                    extentions.keyUsage_decipherOnly = 'keyUsage_decipherOnly' in request.form
+                else:
+                    extentions.keyUsage_encipherOnly = False
+                    extentions.keyUsage_decipherOnly = False
+                
+            elif ext == 'subjectKeyIdentifier':
+                extentions.subjectKeyIdentifier = True
+                
 
         p = ParamsSelfSignedCert(alg_type=alg_type,
                                 beg_validity_date=beg_date,
@@ -214,7 +219,7 @@ def download_certificate():
 
     return send_file(
         BytesIO(app.config[ROOT_CERT_TO_SEND]),
-        mimetype='application/x-x509-ca-cert', # указывает тип содержимого
+        mimetype='application/x-x509-ca-cert', 
         as_attachment=True,  # указание браузеру, что файл должен быть скачан (а не открыт в браузере)
         # download_name=f'certificate_{cert_data["serial_num"]}.der'
         download_name="root_certificate.der"
@@ -232,7 +237,7 @@ def download_private_key():
         as_attachment=True,
         #download_name=f'private_key{cert_data["serial_num"]}.key',
         download_name="private.key",
-        mimetype="application/octet-stream"  # Указывает, что это бинарный файл
+        mimetype="application/octet-stream"  
     )
 
 @app.route('/show-password')
@@ -276,28 +281,9 @@ def update_rootcert():
             logger.error(f"Password must not be empty")
             return render_template('error_update_rootcert.html', error="Password must not be empty"), 400
 
-
-        # СОХРАНЕНИЕ ФАЙЛОВ ДЛЯ ДЕМОНА
-        save_dir = '/root_cert_daemon'
-        os.makedirs(save_dir, exist_ok=True)
-
-        cert_filename = secure_filename('root_certificate.der')
-        cert_path = os.path.join(save_dir, cert_filename)
-        filecert.seek(0)  
-        filecert.save(cert_path)
-
-        key_filename = secure_filename('private.key')
-        key_path = os.path.join(save_dir, key_filename)
-        filekey.seek(0)  
-        filekey.save(key_path)
-
-        password_file = os.path.join(save_dir, 'password.txt')
-        with open(password_file, 'w') as f:
-            f.write(password)
-        ############################
-
         #получаем как строку байт
         cert_bytes = filecert.read()
+        logger.info(f"BYTES:{cert_bytes}")
         if not cert_bytes:
             logger.error(f"Certificate file is empty")
             return render_template('error_update_rootcert.html',
@@ -312,6 +298,17 @@ def update_rootcert():
         certsAsn1.change_active_root_cert(cert_bytes=cert_bytes,
                                         private_key=private_key,
                                         password=password)
+        #считываем в файлы для демона
+        with open('/opt/myapp/app/root_cert_daemon/root_certificate.der', 'wb') as f:
+                f.write(cert_bytes)
+
+        with open('/opt/myapp/app/root_cert_daemon/private.key', 'wb') as f:
+                f.write(private_key)
+
+        password_file = os.path.join("/opt/myapp/app/root_cert_daemon", 'password.txt')
+        with open(password_file, 'w') as f:
+            f.write(password)
+        logger.info(f"Daemon file created")
 
         return render_template('success.html',
                             message="Активный корневой сертификат успешно изменен")
@@ -319,6 +316,7 @@ def update_rootcert():
     except Exception as e:
         logger.error(f"Error updating root certificate: {str(e)}")
         return render_template('error_update_rootcert.html', error=str(e)), 500
+    
 
 '''------------------------------------------------ ОТЗЫВ СЕРТИФИКАТОВ ------------------------------------'''
 @app.route('/revoke-certificate')
@@ -326,18 +324,17 @@ def revoke_certificate_page():
     try:
         revoked_certs = []
         with db_manager.get_cursor() as cursor:
-            # cursor.execute("SELECT serial_number, is_revoked, revoke_date, invalidity_date, revoke_reason, source_serial_number FROM certificates")
             cursor.execute("SELECT serial_number, is_revoked, revoke_date, invalidity_date, revoke_reason, source_serial_number, send_to_ca FROM certificates")
             certificates = cursor.fetchall()
 
             for cert in certificates:
                 revoked_certs.append({
-                    'serial_number': cert[0],  # serial_number
-                    'status': "Отозван" if cert[1] else "Не отозван",  # is_revoked
-                    'revoke_date': cert[2].strftime('%Y-%m-%d') if cert[2] else None,  # revoke_date
-                    'invalidity_date': cert[3].strftime('%Y-%m-%d') if cert[2] else None,  # invalidity_date (исправлена проверка на revoke_date)
-                    'revoke_reason': cert[4],  # revoke_reason
-                    'source_serial_number': cert[5],  # source_serial_number
+                    'serial_number': cert[0],  
+                    'status': "Отозван" if cert[1] else "Не отозван",  
+                    'revoke_date': cert[2].strftime('%Y-%m-%d') if cert[2] else None,  
+                    'invalidity_date': cert[3].strftime('%Y-%m-%d') if cert[2] else None,  
+                    'revoke_reason': cert[4],  
+                    'source_serial_number': cert[5], 
 
 
                     'send_to_ca': "Отправлен" if cert[6] else "Не отправлен"  
@@ -461,7 +458,7 @@ def create_certificate_p10():
             for values in value_1:
                 setattr(rdn_template, values, True)
 
-        cert_template = CertTemplate(rdn_template)  # пока не трогаем
+        cert_template = CertTemplate(rdn_template)  
 
         serial_num = db_manager.find_serial_number(generate_serial_num())
 
@@ -521,7 +518,6 @@ def certificate_created_p10():
 def download_certificate_p10():
     res_filename = os.path.join(CREATED_FILES_FOLDER, "res.pem")
 
-    # Проверяем существование файла
     if not os.path.exists(res_filename):
         return redirect(url_for('upload_p10_form'))
 
@@ -576,8 +572,8 @@ def download_crl():
 
         return send_file(
             res_filename,
-            mimetype='application/x-x509-ca-cert', # указывает тип содержимого
-            as_attachment=True,  # указание браузеру, что файл должен быть скачан (а не открыт в браузере)
+            mimetype='application/x-x509-ca-cert', 
+            as_attachment=True,  
             # download_name=f'certificate_{cert_data["serial_num"]}.der'
             download_name="crl.der"
         )
@@ -585,7 +581,6 @@ def download_crl():
     except Exception as e:
         logger.error(f"Error create crl: {str(e)}")
 
-        # return redirect(url_for('index'))
         return render_template('error.html',
                             error=f"Error create crl: {str(e)}"), 500
 
@@ -594,7 +589,8 @@ def create_app_folders():
     folders = [
         UPLOAD_FOLDER,
         CREATED_FILES_FOLDER,
-        ROOT_CERT_FOLDER
+        ROOT_CERT_FOLDER,
+        ROOT_CERT_DAEMON
     ]
 
     for folder in folders:
