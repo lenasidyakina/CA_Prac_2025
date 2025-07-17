@@ -327,7 +327,7 @@ def revoke_certificate_page():
     try:
         revoked_certs = []
         with db_manager.get_cursor() as cursor:
-            cursor.execute("SELECT serial_number, is_revoked, revoke_date, invalidity_date, revoke_reason, source_serial_number, send_to_ca FROM certificates")
+            cursor.execute("SELECT serial_number, is_revoked, revoke_date, revoke_reason, source_serial_number, send_to_ca FROM certificates")
             certificates = cursor.fetchall()
 
             for cert in certificates:
@@ -335,10 +335,9 @@ def revoke_certificate_page():
                     'serial_number': cert[0],  
                     'status': "Отозван" if cert[1] else "Не отозван",  
                     'revoke_date': cert[2].strftime('%Y-%m-%d') if cert[2] else None,  
-                    'invalidity_date': cert[3].strftime('%Y-%m-%d') if cert[2] else None,  
-                    'revoke_reason': cert[4],  
-                    'source_serial_number': cert[5], 
-                    'send_to_ca': "Отправлен" if cert[6] else "Не отправлен"  
+                    'revoke_reason': cert[3],  
+                    'source_serial_number': cert[4], 
+                    'send_to_ca': "Отправлен" if cert[5] else "Не отправлен"  
                 })
 
         return render_template('revoke_certificate.html', certificates=revoked_certs)
@@ -359,25 +358,25 @@ def revoke_certificate():
             return jsonify({"error": "No certificates were chosen for revokation"}), 400
             #return render_template('error.html', error="No certificates were chosen for revokation"), 400
 
-        for cert_data in certs_to_revoke:
-            if not cert_data.get('invalidity_date'):
-                return jsonify({
-                    "error": f"Certificate {cert_data['serial_number']} has no invalidity date",
-                    "serial_number": cert_data['serial_number']
-                }), 400
-            try:
-                invalidity_date = datetime.strptime(cert_data['invalidity_date'], "%Y-%m-%d")  
-            except (ValueError, TypeError):
-                return jsonify({
-                    "error": f"Invalid format of invalidity date for certificate {cert_data['serial_number']}",
-                    "serial_number": cert_data['serial_number']
-                }), 400
+        # for cert_data in certs_to_revoke:
+            # if not cert_data.get('invalidity_date'):
+            #     return jsonify({
+            #         "error": f"Certificate {cert_data['serial_number']} has no invalidity date",
+            #         "serial_number": cert_data['serial_number']
+            #     }), 400
+            # try:
+            #     invalidity_date = datetime.strptime(cert_data['invalidity_date'], "%Y-%m-%d")  
+            # except (ValueError, TypeError):
+            #     return jsonify({
+            #         "error": f"Invalid format of invalidity date for certificate {cert_data['serial_number']}",
+            #         "serial_number": cert_data['serial_number']
+            #     }), 400
             
-            if invalidity_date > datetime.now():
-                return jsonify({
-                    "error": f"Certificate {cert_data['serial_number']} has incorrect invalidity date (this date is in the future)",
-                    "serial_number": cert_data['serial_number']
-                }), 400
+            # if invalidity_date > datetime.now():
+            #     return jsonify({
+            #         "error": f"Certificate {cert_data['serial_number']} has incorrect invalidity date (this date is in the future)",
+            #         "serial_number": cert_data['serial_number']
+            #     }), 400
 
         with db_manager.get_cursor() as cursor:
             for cert_data in certs_to_revoke:
@@ -385,11 +384,9 @@ def revoke_certificate():
                     """UPDATE certificates
                     SET is_revoked = TRUE,
                         revoke_date = NOW(),
-                        invalidity_date = %s,
                         revoke_reason = %s
                     WHERE serial_number = %s""",
                     (
-                        cert_data['invalidity_date'],
                         cert_data.get('revoke_reason', 'unspecified'),
                         cert_data['serial_number']
                     )

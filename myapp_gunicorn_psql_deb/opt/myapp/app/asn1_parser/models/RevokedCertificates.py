@@ -15,9 +15,7 @@ class CRLReasonCode(enum.Enum):
 class RevokedCertificates:
     def __init__(self, serialNumber: int, 
                  revocationDate: datetime, 
-                 crlReasonCode: CRLReasonCode,
-                 invalidityDate: datetime):
+                 crlReasonCode: CRLReasonCode):
         self.serialNumber = serialNumber
         self.revocationDate = revocationDate    # Дата отзыва
         self.crlReasonCode = crlReasonCode      # причина отзыва
-        self.invalidityDate = invalidityDate    # Дата признания недействительным
