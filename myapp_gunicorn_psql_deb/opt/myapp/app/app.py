@@ -12,7 +12,7 @@ from datetime import datetime, timezone,  timedelta
 from asn1_parser.cert_parse import CertsAsn1, ErrNoRootCert
 from asn1_parser.asn1_parse import bytes_to_pem, generate_serial_num
 from asn1_parser.models.RootCert import RootCert, restore_root_cert
-from asn1_parser.models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN
+from asn1_parser.models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN, ExtentionsCert
 from asn1_parser.models.CertTemplate import CertTemplate, RDNTemplate, ErrParamsTemplate
 from asn1_parser.models.AlgParams import AlgTypes
 from threading import Lock
@@ -77,7 +77,6 @@ def get_config_value(section, key):
 
 BASE_DIR = Path(__file__).parent
 config = ConfigParser()
-# config.read('../../etc/myapp/db.env')
 config.read('/etc/myapp/db.env')
 
 UPLOAD_FOLDER = get_config_value('app', 'UPLOAD_FOLDER')
@@ -100,7 +99,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 logger = setup_logging()
 db_manager = DatabaseManager(logger)
 
-# главная страница
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -148,11 +147,40 @@ def create_selfsigned_certificate():
                             commonName=common_name, organizationName=org_name,
                             countryName=org_country, stateOrProvinceName=org_region,
                             streetAddress=org_address, localityName=org_locality)
+        
+        selected_extensions = request.form.getlist('extensions')
+        extensions_data = {}
+        extentions = ExtentionsCert()
+        for ext in selected_extensions:
+            ext_params = {}
+            
+            if ext == 'basicConstraints':
+                ext_params['max_depth'] = request.form.get('basicConstraints_max_depth', type=int)
+                if ext_params['max_depth'] is None or ext_params['max_depth'] <= 0:
+                    logger.error(f"Максимальная длина цепочки не должна быть целым числом большим 0!")
+                    return render_template('error_self.html', error="Максимальная длина цепочки не должна быть целым числом большим 0!"), 500
+                extentions.basicConstraints = True
+                extentions.basicConstraints_subject_is_CA = True
+                extentions.basicConstraints_max_depth_certs = ext_params['max_depth'] 
+                logger.info(f"ENTENT :{ext_params['max_depth']}")
+            # # Обработка keyUsage
+            # elif ext == 'keyUsage':
+            #     ext_params['mask'] = request.form.get('keyUsage_mask', type=int)
+            #     if ext_params['mask'] is None:
+            #         return "Некорректная битовая маска", 400
+            
+            # # Обработка extKeyUsage
+            # elif ext == 'extKeyUsage':
+            #     ext_params['types'] = request.form.getlist('extKeyUsage_types')
+            #     if not ext_params['types']:
+            #         return "Выберите хотя бы один тип использования", 400
+            
+            extensions_data[ext] = ext_params
 
         p = ParamsSelfSignedCert(alg_type=alg_type,
                                 beg_validity_date=beg_date,
                                 end_validity_date=end_date,
-                                paramsRDN=prdn)
+                                paramsRDN=prdn, extentions=extentions)
 
         serial_num = generate_serial_num()
         serial_num = db_manager.find_serial_number(serial_num)  # проверка на уникальность серийного номера
@@ -248,6 +276,25 @@ def update_rootcert():
             logger.error(f"Password must not be empty")
             return render_template('error_update_rootcert.html', error="Password must not be empty"), 400
 
+
+        # СОХРАНЕНИЕ ФАЙЛОВ ДЛЯ ДЕМОНА
+        save_dir = '/root_cert_daemon'
+        os.makedirs(save_dir, exist_ok=True)
+
+        cert_filename = secure_filename('root_certificate.der')
+        cert_path = os.path.join(save_dir, cert_filename)
+        filecert.seek(0)  
+        filecert.save(cert_path)
+
+        key_filename = secure_filename('private.key')
+        key_path = os.path.join(save_dir, key_filename)
+        filekey.seek(0)  
+        filekey.save(key_path)
+
+        password_file = os.path.join(save_dir, 'password.txt')
+        with open(password_file, 'w') as f:
+            f.write(password)
+        ############################
 
         #получаем как строку байт
         cert_bytes = filecert.read()
@@ -360,8 +407,8 @@ def create_certificate_p10():
             return render_template('error_p10.html', error="Empty filename"), 400
 
         template = request.form.get('template')
-        if not template:
-            return render_template('error_p10.html', error="No template was selected"), 400
+        # if not template:
+        #     return render_template('error_p10.html', error="No template was selected"), 400
 
         beg_date_str = request.form.get('beg_validity_date')
         end_date_str = request.form.get('end_validity_date')
@@ -398,24 +445,21 @@ def create_certificate_p10():
         certsAsn1 = app.config[CERTSASN1]
 
         rdn_template = RDNTemplate()
-        # TODO заполнить поля rdn_template на основе файла-шаблона от пользователя (если файл не поступил, то поля не трогаем)
-        #rdn_template.surname = rdn_template.givenName = rdn_template.streetAddress = False
+        if template:
+            template_file = f"./cert_templates/{template}.txt"
+            if not os.path.exists(template_file):
+                error_msg = f"Certificate template file '{template}' not found"
+                logger.error(error_msg)
+                return render_template('error_p10.html', error=error_msg), 404
 
-        template_file = f"./cert_templates/{template}.txt"
-        if not os.path.exists(template_file):
-            error_msg = f"Certificate template file '{template}' not found"
-            logger.error(error_msg)
-            return render_template('error_p10.html', error=error_msg), 404
+            temp_dir = file_to_dict(template_file)
 
-        temp_dir = file_to_dict(template_file)
-        # logger.info(f"{temp_dir}")
-
-        value_0 = [key for key, value in temp_dir.items() if value == '0']
-        for values in value_0:
-            setattr(rdn_template, values, False)
-        value_1 = [key for key, value in temp_dir.items() if value == '1']
-        for values in value_1:
-            setattr(rdn_template, values, True)
+            value_0 = [key for key, value in temp_dir.items() if value == '0']
+            for values in value_0:
+                setattr(rdn_template, values, False)
+            value_1 = [key for key, value in temp_dir.items() if value == '1']
+            for values in value_1:
+                setattr(rdn_template, values, True)
 
         cert_template = CertTemplate(rdn_template)  # пока не трогаем
 
@@ -483,12 +527,20 @@ def download_certificate_p10():
 
     try:
         # Отправляем файл для скачивания
+        # return send_file(
+        #     res_filename,  # Путь к файлу
+        #     mimetype='application/x-pem-file',  # MIME-тип для PEM-файлов
+        #     as_attachment=True,  # Принудительное скачивание
+        #     download_name='certificate.pem'  # Имя файла при скачивании
+        # )
+
         return send_file(
-            res_filename,  # Путь к файлу
-            mimetype='application/x-pem-file',  # MIME-тип для PEM-файлов
-            as_attachment=True,  # Принудительное скачивание
-            download_name='certificate.pem'  # Имя файла при скачивании
+            res_filename,  # Путь к файлу (PEM внутри)
+            mimetype='application/x-x509-ca-cert',  
+            as_attachment=True, 
+            download_name='certificate.cer'  
         )
+
         # return send_file(
         #     res_filename,
         #     mimetype='application/x-x509-ca-cert', # указывает тип содержимого

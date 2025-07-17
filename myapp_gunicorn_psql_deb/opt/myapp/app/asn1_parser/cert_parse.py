@@ -9,7 +9,7 @@ from .models.paramsSelfSignedCert import ParamsSelfSignedCert
 from .models.CertTemplate import CertTemplate
 from .models.RevokedCertificates import RevokedCertificates
 from .models.RootCert import RootCert, restore_root_cert
-from .models.AlgParams import ALL_ALG_PARAMS, AlgParams
+from .models.AlgParams import ALL_ALG_PARAMS, AlgTypes, AlgParams
 from bicry.bicry import BicryWrapper
 
 class ErrNoRootCert(Exception):
@@ -21,6 +21,14 @@ class CertsAsn1:
     def __init__(self, rootCert: RootCert =None):
         self.rootCert = None
         self.bicrypt = BicryWrapper(lib_path='libbicry_openkey.so')
+        # if self.rootCert is None:
+        #     self.bicrypt = BicryWrapper(lib_path='libbicry_openkey.so', param=None)
+        # else:
+        #     self.bicrypt = BicryWrapper(lib_path='libbicry_openkey.so', param=self.rootCert.alg_type.value)
+        #     self.bicrypt.compare_keys(self.rootCert.public_key)
+        #     pwd, privkey = self.bicrypt.get_private_key_with_password()
+        #     self.rootCert.password = pwd
+        #     self.rootCert.private_key = privkey
 
     '''Создает самопоодписанный сертификат  на основе ParamsSelfSignedCert.get_list.get_list()
     return самоподписанный сертификат, открытый ключ, пароль'''
@@ -39,7 +47,7 @@ class CertsAsn1:
             sign_algid_bytes=self._signAlgId_encode(alg_param=alg_param),
             beg_date=params.beg_validity_date, end_date=params.end_validity_date,
             subjectPKinfo_bytes=self._subjPKInfo_encode(alg_param=alg_param, public_key=public_key),
-            attr_bytes_list=[]
+            attr_bytes_list=params.extentions.extentions_cert_encode()
         )
 
         signature_bytes = self.bicrypt.temp_electronic_signature(tbsCertificate_bytes)
@@ -235,3 +243,4 @@ class CertsAsn1:
         encoder.leave()                         # out SubjectPublicKeyInfo
         alg_bytes = encoder.output()
         return alg_bytes
+    

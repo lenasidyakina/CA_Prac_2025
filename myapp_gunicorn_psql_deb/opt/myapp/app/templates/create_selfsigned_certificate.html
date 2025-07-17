@@ -142,6 +142,35 @@
             transform: translateY(-50%);
             pointer-events: none;
         }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 0;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: auto;
+            transform: scale(1.5);
+            margin-right: 10px;
+        }
+
+        .form-unit h3.unit-title {
+            margin-bottom: 5px;
+        }
+
+        #basicConstraintsParams {
+            padding-left: 28px; /* Отступ равный чекбоксу */
+            transition: all 0.3s ease;
+        }
+
+        #basicConstraintsNumber {
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -152,6 +181,7 @@
             <div class="tab active" data-tab="organization">Организация</div>
             <div class="tab" data-tab="employee">Сотрудник</div>
             <div class="tab" data-tab="other">Прочие</div>
+            <div class="tab" data-tab="extensions">Расширения</div>
         </div>
         
         <form id="certForm">
@@ -253,7 +283,7 @@
                 </div>
 
                 <div class="form-unit">
-                    <h3 class="unit-title">Параметры шифрования</h3>
+                    <!-- <h3 class="unit-title">Параметры шифрования</h3> -->
                     <div class="form-group">
                         <label for="algorithm">Алгоритм шифрования:</label>
                         <select id="algorithm" name="algorithm" required>
@@ -268,6 +298,28 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Расширения -->
+            <div id="extensions-tab" class="tab-content">
+            <div class="form-unit">
+                <h3 class="unit-title">Выберите расширения:</h3>
+                
+                <!-- Basic Constraints -->
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="extensions" value="basicConstraints" class="extension-checkbox">
+                        basicConstraints
+                    </label>
+                    <div class="extension-params" data-extension="basicConstraints" style="display: none; margin-top: 10px;">
+                        <label>Максимальная глубина цепочки:</label>
+                        <input type="number" name="basicConstraints_max_depth" min="1" value="1" style="width: 100px; margin-left: 10px;">
+                    </div>
+                </div>
+                
+                
+            </div>
+        </div>
+
             
             
             <button type="submit" class="button">Создать сертификат</button>
@@ -300,6 +352,9 @@
             // Установка алгоритма по умолчанию
             const algorithmSelect = document.getElementById('algorithm');
             algorithmSelect.value = 'b'; // Параметр В по умолчанию
+
+            // const extensionSelect = document.getElementById('extension');
+            // extensionSelect.value = 'basicConstraints';
         });
         // переключение вкладок
         document.querySelectorAll('.tab').forEach(tab => {
@@ -309,6 +364,21 @@
                 
                 tab.classList.add('active');
                 document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+            });
+        });
+
+        
+        // обработчик для всех чекбоксов расширений
+        document.querySelectorAll('.extension-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const extensionName = this.value;
+                const paramsDiv = document.querySelector(`.extension-params[data-extension="${extensionName}"]`);
+                paramsDiv.style.display = this.checked ? 'block' : 'none';
+                
+                // Делаем поля обязательными, если чекбокс отмечен
+                paramsDiv.querySelectorAll('input, select').forEach(field => {
+                    field.required = this.checked;
+                });
             });
         });
 
