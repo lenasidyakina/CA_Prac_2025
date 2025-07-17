@@ -28,16 +28,6 @@ class NumberLogger:
         self.interval = self._read_interval_from_config()
 
         self._running = False
-
-        # Настройка логирования
-        # logging.basicConfig(
-        #     level=logging.INFO,
-        #     format='%(asctime)s - %(levelname)s - %(message)s',
-        #     handlers=[
-        #         logging.FileHandler(self.log_file),
-        #         logging.StreamHandler(sys.stdout)
-        #     ]
-        # )
         self.logger = logging.getLogger('NumberLogger')
         self.logger.setLevel(logging.INFO)
         file_handler = logging.FileHandler(self.log_file)
@@ -61,17 +51,21 @@ class NumberLogger:
 
         self.certsAsn1 = CertsAsn1()
         self.logger.info(f"inited CertsAsn1 + Bicry")
+        self.cert_bytes = bytes()
         try:
             with open('/opt/myapp/app/root_cert_daemon/root_certificate.der', 'rb') as f:
                 cert_bytes = f.read()
+                self.logger.info(f"read root_cert_daemon/cert_bytes")
+                self.cert_bytes = cert_bytes
+                self.logger.info(f"read root_cert_daemon/cert_bytes")
             self.logger.info(f"read root_cert_daemon/cert_bytes {cert_bytes.hex()}")
             with open('/opt/myapp/app/root_cert_daemon/private.key', 'rb') as f:
                 private_key = f.read()
-            self.logger.info(f"read root_cert_daemon/private.key  {private_key.hex()}")
-            with open('/opt/myapp/app/root_cert_daemon/pwd.txt', 'r') as f:
+            self.logger.info(f"read root_cert_daemon/private.key")
+            with open('/opt/myapp/app/root_cert_daemon/password.txt', 'r') as f:
                 password = f.read().strip()
-            self.logger.info(f"read root_cert_daemon/pwd.txt: {password}")
-            self.certsAsn1.change_active_root_cert(cert_bytes=cert_bytes,
+            self.logger.info(f"read root_cert_daemon/pwd.txt")
+            self.certsAsn1.change_active_root_cert(cert_bytes=self.cert_bytes,
                                                     private_key=private_key,
                                                     password=password)
             self.logger.info(f"change_active_root_cert end")
@@ -103,15 +97,32 @@ class NumberLogger:
         self.logger.info(f"Number logger started with interval {self.interval} seconds")
 
         while self._running:
+            start_time = time.time()  # Засекаем время начала итерации
             try:
                 array_of_revoked_certificate = self.db_manager.get_revoked_certificates()
                 current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 
+                with open('/opt/myapp/app/root_cert_daemon/root_certificate.der', 'rb') as f:
+                    cert_bytes_new = f.read()
+                    self.logger.info(f"read new root_cert_daemon/private.key")
+                if (cert_bytes_new != self.cert_bytes):
+                    self.logger.info(f"change root")
+                    self.cert_bytes = cert_bytes_new
+                    with open('/opt/myapp/app/root_cert_daemon/private.key', 'rb') as f:
+                         private_key = f.read()
+                    self.logger.info(f"read new root_cert_daemon/private.key")
+                    with open('/opt/myapp/app/root_cert_daemon/password.txt', 'r') as f:
+                         password = f.read().strip()
+                    self.logger.info(f"read new root_cert_daemon/pwd.txt")
+                    self.certsAsn1.change_active_root_cert(cert_bytes=self.cert_bytes,
+                                                             private_key=private_key,
+                                                             password=password)
                 crl_bytes = self.certsAsn1.create_crl(
                     revokedCerts=array_of_revoked_certificate,
                     thisUpdate=datetime.now(tz=timezone.utc),
                     nextUpdate=datetime.now(tz=timezone.utc) + timedelta(seconds=self.interval))
                 
+
                 with open('/opt/myapp/app/crl.pem', 'w') as f:
                     f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL"))    
                 self.logger.info(f"Updated numbers at {current_time}")
@@ -119,8 +130,12 @@ class NumberLogger:
             except Exception as e:
                 self.logger.error(f"Error: {str(e)}", exc_info=True)
 
-            # Ожидаем указанный интервал
-            time.sleep(self.interval)
+            # Рассчитываем оставшееся время для сна
+            execution_time = time.time() - start_time
+            sleep_time = max(0, self.interval - execution_time)  # Не даём уйти в отрицательное значение
+
+            if sleep_time > 0:
+                time.sleep(sleep_time)
 
     def stop(self):
         self._running = False
