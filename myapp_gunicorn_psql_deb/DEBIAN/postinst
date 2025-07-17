@@ -1,12 +1,50 @@
 #!/bin/bash
-# Полный скрипт установки MyApp с PostgreSQL и CRL Daemon
+# Полный скрипт установки MyApp с PostgreSQL и CRL Daemon с индикатором прогресса
 
-bicry_path="/home/lusix/bicr5_last"
-db_user="q"
-db_pass="q"
-db_name="qw"
+# Функция для отображения прогресс-бара внизу экрана
+progress_bar() {
+    local current=$1
+    local total=$2
+    local width=50
+    local percent=$((current * 100 / total))
+    local progress=$((current * width / total))
+
+    # Сохраняем позицию курсора
+    tput sc
+
+    # Перемещаем курсор вниз экрана
+    tput cup $(tput lines) 0
+
+    # Создаем строку прогресса
+    local bar="MyApp:["
+    for ((i=0; i<width; i++)); do
+        if [ $i -lt $progress ]; then
+            bar+="#"
+        else
+            bar+="."
+        fi
+    done
+    bar+="] $percent%"
+
+    # Выводим прогресс-бар и очищаем остаток строки
+    echo -ne "$bar$(tput el)"
+
+    # Восстанавливаем позицию курсора
+    tput rc
+}
+
+# Очищаем последнюю строку перед началом
+tput sc
+tput cup $(tput lines) 0
+echo -ne "$(tput el)"
+tput rc
+
+# Общее количество шагов (для прогресс-бара)
+TOTAL_STEPS=24
+CURRENT_STEP=0
 
 # 0. Установка системных зависимостей
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
 echo "=== Установка системных зависимостей ==="
 apt-get update -q
 DEBIAN_FRONTEND=noninteractive apt-get install -yq \
@@ -23,13 +61,14 @@ DEBIAN_FRONTEND=noninteractive apt-get install -yq \
     firewalld \
     python3-dev \
     python3-psutil \
-    python3-pyasn1 \
-    keepassxc
+    python3-pyasn1\
+    keepassxc > /dev/null
 
 # 0.1. Запрос пути и копирование файлов библиотеки bicry
-echo "=== Настройка библиотек BICRY ==="
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
+echo -e "\n=== Настройка библиотек BICRY ==="
 while true; do
-    #read -p "Введите полный путь до папки с файлами библиотеки BICRY: " bicry_path
+    read -p "Введите полный путь до папки с файлами библиотеки BICRY: " bicry_path
     if [ -d "$bicry_path" ]; then
         # Проверка наличия необходимых файлов
         if [ -f "$bicry_path/bcry.h" ] && [ -f "$bicry_path/errors.h" ] && \
@@ -48,13 +87,13 @@ while true; do
             sudo cp "$bicry_path/Linux/libbicr5_64.so" "$bicry_path/Linux/libbiogrn.so" /usr/lib/
             sudo ldconfig
 
-
             # Компиляция библиотеки
-            echo "Компиляция библиотеки libbicry_openkey.so..."
+            progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
+            echo -e "\nКомпиляция библиотеки libbicry_openkey.so..."
             cd /opt/myapp/app/bicry
             export LD_LIBRARY_PATH=/opt/myapp/app/bicry:$LD_LIBRARY_PATH
             if [ -f "bicr_func.c" ]; then
-                # 1. Сборка библиотеки (как в вашем оригинальном примере)
+                # 1. Сборка библиотеки
                 gcc -shared -fPIC -o libbicry_openkey.so bicr_func.c -L. -lbicr5_64 -lbiogrn
 
                 # 2. Копирование библиотеки в /usr/lib/your_app/
@@ -83,7 +122,8 @@ while true; do
 done
 
 # 1. Проверка и создание необходимых директорий
-echo "=== Настройка файловой структуры ==="
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
+echo -e "\n=== Настройка файловой структуры ==="
 mkdir -p /opt/myapp/{venv,app,logs}
 mkdir -p /var/log/myapp/
 mkdir -p /var/lib/myapp/
@@ -94,7 +134,8 @@ chmod 755 /var/lib/myapp
 chmod 644 /var/log/myapp/*.log 2>/dev/null || true
 
 # 2. Настройка Python окружения
-echo "=== Настройка Python окружения ==="
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
+echo -e "\n=== Настройка Python окружения ==="
 python3 -m venv /opt/myapp/venv
 source /opt/myapp/venv/bin/activate
 pip install -U pip wheel >/dev/null
@@ -110,47 +151,42 @@ fi
 deactivate
 
 # 3. Настройка PostgreSQL
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
+echo -e "\nНастройка PostgreSQL..."
+echo "Введите параметры подключения к БД:"
+
 # Функция для проверки существования БД
 check_db_exists() {
     sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "$1"
 }
 
-echo "Настройка PostgreSQL..."
-echo "Введите параметры подключения к БД:"
-
+# Запрос параметров с значениями по умолчанию
+read -p "Имя пользователя PostgreSQL: " db_user
 db_user=${db_user:-myapp_user}
+
+read -s -p "Пароль пользователя PostgreSQL: " db_pass
+echo
+
+# Запрос имени БД с проверкой существования
+while true; do
+    read -p "Имя базы данных: " db_name
+    db_name=${db_name:-flower_db}
+
+    if check_db_exists "$db_name"; then
+        echo "Ошибка: База данных '$db_name' уже существует!" >&2
+        read -p "Хотите ввести другое имя? (y/n) " choice
+        case "$choice" in
+            [yY]|[yY][eE][sS]) continue ;;
+            *) echo "Отмена операции"; exit 1 ;;
+        esac
+    else
+        break
+    fi
+done
 db_name=${db_name:-flower_db}
 
-# # Запрос параметров с значениями по умолчанию
-# read -p "Имя пользователя PostgreSQL: " db_user
-# db_user=${db_user:-myapp_user}
-#
-# read -s -p "Пароль пользователя PostgreSQL: " db_pass
-# echo
-#
-# # Запрос имени БД с проверкой существования
-# # Для тестирования:
-# # read -p "Имя базы данных: " db_name
-# #db_name=${db_name:-flower_db}
-#
-# while true; do
-#     read -p "Имя базы данных: " db_name
-#     db_name=${db_name:-flower_db}
-#
-#     if check_db_exists "$db_name"; then
-#         echo "Ошибка: База данных '$db_name' уже существует!" >&2
-#         read -p "Хотите ввести другое имя? (y/n) " choice
-#         case "$choice" in
-#             [yY]|[yY][eE][sS]) continue ;;
-#             *) echo "Отмена операции"; exit 1 ;;
-#         esac
-#     else
-#         break
-#     fi
-# done
-# db_name=${db_name:-flower_db}
-
 # Создание пользователя и БД с проверкой существования
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
 sudo -u postgres psql -c "DO \$$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '$db_user') THEN
@@ -171,7 +207,8 @@ else
 fi
 
 # 4. Создание конфигурационного файла БД
-echo "Создание конфигурации БД..."
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
+echo -e "\nСоздание конфигурации БД..."
 mkdir -p /etc/myapp
 DB_CONFIG="/etc/myapp/db.env"
 
@@ -199,6 +236,7 @@ FILENAME_SELF_SIGNED=root_certificate.der
 FILENAME_PRIVATE_KEY=private.key
 FILENAME_CERTIFICATE_P10=certificate.der
 FILENAME_CRL=crl.der
+ROOT_CERT_DAEMON=root_cert_daemon
 EOF
 
 # Настройка прав доступа к конфигу
@@ -206,13 +244,14 @@ chown www-data:www-data "$DB_CONFIG"
 chmod 644 "$DB_CONFIG"
 
 # 5. Настройка прав доступа к БД
-echo "Настройка прав доступа к БД..."
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $db_name TO $db_user;"
 sudo -u postgres psql -d $db_name -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $db_user;"
 sudo -u postgres psql -d $db_name -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $db_user;"
 
 # 6. Инициализация таблиц БД
-echo "Инициализация таблиц БД..."
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
+echo -e "\nИнициализация таблиц БД..."
 init_log="/tmp/myapp_db_init.log"
 if [ -f "/opt/myapp/app/db/init_db.py" ]; then
     sudo -u www-data /opt/myapp/venv/bin/python /opt/myapp/app/db/init_db.py 2>&1 | tee "$init_log"
@@ -228,10 +267,9 @@ else
     echo "Файл init_db.py не найден, пропускаем инициализацию БД"
 fi
 
-
-
 # 7. Настройка Nginx
-echo "=== Настройка Nginx ==="
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
+echo -e "\n=== Настройка Nginx ==="
 if [ -f "/etc/nginx/sites-available/myapp.conf" ]; then
     ln -sf /etc/nginx/sites-available/myapp.conf /etc/nginx/sites-enabled/
     rm -f /etc/nginx/sites-enabled/default
@@ -239,15 +277,17 @@ if [ -f "/etc/nginx/sites-available/myapp.conf" ]; then
 fi
 
 # 8. Настройка firewall
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
 if command -v firewall-cmd &>/dev/null; then
-    echo "=== Настройка firewall ==="
+    echo -e "\n=== Настройка firewall ==="
     firewall-cmd --permanent --add-service=http
     firewall-cmd --permanent --add-service=https
     firewall-cmd --reload
 fi
 
 # 9. Настройка systemd сервисов
-echo "=== Настройка сервисов ==="
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
+echo -e "\n=== Настройка сервисов ==="
 
 # Основной сервис приложения
 cat > /etc/systemd/system/myapp.service <<'EOL'
@@ -299,7 +339,8 @@ WantedBy=multi-user.target
 EOL
 
 # 10. Запуск сервисов
-echo "=== Запуск сервисов ==="
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
+echo -e "\n=== Запуск сервисов ==="
 systemctl daemon-reload
 systemctl enable myapp.service
 systemctl enable crl_daemon.service
@@ -311,7 +352,8 @@ systemctl start crl_daemon
 systemctl restart nginx
 
 # 11. Проверка установки
-echo "=== Проверка установки ==="
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
+echo -e "\n=== Проверка установки ==="
 
 check_service() {
     local service="$1"
@@ -333,7 +375,8 @@ check_service crl_daemon
 check_service nginx
 
 # Проверка доступности приложения
-echo "=== Проверка приложения ==="
+progress_bar $((CURRENT_STEP++)) $TOTAL_STEPS
+echo -e "\n=== Проверка приложения ==="
 if curl -sSf http://localhost >/dev/null 2>&1; then
     echo "✓ Приложение доступно по http://localhost"
 else
@@ -341,10 +384,17 @@ else
     exit 1
 fi
 
+# Завершаем прогресс-бар
+progress_bar $TOTAL_STEPS $TOTAL_STEPS
+echo
 echo "=== Установка успешно завершена ==="
 echo "Данные для подключения к БД:"
 echo "============================"
 cat "$DB_CONFIG" | sed 's/DB_PASS=.*/DB_PASS=********/'
 echo "============================"
 
-
+# Очищаем прогресс-бар в конце
+tput sc
+tput cup $(tput lines) 0
+echo -ne "$(tput el)"
+tput rc
