@@ -84,27 +84,6 @@ class DatabaseManager:
             
         return number
 
-    # def get_revoked_certificates(self):
-    #     revoked_certificates = []
-    #     with self.get_cursor() as cursor:
-    #         # cursor.execute("SELECT serial_number, revoke_date, revoke_reason, invalidity_date FROM certificates WHERE is_revoked = TRUE")
-    #         cursor.execute("SELECT serial_number, revoke_date, revoke_reason, invalidity_date FROM certificates WHERE is_revoked = TRUE and send_to_ca = FALSE")
-            
-    #         for row in cursor.fetchall():
-    #             serialNumber = int(row[0])
-    #             revocationDate = row[1]
-    #             crlReasonCode = CRLReasonCode[row[2]] if row[2] else CRLReasonCode.unspecified
-    #             invalidityDate = row[3]
-                
-    #             revoked_certificates.append(
-    #                 RevokedCertificates(
-    #                     serialNumber=serialNumber,
-    #                     revocationDate=revocationDate,
-    #                     crlReasonCode=crlReasonCode,
-    #                     invalidityDate=invalidityDate
-    #                 )
-    #             )
-    #     return revoked_certificates
     def get_revoked_certificates(self):
         revoked_certificates = []
         with self.get_cursor() as cursor:
@@ -149,10 +128,6 @@ class DatabaseManager:
                 
                 
         return revoked_certificates
-    
-    
-    
-
 
     def insert_to_db(self, serial_number, source_serial_number):
         try:

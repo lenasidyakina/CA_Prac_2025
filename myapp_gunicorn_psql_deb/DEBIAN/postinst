@@ -1,5 +1,10 @@
 #!/bin/bash
-# Полный скрипт установки MyApp с PostgreSQL и Number Logger Daemon
+# Полный скрипт установки MyApp с PostgreSQL и CRL Daemon
+
+bicry_path="/home/admink/bicr5_last"
+db_user="q"
+db_pass="q"
+db_name="qw"
 
 # 0. Установка системных зависимостей
 echo "=== Установка системных зависимостей ==="
@@ -21,10 +26,10 @@ DEBIAN_FRONTEND=noninteractive apt-get install -yq \
     python3-pyasn1 \
     keepassxc
 
-# 0.1. Запрос пути и копирование файлов библиотеки
+# 0.1. Запрос пути и копирование файлов библиотеки bicry
 echo "=== Настройка библиотек BICRY ==="
 while true; do
-    read -p "Введите полный путь до папки с файлами библиотеки BICRY: " bicry_path
+    #read -p "Введите полный путь до папки с файлами библиотеки BICRY: " bicry_path
     if [ -d "$bicry_path" ]; then
         # Проверка наличия необходимых файлов
         if [ -f "$bicry_path/bcry.h" ] && [ -f "$bicry_path/errors.h" ] && \
@@ -97,14 +102,14 @@ pip install gunicorn flask psycopg2-binary >/dev/null
 pip install asn1
 pip install pyasn1_modules
 pip install sqlalchemy
-pip install pykeepass
+
 # Установка дополнительных зависимостей, если есть requirements.txt
 if [ -f "/opt/myapp/app/requirements.txt" ]; then
     pip install -r /opt/myapp/app/requirements.txt >/dev/null
 fi
 deactivate
 
-# 4. Настройка PostgreSQL
+# 3. Настройка PostgreSQL
 # Функция для проверки существования БД
 check_db_exists() {
     sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "$1"
@@ -113,21 +118,25 @@ check_db_exists() {
 echo "Настройка PostgreSQL..."
 echo "Введите параметры подключения к БД:"
 
-# Запрос параметров с значениями по умолчанию
-read -p "Имя пользователя PostgreSQL: " db_user
 db_user=${db_user:-myapp_user}
-
-read -s -p "Пароль пользователя PostgreSQL: " db_pass
-echo
-
-# Запрос имени БД с проверкой существования
-read -p "Имя базы данных: " db_name
 db_name=${db_name:-flower_db}
 
+# # Запрос параметров с значениями по умолчанию
+# read -p "Имя пользователя PostgreSQL: " db_user
+# db_user=${db_user:-myapp_user}
+#
+# read -s -p "Пароль пользователя PostgreSQL: " db_pass
+# echo
+#
+# # Запрос имени БД с проверкой существования
+# # Для тестирования:
+# # read -p "Имя базы данных: " db_name
+# #db_name=${db_name:-flower_db}
+#
 # while true; do
 #     read -p "Имя базы данных: " db_name
 #     db_name=${db_name:-flower_db}
-
+#
 #     if check_db_exists "$db_name"; then
 #         echo "Ошибка: База данных '$db_name' уже существует!" >&2
 #         read -p "Хотите ввести другое имя? (y/n) " choice
@@ -161,7 +170,7 @@ else
     echo "База данных $db_name уже существует, пропускаем создание"
 fi
 
-# 5. Создание конфигурационного файла БД
+# 4. Создание конфигурационного файла БД
 echo "Создание конфигурации БД..."
 mkdir -p /etc/myapp
 DB_CONFIG="/etc/myapp/db.env"
@@ -192,18 +201,17 @@ FILENAME_CERTIFICATE_P10=certificate.der
 FILENAME_CRL=crl.der
 EOF
 
-
 # Настройка прав доступа к конфигу
 chown www-data:www-data "$DB_CONFIG"
-chmod 640 "$DB_CONFIG"
+chmod 644 "$DB_CONFIG"
 
-# 6. Настройка прав доступа к БД
+# 5. Настройка прав доступа к БД
 echo "Настройка прав доступа к БД..."
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $db_name TO $db_user;"
 sudo -u postgres psql -d $db_name -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $db_user;"
 sudo -u postgres psql -d $db_name -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $db_user;"
 
-# 7. Инициализация таблиц БД
+# 6. Инициализация таблиц БД
 echo "Инициализация таблиц БД..."
 init_log="/tmp/myapp_db_init.log"
 if [ -f "/opt/myapp/app/db/init_db.py" ]; then
@@ -222,7 +230,7 @@ fi
 
 
 
-# 6. Настройка Nginx
+# 7. Настройка Nginx
 echo "=== Настройка Nginx ==="
 if [ -f "/etc/nginx/sites-available/myapp.conf" ]; then
     ln -sf /etc/nginx/sites-available/myapp.conf /etc/nginx/sites-enabled/
@@ -230,7 +238,7 @@ if [ -f "/etc/nginx/sites-available/myapp.conf" ]; then
     nginx -t && systemctl restart nginx
 fi
 
-# 7. Настройка firewall
+# 8. Настройка firewall
 if command -v firewall-cmd &>/dev/null; then
     echo "=== Настройка firewall ==="
     firewall-cmd --permanent --add-service=http
@@ -238,7 +246,7 @@ if command -v firewall-cmd &>/dev/null; then
     firewall-cmd --reload
 fi
 
-# 8. Настройка systemd сервисов
+# 9. Настройка systemd сервисов
 echo "=== Настройка сервисов ==="
 
 # Основной сервис приложения
@@ -290,7 +298,7 @@ SyslogIdentifier=crl_daemon
 WantedBy=multi-user.target
 EOL
 
-# 9. Запуск сервисов
+# 10. Запуск сервисов
 echo "=== Запуск сервисов ==="
 systemctl daemon-reload
 systemctl enable myapp.service
@@ -302,16 +310,19 @@ sleep 3  # Даем время основному приложению запу�
 # systemctl start crl_daemon
 systemctl restart nginx
 
-# 10. Проверка установки
+# 11. Проверка установки
 echo "=== Проверка установки ==="
 
 check_service() {
-    if systemctl is-active --quiet "$1"; then
-        echo "✓ $1: работает нормально"
+    local service="$1"
+    local status=$(systemctl is-active "$service" 2>&1)
+
+    if [[ "$status" == "active" ]]; then
+        echo "✓ $service: успешно запущен и работает"
         return 0
     else
-        echo "⚠️ $1: не запущен!"
-        journalctl -u "$1" -n 10 --no-pager
+        echo "⚠️ $service: не запущен или ещё не готов (состояние: $status)"
+        journalctl -u "$service" -n 10 --no-pager
         return 1
     fi
 }

@@ -4,35 +4,52 @@ import logging
 import traceback
 from logging.handlers import SysLogHandler
 import socket
+import sys
 
 # Настройка логгера должна быть ДО создания экземпляра BicryWrapper
-logger = logging.getLogger('Bicry')
-logger.setLevel(logging.INFO)
+# logger = logging.getLogger('bicry_c')
+# logger.setLevel(logging.INFO)
 
-syslog_handler = SysLogHandler(
-    address='/dev/log', 
-    facility='user',
-    socktype=socket.SOCK_DGRAM
+# syslog_handler = SysLogHandler(
+#     address='/dev/log', 
+#     facility='user',
+#     socktype=socket.SOCK_DGRAM
+# )
+
+# syslog_handler.setFormatter(logging.Formatter('%(name)s: %(levelname)s %(message)s'))
+# logger.addHandler(syslog_handler)
+
+log_dir = '/var/log/myapp/'
+os.makedirs(log_dir, exist_ok=True)
+lof_file = os.path.join(log_dir, 'bicry.log')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(lof_file),
+        logging.StreamHandler(sys.stdout)
+    ]
 )
+logger = logging.getLogger('NumberLogger')
 
-syslog_handler.setFormatter(logging.Formatter('%(name)s: %(levelname)s %(message)s'))
-logger.addHandler(syslog_handler)
-
-# Добавление в /etc/rsyslog.conf: 
-# Добавьте в конец файла
-# Для C-логов (tag=bicry_c)
-# if $programname == 'bicry_c' then /var/log/bicry.log
-# Для Python-логов (процесс python*)
-#if $programname startswith 'python' then /var/log/bicry.log
-# Остановить дальнейшую обработку
+'''
+#При запуске просто приложения:
+#В файл
+#/etc/rsyslog.d/bicry.conf
+#поместить:
+#if $programname == 'bicry_c' then /var/log/bicry.log
 #& stop
 
+#sudo touch /var/log/bicry.log
+#sudo chown syslog:adm /var/log/bicry.log    //Права chown syslog:adm гарантируют, что rsyslog сможет писать в файл лога.
+#sudo chmod 664 /var/log/bicry.log
+#sudo systemctl restart rsyslog
 
-# для деб пакета 
+# Для деб пакета 
 # 1) postinst скрипт
 #!/bin/sh
 # Скопировать конфиг rsyslog
-# cp /path/to/99-bicry.conf /etc/rsyslog.d/
+# cp /path/to/bicry.conf /etc/rsyslog.d/
 
 # Создать файл лога с правильными правами
 #touch /var/log/bicry.log
@@ -42,22 +59,22 @@ logger.addHandler(syslog_handler)
 # Перезапустить rsyslog
 #systemctl restart rsyslog
 
-# 2) содержимое 99-bicry.conf
+# 2) содержимое bicry.conf
 # Правила для приложения Bicry
 #if $programname == 'bicry_c' then /var/log/bicry.log
-#if $programname startswith 'python' then /var/log/bicry.log
 #& stop
 
 # 3) prerm скрипт
 #!/bin/sh
 # Удалить конфиг
-#rm /etc/rsyslog.d/99-bicry.conf
+#rm /etc/rsyslog.d/bicry.conf
 
 # (Опционально) Удалить лог-файл
 #rm /var/log/bicry.log
 
 # Перезапустить rsyslog
 #systemctl restart rsyslog
+'''
 
 class BicryWrapper:
     def __init__(self, lib_path='./libbicry_openkey.so'):
@@ -121,6 +138,7 @@ class BicryWrapper:
             ctypes.c_int
         ]
 
+        logger.info("start init_bicr()")
         # Инициализация библиотеки
         try:
             result = self.lib.init_bicr()
@@ -201,7 +219,7 @@ class BicryWrapper:
                 logger.error(error_msg)
                 raise RuntimeError(error_msg)
             
-            self.param = param
+            self.temp_param = param
             password = pw_buffer.value.decode('ascii')
             private_key = bytes(private_key_buffer)
             key_bytes = bytes(key_buffer)
@@ -222,11 +240,11 @@ class BicryWrapper:
                 logger.error("Library not initialized during temp signature creation")
                 raise RuntimeError("Library not initialized")
 
-            if not self.param:
+            if not self.temp_param:
                 logger.error("Temp keypair not created, cannot create temp signature")
                 raise RuntimeError("Temp keypair not created")
 
-            signature_size = 128 if self.param in {49, 50, 51} else 64
+            signature_size = 128 if self.temp_param in {49, 50, 51} else 64
             es_buffer = (ctypes.c_ubyte * signature_size)()
             cert_buffer = (ctypes.c_ubyte * len(cert_data)).from_buffer_copy(cert_data)
 
@@ -235,7 +253,7 @@ class BicryWrapper:
                 es_buffer,
                 cert_buffer,
                 len(cert_data),
-                self.param 
+                self.temp_param 
             )
             
             if result != 0:
@@ -388,9 +406,6 @@ if __name__ == "__main__":
         wrapper = BicryWrapper(lib_path='./libbicry_openkey.so')
 
         password, private_key, public_key = wrapper.generate_temp_keypair("Ivanov", param=98)
-        #print(f"Public key: {public_key.hex()}")
-        #print(f"Password: {password}")
-        #print(f"Private key: {private_key}")
 
         with open('tbs.der', 'rb') as f:
             cert_data = f.read()
@@ -399,7 +414,14 @@ if __name__ == "__main__":
         #print(f"Signature: {es.hex()}")
 
         wrapper.change_active_cert(param=98, password=password, private_key=private_key, public_key=public_key)
-        print(f"Ok")
+
+        password, private_key, public_key = wrapper.generate_temp_keypair("Ivanov", param=98)
+
+        with open('tbs.der', 'rb') as f:
+            cert_data = f.read()  
+        
+        es = wrapper.temp_electronic_signature(cert_data)
+        #print(f"Signature: {es.hex()}")
 
         with open('tbs.der', 'rb') as f:
             cert_data = f.read()
@@ -407,6 +429,7 @@ if __name__ == "__main__":
         es = wrapper.electronic_signature(cert_data)
         
         wrapper.close()   
+        logger.removeHandler(syslog_handler)
         
     except Exception as e:
         logger.critical(f"Critical error in demo: {e}\n{traceback.format_exc()}")

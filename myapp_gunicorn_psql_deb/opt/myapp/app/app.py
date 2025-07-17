@@ -100,34 +100,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 logger = setup_logging()
 db_manager = DatabaseManager(logger)
 
-
-'''------------------------------- ПРОВЕРКА НА СУЩЕСТВ-НИЕ КОРНЕВОГО СЕРТИФИКАТА ПРИ ЗАПУСКЕ ПРИЛОЖЕНИЯ--------------------------------'''
-# def init_root_cert():
-#     cert_path = Path('./root_certs/root_cert.der')
-
-#     logger.info("Checking existance of root certificate...")
-
-#     with app.config['ROOT_CERT_INIT_LOCK']:
-#         rootCert = None
-#         if cert_path.exists():
-#             try:
-#                 with open(cert_path, 'rb') as f:
-#                     cert_data = f.read()
-
-#                     if cert_data is None:
-#                         rootCert = None
-#                     else:
-#                         rootCert = restore_root_cert(cert_data)
-#                         logger.info("Existing root certificate was successfully restored")
-#                         logger.info(f"{rootCert}")
-#             except Exception as e:
-#                 logger.error(f"Error while loading existing root certificate: {e}")
-#         else:
-#             logger.info("No existing root certificate was found at %s", cert_path)
-
-#         app.config[CERTSASN1] = CertsAsn1(rootCert=rootCert)
-
-
 # главная страница
 @app.route('/')
 def index():
@@ -479,9 +451,7 @@ def create_certificate_p10():
         for values in value_1:
             setattr(rdn_template, values, True)
 
-        
         cert_template = CertTemplate(rdn_template)  # пока не трогаем
-
 
         serial_num = db_manager.find_serial_number(generate_serial_num())
 
@@ -501,18 +471,18 @@ def create_certificate_p10():
         if CERTSASN1 not in app.config:
             raise Exception("Configuration 'CERTASN1' not found in app.config")
 
-        source_num = certsAsn1.rootCert.serial_num
-        if source_num == None:
+        if certsAsn1.rootCert is None:
             raise Exception("Root self signed certificate not found")
+        source_num = certsAsn1.rootCert.serial_num
 
         rc = db_manager.insert_to_db(serial_num, source_num)
         if not rc:
             raise Exception("Inserting certificate into database failed")
-        res_filename =  f"./{CREATED_FILES_FOLDER}/res.der"
-        # with open(res_filename, 'w') as f:
-        #     f.write(bytes_to_pem(cert_bytes, pem_type="CERTIFICATE")) # !!! pem_type - НЕ МЕНЯТЬ
-        with open(res_filename, 'wb') as f:
-            f.write(cert_bytes)
+        res_filename =  f"./{CREATED_FILES_FOLDER}/res.pem"
+        with open(res_filename, 'w') as f:
+            f.write(bytes_to_pem(cert_bytes, pem_type="CERTIFICATE")) # !!! pem_type - НЕ МЕНЯТЬ
+        # with open(res_filename, 'wb') as f:
+        #     f.write(cert_bytes)
 
         logger.info("Certificate was successfully created")
 
@@ -539,7 +509,7 @@ def certificate_created_p10():
 
 @app.route('/download-certificate-p10')
 def download_certificate_p10():
-    res_filename = os.path.join(CREATED_FILES_FOLDER, "res.der")
+    res_filename = os.path.join(CREATED_FILES_FOLDER, "res.pem")
 
     # Проверяем существование файла
     if not os.path.exists(res_filename):
@@ -547,19 +517,19 @@ def download_certificate_p10():
 
     try:
         # Отправляем файл для скачивания
-        # return send_file(
-        #     res_filename,  # Путь к файлу
-        #     mimetype='application/x-pem-file',  # MIME-тип для PEM-файлов
-        #     as_attachment=True,  # Принудительное скачивание
-        #     download_name='certificate.pem'  # Имя файла при скачивании
-        # )
         return send_file(
-        res_filename,
-        mimetype='application/x-x509-ca-cert', # указывает тип содержимого
-        as_attachment=True,  # указание браузеру, что файл должен быть скачан (а не открыт в браузере)
-        # download_name=f'certificate_{cert_data["serial_num"]}.der'
-        download_name="certificate.der"
-    )
+            res_filename,  # Путь к файлу
+            mimetype='application/x-pem-file',  # MIME-тип для PEM-файлов
+            as_attachment=True,  # Принудительное скачивание
+            download_name='certificate.pem'  # Имя файла при скачивании
+        )
+        # return send_file(
+        #     res_filename,
+        #     mimetype='application/x-x509-ca-cert', # указывает тип содержимого
+        #     as_attachment=True,  # указание браузеру, что файл должен быть скачан (а не открыт в браузере)
+        #     # download_name=f'certificate_{cert_data["serial_num"]}.der'
+        #     download_name="certificate.der"
+        # )
 
     except Exception as e:
         logger.error(f"Error downloading certificate: {str(e)}")
