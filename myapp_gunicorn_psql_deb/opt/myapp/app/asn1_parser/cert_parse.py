@@ -67,12 +67,23 @@ class CertsAsn1:
         # self.rootCert.private_key = private_key
         return cert_bytes, private_key, password
 
+    # def change_active_root_cert(self, cert_bytes: bytes, private_key: bytes, password: str):
+    #     self.rootCert = restore_root_cert(cert_bytes)
+    #     self.bicrypt.change_active_cert(param=self.rootCert.alg_type.value,
+    #                                         password=password,
+    #                                         private_key=private_key,
+    #                                         public_key=self.rootCert.public_key)
+
     def change_active_root_cert(self, cert_bytes: bytes, private_key: bytes, password: str):
-        self.rootCert = restore_root_cert(cert_bytes)
-        self.bicrypt.change_active_cert(param=self.rootCert.alg_type.value,
-                                            password=password,
-                                            private_key=private_key,
-                                            public_key=self.rootCert.public_key)
+        try:
+            rootCert = restore_root_cert(cert_bytes)
+            self.bicrypt.change_active_cert(param=rootCert.alg_type.value,
+                                                password=password,
+                                                private_key=private_key,
+                                                public_key=rootCert.public_key)
+        except Exception as e:
+            raise
+        self.rootCert = rootCert
 
     ''' Создает сертификат на основе запроса на сертификат'''
     def create_cert(self, serial_num: int, 
@@ -143,7 +154,6 @@ class CertsAsn1:
         
         return cert_bytes
 
-    '''Создает подписанный список отозванных сертификатов'''
     def create_crl(self, revokedCerts: List[RevokedCertificates], 
                 thisUpdate: datetime, nextUpdate: datetime) -> bytes:
         if self.rootCert is None:
@@ -167,31 +177,36 @@ class CertsAsn1:
         encoder.write(nextUpdate.strftime(UTC_DATETIME_FORMAT), asn1.Numbers.UTCTime)
 
         # revokedCertificates
-        encoder.enter(asn1.Numbers.Sequence)    # revokedCertificates
-        for rcert in revokedCerts:
-            encoder.enter(asn1.Numbers.Sequence)
-            encoder.write(rcert.serialNumber, asn1.Numbers.Integer)
-            encoder.write(rcert.revocationDate.strftime(UTC_DATETIME_FORMAT), asn1.Numbers.UTCTime)
-            encoder.enter(asn1.Numbers.Sequence)    # crlEntryExtensions
+        if len(revokedCerts) > 0:
+            encoder.enter(asn1.Numbers.Sequence)    # revokedCertificates
+            for rcert in revokedCerts:
+                encoder.enter(asn1.Numbers.Sequence)
+                encoder.write(rcert.serialNumber, asn1.Numbers.Integer)
+                encoder.write(rcert.revocationDate.strftime(UTC_DATETIME_FORMAT), asn1.Numbers.UTCTime)
+                encoder.enter(asn1.Numbers.Sequence)    # crlEntryExtensions
 
-            encoder.enter(asn1.Numbers.Sequence)    # reasonCode
-            encoder.write(str(rfc5280.id_ce_cRLReasons), asn1.Numbers.ObjectIdentifier)
-            value_encoder = asn1.Encoder()
-            value_encoder.start()
-            value_encoder.write(rcert.crlReasonCode.value, asn1.Numbers.Enumerated)
-            encoded_value = value_encoder.output()
-            encoder.write(encoded_value, asn1.Numbers.OctetString)
-            encoder.leave()                         # out reasonCode
+                encoder.enter(asn1.Numbers.Sequence)    # reasonCode
+                encoder.write(str(rfc5280.id_ce_cRLReasons), asn1.Numbers.ObjectIdentifier)
+                value_encoder = asn1.Encoder()
+                value_encoder.start()
+                value_encoder.write(rcert.crlReasonCode.value, asn1.Numbers.Enumerated)
+                encoded_value = value_encoder.output()
+                encoder.write(encoded_value, asn1.Numbers.OctetString)
+                encoder.leave()                         # out reasonCode
 
-            encoder.enter(asn1.Numbers.Sequence)    # invalidityDate
-            encoder.write(str(rfc5280.id_ce_invalidityDate), asn1.Numbers.ObjectIdentifier)
-            encoder.write(rcert.invalidityDate.strftime(GENERALIZED_TIME_FORMAT), asn1.Numbers.GeneralizedTime)
-            encoder.leave()                         # out invalidityDate
+                # encoder.enter(asn1.Numbers.Sequence)    # invalidityDate
+                # encoder.write(str(rfc5280.id_ce_invalidityDate), asn1.Numbers.ObjectIdentifier)
+                # # encoder.write(rcert.invalidityDate.strftime(GENERALIZED_TIME_FORMAT), asn1.Numbers.GeneralizedTime)
+                # encoder.write(rcert.invalidityDate.strftime(UTC_DATETIME_FORMAT), asn1.Numbers.UTCTime)
+                # encoder.leave()                         # out invalidityDate
 
-            encoder.leave()                         # out crlEntryExtensions
-            encoder.leave() 
-        encoder.leave()                         # out revokedCertificates  
-        # TODO crlExtensions           
+                encoder.leave()                         # out crlEntryExtensions
+                encoder.leave() 
+            encoder.leave()                         # out revokedCertificates  
+        # TODO crlExtensions  
+        # encoder.enter(nr=0, cls=asn1.Classes.Context) 
+        # encode.write(version, asn1.Numbers.Integer)  
+        # encoder.leave()         
         
         encoder.leave()                         # out TBSCertList   
         
@@ -203,7 +218,8 @@ class CertsAsn1:
             signature_bytes=signature_bytes)
 
         return crl_bytes
-
+    
+    
     def _signature_encode(self, alg_param: AlgParams, tbs_bytes: bytes, signature_bytes: bytes):
         encoder = asn1.Encoder()
         encoder.start()

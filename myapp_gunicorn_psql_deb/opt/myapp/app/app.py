@@ -209,13 +209,14 @@ def selfsigned_certificate_created():
         logger.error(f"app.config[CERTSASN1] is None")
         return redirect(url_for('create_certificate_page'))
 
-    return render_template('selfsigned_certificate_created.html')  # TODO
+    return render_template('selfsigned_certificate_created.html')  
 
 @app.route('/download-certificate') 
 def download_certificate():
     if app.config[ROOT_CERT_TO_SEND] is None:
         logger.error(f"app.config[ROOT_TO_SEND] is None")
-        return "Self signed certificate not found (root_cert_bytes)", 404
+        #return "Self signed certificate not found (app.config[ROOT_TO_SEND] is None)", 404
+        return render_template('error_self.html', error="Self signed certificate not found"), 404
 
     return send_file(
         BytesIO(app.config[ROOT_CERT_TO_SEND]),
@@ -229,7 +230,8 @@ def download_certificate():
 def download_private_key():
     if app.config[PRIV_KEY_TO_SEND] is None:
         logger.error(f"app.config[PRIV_KEY_TO_SEND] is None")
-        return "Private key not found", 404
+        #return "Private key not found (app.config[PRIV_KEY_TO_SEND] is None)", 404
+        return render_template('error_self.html', error="Private key not found"), 404
 
     key_file = BytesIO(app.config[PRIV_KEY_TO_SEND])
     return send_file(
@@ -244,7 +246,8 @@ def download_private_key():
 def show_password():
     if app.config[PWD_TO_SEND] is None:
         logger.error(f"Password not found")
-        return "Password not found", 404
+        #return "Password not found", 404
+        return render_template('error_self.html', error="Password not found"), 404
 
     return render_template('show_password.html', password=app.config[PWD_TO_SEND])
 
@@ -268,7 +271,7 @@ def update_rootcert():
 
         if 'privatekey' not in request.files:
             logger.error(f"No private.key was sent to server")
-            return render_template('error_update_rootcert.html', error="No private.key was sent to server"), 400
+            return render_template('error_update_rootcert.html', error="No private key file (.key) was sent to server"), 400
 
         filekey = request.files['privatekey']
         if filekey.filename == '':
@@ -335,8 +338,6 @@ def revoke_certificate_page():
                     'invalidity_date': cert[3].strftime('%Y-%m-%d') if cert[2] else None,  
                     'revoke_reason': cert[4],  
                     'source_serial_number': cert[5], 
-
-
                     'send_to_ca': "Отправлен" if cert[6] else "Не отправлен"  
                 })
 
@@ -350,16 +351,31 @@ def revoke_certificate():
     try:
         data = request.get_json()
         if not data or 'certificates' not in data:
-            return jsonify({"error": "Неверный формат данных"}), 400
+            return jsonify({"error": "Invalid data format"}), 400
+            #return render_template('error.html', error="Invalid data format"), 400
 
         certs_to_revoke = data['certificates']
         if not certs_to_revoke:
-            return jsonify({"error": "Не выбраны сертификаты для отзыва"}), 400
+            return jsonify({"error": "No certificates were chosen for revokation"}), 400
+            #return render_template('error.html', error="No certificates were chosen for revokation"), 400
 
         for cert_data in certs_to_revoke:
             if not cert_data.get('invalidity_date'):
                 return jsonify({
-                    "error": f"Для сертификата {cert_data['serial_number']} не указана дата признания недействительным",
+                    "error": f"Certificate {cert_data['serial_number']} has no invalidity date",
+                    "serial_number": cert_data['serial_number']
+                }), 400
+            try:
+                invalidity_date = datetime.strptime(cert_data['invalidity_date'], "%Y-%m-%d")  
+            except (ValueError, TypeError):
+                return jsonify({
+                    "error": f"Invalid format of invalidity date for certificate {cert_data['serial_number']}",
+                    "serial_number": cert_data['serial_number']
+                }), 400
+            
+            if invalidity_date > datetime.now():
+                return jsonify({
+                    "error": f"Certificate {cert_data['serial_number']} has incorrect invalidity date (this date is in the future)",
                     "serial_number": cert_data['serial_number']
                 }), 400
 
@@ -412,7 +428,7 @@ def create_certificate_p10():
 
         if not beg_date_str or not end_date_str:
             return render_template('error_p10.html',
-                                error="Please specify both start and end validity dates"), 400
+                                error="Please enter both start and end validity dates"), 400
 
         try:
             beg_validity_date = datetime.strptime(beg_date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
@@ -470,7 +486,7 @@ def create_certificate_p10():
                                        pem_csr=pem_csr)
         except ErrNoRootCert as e:
             return render_template('error_p10.html',
-                            error=f"{str(e)}"), 400
+                            error=f"{str(e)}"), 404
         except ErrParamsTemplate as e:
             return render_template('error_p10.html',
                             error=f"{str(e)}"), 400
@@ -565,17 +581,32 @@ def download_crl():
                         thisUpdate=datetime.now(tz=timezone.utc),
                         nextUpdate=datetime.now(tz=timezone.utc) + timedelta(days=10))
         logger.info("crl created")
-        res_filename = os.path.join(CREATED_FILES_FOLDER, "crl.der")
-        logger.info(f"saving to: {res_filename}")
-        with open(res_filename, 'w') as f:
-            f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL"))
+        
+        #res_filename = os.path.join(CREATED_FILES_FOLDER, "crl.der")
+        # with open(res_filename, 'w') as f:
+        #     f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL"))
 
+        # return send_file(
+        #     res_filename,
+        #     mimetype='application/x-x509-ca-cert', 
+        #     as_attachment=True,  
+        #     # download_name=f'certificate_{cert_data["serial_num"]}.der'
+        #     download_name="crl.der"
+        # )
+
+
+
+        # формат .crl
+        res_filename = os.path.join(CREATED_FILES_FOLDER, "crl.crl")  
+        with open(res_filename, 'wb') as f:  
+            f.write(crl_bytes) 
+
+        
         return send_file(
             res_filename,
-            mimetype='application/x-x509-ca-cert', 
-            as_attachment=True,  
-            # download_name=f'certificate_{cert_data["serial_num"]}.der'
-            download_name="crl.der"
+            mimetype='application/pkix-crl',  
+            as_attachment=True,
+            download_name="revocation_list.crl" 
         )
 
     except Exception as e:
@@ -584,7 +615,8 @@ def download_crl():
         return render_template('error.html',
                             error=f"Error create crl: {str(e)}"), 500
 
-'''-------------------------------------------------------------------------------'''
+
+'''----------------------------------------------------------------------------------------------'''
 def create_app_folders():
     folders = [
         UPLOAD_FOLDER,
