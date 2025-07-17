@@ -88,7 +88,7 @@ class DatabaseManager:
         revoked_certificates = []
         with self.get_cursor() as cursor:
             cursor.execute("""
-                SELECT serial_number, revoke_date, revoke_reason, invalidity_date 
+                SELECT serial_number, revoke_date, revoke_reason
                 FROM certificates 
                 WHERE is_revoked = TRUE AND send_to_ca = FALSE
             """)
@@ -103,8 +103,7 @@ class DatabaseManager:
                         RevokedCertificates(
                             serialNumber=serialNumber,
                             revocationDate=row[1],
-                            crlReasonCode=CRLReasonCode[row[2]] if row[2] else CRLReasonCode.unspecified,
-                            invalidityDate=row[3]
+                            crlReasonCode=CRLReasonCode[row[2]] if row[2] else CRLReasonCode.unspecified
                         )
                     )
                     serial_numbers.append(serial_str)
@@ -133,7 +132,7 @@ class DatabaseManager:
             with self.get_cursor() as cursor:
                 cursor.execute(
                     """INSERT INTO certificates 
-                    VALUES (%s, false, null, null, null, %s, false)""",
+                    VALUES (%s, false, null, null, %s, false)""",
                     (serial_number, source_serial_number)
                 )
             return True

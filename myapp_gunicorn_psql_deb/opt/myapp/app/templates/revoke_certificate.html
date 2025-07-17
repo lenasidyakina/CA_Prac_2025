@@ -160,7 +160,6 @@
                     <th>Серийный номер</th>
                     <th>Статус</th>
                     <th>Дата отзыва</th>
-                    <th>Дата признания недействительным</th>
                     <th>Причина отзыва</th>
                     <th>Серийный номер сертификата-источника</th>
                     <th>Отправка в цс</th>
@@ -181,14 +180,6 @@
                         {{ cert.status }}
                     </td>
                     <td class="date-column">{{ cert.revoke_date or '-' }}</td>
-                    <td class="date-column">
-                        <span class="static-field">{{ cert.invalidity_date or '-' }}</span>
-                        <div class="editable-field">
-                            <input type="date" name="invalidity_date_{{ cert.serial_number }}" 
-                                   value="{{ cert.invalidity_date if cert.invalidity_date else '' }}"
-                                   class="date-input">
-                        </div>
-                    </td>
                     <td class="reason-code">
                         <span class="static-field">
                             {{ {
@@ -239,7 +230,6 @@
             // Функция для обновления состояния полей
             function updateFields(checkbox) {
                 const row = checkbox.closest('tr');
-                const dateInput = row.querySelector('.date-input');
                 const reasonSelect = row.querySelector('.reason-select');
                 const staticFields = row.querySelectorAll('.static-field');
                 const editableFields = row.querySelectorAll('.editable-field');
@@ -247,12 +237,10 @@
                 if (checkbox.checked) {
                     staticFields.forEach(field => field.style.display = 'none');
                     editableFields.forEach(field => field.style.display = 'block');
-                    dateInput.disabled = false;
                     reasonSelect.disabled = false;
                 } else {
                     staticFields.forEach(field => field.style.display = 'block');
                     editableFields.forEach(field => field.style.display = 'none');
-                    dateInput.disabled = true;
                     reasonSelect.disabled = true;
                 }
             }
@@ -278,7 +266,6 @@
                 serialNumbers.forEach(serial => {
                     certificatesData.push({
                         serial_number: serial,
-                        invalidity_date: formData.get(`invalidity_date_${serial}`),
                         revoke_reason: formData.get(`revoke_reason_${serial}`)
                     });
                 });
@@ -308,7 +295,3 @@
     </script>
 </body>
 </html>
-
-
-
-

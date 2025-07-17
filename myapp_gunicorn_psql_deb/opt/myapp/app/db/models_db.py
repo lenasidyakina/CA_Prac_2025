@@ -40,7 +40,7 @@ class Certificate(Base):
     revoke_reason = Column(Text)
 
     
-    invalidity_date = Column(Date)
+    # invalidity_date = Column(Date)
 
     source_serial_number = Column(
         String(100), nullable=False
@@ -89,11 +89,11 @@ class Certificate(Base):
                 )
         return value
     
-    @validates('invalidity_date')
-    def validate_revoke_date(self, key, value):
-        if value and value > datetime.now().date():
-            raise ValueError("Дата признания сертификата недействительным не может быть в будущем")
-        return value
+    # @validates('invalidity_date')
+    # def validate_revoke_date(self, key, value):
+    #     if value and value > datetime.now().date():
+    #         raise ValueError("Дата признания сертификата недействительным не может быть в будущем")
+    #     return value
     
 
     @validates('source_serial_number')
@@ -136,16 +136,20 @@ class Certificate(Base):
             "revoke_reason IS NULL OR revoke_reason IN ('unspecified', 'keyCompromise', 'cACompromise', 'affiliationChanged', 'superseded', 'cessationOfOperation', 'certificateHold', 'removeFromCRL')",
             name="ck_certificates_valid_revoke_reason"
         ),
-    CheckConstraint(
-        "invalidity_date <= CURRENT_DATE",
-        name="ck_certificates_invalidity_date_not_future"
-    ),
+    # CheckConstraint(
+    #     "invalidity_date <= CURRENT_DATE",
+    #     name="ck_certificates_invalidity_date_not_future"
+    # ),
     CheckConstraint(
         "source_serial_number ~ '^[0-9]+$'",
         name="ck_certificates_source_serial_number_digits"
     ),
+    # CheckConstraint(
+    #     "(is_revoked = false) OR (is_revoked = true AND revoke_date IS NOT NULL AND invalidity_date IS NOT NULL)",
+    #     name="ck_certificates_revoke_date_required_when_revoked"
+    # ),
     CheckConstraint(
-        "(is_revoked = false) OR (is_revoked = true AND revoke_date IS NOT NULL AND invalidity_date IS NOT NULL)",
+        "(is_revoked = false) OR (is_revoked = true AND revoke_date IS NOT NULL)",
         name="ck_certificates_revoke_date_required_when_revoked"
     ),
     CheckConstraint(
