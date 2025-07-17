@@ -1,7 +1,10 @@
+import asn1
 from pyasn1_modules import rfc5280
 from datetime import datetime
+from typing import List
 from .CertTemplate import RDNTemplate, ErrParamsTemplate
 from .AlgParams import AlgTypes
+from .ExtensionsCert import ExtentionsCert
 
 class ParamsRDN:
     oid_surname = str(rfc5280.id_at_surname)
@@ -138,16 +141,19 @@ class ParamsRDN:
 class ParamsSelfSignedCert:
     def __init__(self, beg_validity_date: datetime, end_validity_date: datetime, 
                  alg_type: AlgTypes,
-                 paramsRDN: ParamsRDN):
+                 paramsRDN: ParamsRDN, 
+                 extentions: ExtentionsCert):
         self.beg_validity_date = beg_validity_date  # время начала действия сертификата
         self.end_validity_date = end_validity_date  # время ококнчания действия сертификата
         self.alg_type = alg_type                    # тип алгоритмов шифрования ("b", "a") # TODO пока только "b"
         self.paramsRDN = paramsRDN
+        self.extentions = extentions
 
     def __str__(self):
         res = f"validity: {self.beg_validity_date.strftime('%y%m%d%H%M%SZ')}---{self.end_validity_date.strftime('%y%m%d%H%M%SZ')}\n"
         res += f"alg_type: {self.alg_type}\n"
         res += str(self.paramsRDN)
+        res += str(self.extentions)
         return res
 
     def validate() -> bool:

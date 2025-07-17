@@ -107,14 +107,12 @@
             <h3 class="unit-title">Основные параметры</h3>
             <div class="form-group">
                 <label for="template">Шаблон сертификата:</label>
-                <select id="template" name="template" required>
+                <select id="template" name="template">
                     <option value="">-- Выберите шаблон --</option>
                     <option value="t_all_worker">Шаблон (worker's info required)</option>
                     <option value="t_all_company">Шаблон (companie's info required)</option>
                     <option value="t_work_comp_name">Шаблон (worker's and companie's name required)</option>
                     <option value="t_all_address">Шаблон (companie's address required)</option>
-                    <!-- <option value="t_1">шаблон 1</option>
-                    <option value="t_2">шаблон 2</option> -->
                 </select>
             </div>
             <div class="form-group">
@@ -158,11 +156,11 @@
             const begDate = document.getElementById('beg_validity_date').value;
             const endDate = document.getElementById('end_validity_date').value;
             
-            if (!template) {
-                e.preventDefault();
-                alert('Выберите шаблон!');
-                return;
-            }
+            // if (!template) {
+            //     e.preventDefault();
+            //     alert('Выберите шаблон!');
+            //     return;
+            // }
             
             if (fileInput.files.length === 0) {
                 e.preventDefault();

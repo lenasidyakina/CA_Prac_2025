@@ -12,7 +12,7 @@ from datetime import datetime, timezone,  timedelta
 from asn1_parser.cert_parse import CertsAsn1, ErrNoRootCert
 from asn1_parser.asn1_parse import bytes_to_pem, generate_serial_num
 from asn1_parser.models.RootCert import RootCert, restore_root_cert
-from asn1_parser.models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN
+from asn1_parser.models.paramsSelfSignedCert import ParamsSelfSignedCert, ParamsRDN, ExtentionsCert
 from asn1_parser.models.CertTemplate import CertTemplate, RDNTemplate, ErrParamsTemplate
 from asn1_parser.models.AlgParams import AlgTypes
 from threading import Lock
@@ -26,7 +26,7 @@ from cert_templates.parse import file_to_dict
 def setup_logging():
     logger = logging.getLogger(__name__)
 
-    # тобы логгер не дублировал сообщения
+    # чтобы логгер не дублировал сообщения
     logger.propagate = False
 
     logger.setLevel(logging.DEBUG)
@@ -65,7 +65,6 @@ def setup_logging():
         handlers = [console_handler]
         logger.error(f"Failed to setup file logging: {str(e)}")
 
-    # Очищаем существующие обработчики и добавляем новые
     logger.handlers.clear()
     for handler in handlers:
         logger.addHandler(handler)
@@ -77,7 +76,6 @@ def get_config_value(section, key):
 
 BASE_DIR = Path(__file__).parent
 config = ConfigParser()
-# config.read('../../etc/myapp/db.env')
 config.read('/etc/myapp/db.env')
 
 UPLOAD_FOLDER = get_config_value('app', 'UPLOAD_FOLDER')
@@ -94,13 +92,14 @@ FILENAME_SELF_SIGNED = get_config_value('app', 'FILENAME_SELF_SIGNED')
 FILENAME_PRIVATE_KEY = get_config_value('app', 'FILENAME_PRIVATE_KEY')
 FILENAME_CERTIFICATE_P10 = get_config_value('app', 'FILENAME_CERTIFICATE_P10')
 FILENAME_CRL = get_config_value('app', 'FILENAME_CRL')
+ROOT_CERT_DAEMON = get_config_value('app', 'ROOT_CERT_DAEMON')
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 logger = setup_logging()
 db_manager = DatabaseManager(logger)
 
-# главная страница
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -113,7 +112,7 @@ def create_certificate_page():
 @app.route('/api/create-selfsigned-certificate', methods=['POST'])
 def create_selfsigned_certificate():
     try:
-        req_data = request.form # объект, который содержит данные формы, отправленные POST-запросом (аналог словаря python)
+        req_data = request.form 
 
         # организация
         common_name = req_data.get('common_name', '').strip()
@@ -148,11 +147,45 @@ def create_selfsigned_certificate():
                             commonName=common_name, organizationName=org_name,
                             countryName=org_country, stateOrProvinceName=org_region,
                             streetAddress=org_address, localityName=org_locality)
+        
+        selected_extensions = request.form.getlist('extensions')
+        extentions = ExtentionsCert()
+        for ext in selected_extensions:
+            if ext == 'basicConstraints':
+                max_depth = request.form.get('basicConstraints_max_depth', type=int)
+                if max_depth is None or max_depth <= 0:
+                    logger.error(f"Максимальное число сертификатов, которые могут быть в цепочке дальше, должно быть целым числом большим 0!")
+                    return render_template('error_self.html', error="Максимальное число сертификатов, которые могут быть в цепочке дальше, должно быть целым числом большим 0!"), 400
+                extentions.basicConstraints = True
+                extentions.basicConstraints_subject_is_CA = True
+                extentions.basicConstraints_max_depth_certs = max_depth
+                extentions.basicConstraints_critical = 'basicConstraints_critical' in request.form
+            elif ext == 'keyUsage':
+                extentions.keyUsage = True
+                extentions.keyUsage_critical = 'keyUsage_critical' in request.form
+                extentions.keyUsage_digitalSignature = 'keyUsage_digitalSignature' in request.form
+                extentions.keyUsage_nonRepudiation = 'keyUsage_nonRepudiation' in request.form
+                extentions.keyUsage_keyEncipherment = 'keyUsage_keyEncipherment' in request.form
+                extentions.keyUsage_dataEncipherment = 'keyUsage_dataEncipherment' in request.form
+                extentions.keyUsage_keyAgreement = 'keyUsage_keyAgreement' in request.form
+                extentions.keyUsage_keyCertSign = 'keyUsage_keyCertSign' in request.form
+                extentions.keyUsage_cRLSign = 'keyUsage_cRLSign' in request.form
+                
+                if extentions.keyUsage_keyAgreement:
+                    extentions.keyUsage_encipherOnly = 'keyUsage_encipherOnly' in request.form
+                    extentions.keyUsage_decipherOnly = 'keyUsage_decipherOnly' in request.form
+                else:
+                    extentions.keyUsage_encipherOnly = False
+                    extentions.keyUsage_decipherOnly = False
+                
+            elif ext == 'subjectKeyIdentifier':
+                extentions.subjectKeyIdentifier = True
+                
 
         p = ParamsSelfSignedCert(alg_type=alg_type,
                                 beg_validity_date=beg_date,
                                 end_validity_date=end_date,
-                                paramsRDN=prdn)
+                                paramsRDN=prdn, extentions=extentions)
 
         serial_num = generate_serial_num()
         serial_num = db_manager.find_serial_number(serial_num)  # проверка на уникальность серийного номера
@@ -176,17 +209,18 @@ def selfsigned_certificate_created():
         logger.error(f"app.config[CERTSASN1] is None")
         return redirect(url_for('create_certificate_page'))
 
-    return render_template('selfsigned_certificate_created.html')  # TODO
+    return render_template('selfsigned_certificate_created.html')  
 
 @app.route('/download-certificate') 
 def download_certificate():
     if app.config[ROOT_CERT_TO_SEND] is None:
         logger.error(f"app.config[ROOT_TO_SEND] is None")
-        return "Self signed certificate not found (root_cert_bytes)", 404
+        #return "Self signed certificate not found (app.config[ROOT_TO_SEND] is None)", 404
+        return render_template('error_self.html', error="Self signed certificate not found"), 404
 
     return send_file(
         BytesIO(app.config[ROOT_CERT_TO_SEND]),
-        mimetype='application/x-x509-ca-cert', # указывает тип содержимого
+        mimetype='application/x-x509-ca-cert', 
         as_attachment=True,  # указание браузеру, что файл должен быть скачан (а не открыт в браузере)
         # download_name=f'certificate_{cert_data["serial_num"]}.der'
         download_name="root_certificate.der"
@@ -196,7 +230,8 @@ def download_certificate():
 def download_private_key():
     if app.config[PRIV_KEY_TO_SEND] is None:
         logger.error(f"app.config[PRIV_KEY_TO_SEND] is None")
-        return "Private key not found", 404
+        #return "Private key not found (app.config[PRIV_KEY_TO_SEND] is None)", 404
+        return render_template('error_self.html', error="Private key not found"), 404
 
     key_file = BytesIO(app.config[PRIV_KEY_TO_SEND])
     return send_file(
@@ -204,14 +239,15 @@ def download_private_key():
         as_attachment=True,
         #download_name=f'private_key{cert_data["serial_num"]}.key',
         download_name="private.key",
-        mimetype="application/octet-stream"  # Указывает, что это бинарный файл
+        mimetype="application/octet-stream"  
     )
 
 @app.route('/show-password')
 def show_password():
     if app.config[PWD_TO_SEND] is None:
         logger.error(f"Password not found")
-        return "Password not found", 404
+        #return "Password not found", 404
+        return render_template('error_self.html', error="Password not found"), 404
 
     return render_template('show_password.html', password=app.config[PWD_TO_SEND])
 
@@ -235,7 +271,7 @@ def update_rootcert():
 
         if 'privatekey' not in request.files:
             logger.error(f"No private.key was sent to server")
-            return render_template('error_update_rootcert.html', error="No private.key was sent to server"), 400
+            return render_template('error_update_rootcert.html', error="No private key file (.key) was sent to server"), 400
 
         filekey = request.files['privatekey']
         if filekey.filename == '':
@@ -248,9 +284,9 @@ def update_rootcert():
             logger.error(f"Password must not be empty")
             return render_template('error_update_rootcert.html', error="Password must not be empty"), 400
 
-
         #получаем как строку байт
         cert_bytes = filecert.read()
+        logger.info(f"BYTES:{cert_bytes}")
         if not cert_bytes:
             logger.error(f"Certificate file is empty")
             return render_template('error_update_rootcert.html',
@@ -265,6 +301,17 @@ def update_rootcert():
         certsAsn1.change_active_root_cert(cert_bytes=cert_bytes,
                                         private_key=private_key,
                                         password=password)
+        #считываем в файлы для демона
+        with open('/opt/myapp/app/root_cert_daemon/root_certificate.der', 'wb') as f:
+                f.write(cert_bytes)
+
+        with open('/opt/myapp/app/root_cert_daemon/private.key', 'wb') as f:
+                f.write(private_key)
+
+        password_file = os.path.join("/opt/myapp/app/root_cert_daemon", 'password.txt')
+        with open(password_file, 'w') as f:
+            f.write(password)
+        logger.info(f"Daemon file created")
 
         return render_template('success.html',
                             message="Активный корневой сертификат успешно изменен")
@@ -272,6 +319,7 @@ def update_rootcert():
     except Exception as e:
         logger.error(f"Error updating root certificate: {str(e)}")
         return render_template('error_update_rootcert.html', error=str(e)), 500
+    
 
 '''------------------------------------------------ ОТЗЫВ СЕРТИФИКАТОВ ------------------------------------'''
 @app.route('/revoke-certificate')
@@ -279,20 +327,17 @@ def revoke_certificate_page():
     try:
         revoked_certs = []
         with db_manager.get_cursor() as cursor:
-            # cursor.execute("SELECT serial_number, is_revoked, revoke_date, invalidity_date, revoke_reason, source_serial_number FROM certificates")
             cursor.execute("SELECT serial_number, is_revoked, revoke_date, invalidity_date, revoke_reason, source_serial_number, send_to_ca FROM certificates")
             certificates = cursor.fetchall()
 
             for cert in certificates:
                 revoked_certs.append({
-                    'serial_number': cert[0],  # serial_number
-                    'status': "Отозван" if cert[1] else "Не отозван",  # is_revoked
-                    'revoke_date': cert[2].strftime('%Y-%m-%d') if cert[2] else None,  # revoke_date
-                    'invalidity_date': cert[3].strftime('%Y-%m-%d') if cert[2] else None,  # invalidity_date (исправлена проверка на revoke_date)
-                    'revoke_reason': cert[4],  # revoke_reason
-                    'source_serial_number': cert[5],  # source_serial_number
-
-
+                    'serial_number': cert[0],  
+                    'status': "Отозван" if cert[1] else "Не отозван",  
+                    'revoke_date': cert[2].strftime('%Y-%m-%d') if cert[2] else None,  
+                    'invalidity_date': cert[3].strftime('%Y-%m-%d') if cert[2] else None,  
+                    'revoke_reason': cert[4],  
+                    'source_serial_number': cert[5], 
                     'send_to_ca': "Отправлен" if cert[6] else "Не отправлен"  
                 })
 
@@ -306,16 +351,31 @@ def revoke_certificate():
     try:
         data = request.get_json()
         if not data or 'certificates' not in data:
-            return jsonify({"error": "Неверный формат данных"}), 400
+            return jsonify({"error": "Invalid data format"}), 400
+            #return render_template('error.html', error="Invalid data format"), 400
 
         certs_to_revoke = data['certificates']
         if not certs_to_revoke:
-            return jsonify({"error": "Не выбраны сертификаты для отзыва"}), 400
+            return jsonify({"error": "No certificates were chosen for revokation"}), 400
+            #return render_template('error.html', error="No certificates were chosen for revokation"), 400
 
         for cert_data in certs_to_revoke:
             if not cert_data.get('invalidity_date'):
                 return jsonify({
-                    "error": f"Для сертификата {cert_data['serial_number']} не указана дата признания недействительным",
+                    "error": f"Certificate {cert_data['serial_number']} has no invalidity date",
+                    "serial_number": cert_data['serial_number']
+                }), 400
+            try:
+                invalidity_date = datetime.strptime(cert_data['invalidity_date'], "%Y-%m-%d")  
+            except (ValueError, TypeError):
+                return jsonify({
+                    "error": f"Invalid format of invalidity date for certificate {cert_data['serial_number']}",
+                    "serial_number": cert_data['serial_number']
+                }), 400
+            
+            if invalidity_date > datetime.now():
+                return jsonify({
+                    "error": f"Certificate {cert_data['serial_number']} has incorrect invalidity date (this date is in the future)",
                     "serial_number": cert_data['serial_number']
                 }), 400
 
@@ -360,15 +420,15 @@ def create_certificate_p10():
             return render_template('error_p10.html', error="Empty filename"), 400
 
         template = request.form.get('template')
-        if not template:
-            return render_template('error_p10.html', error="No template was selected"), 400
+        # if not template:
+        #     return render_template('error_p10.html', error="No template was selected"), 400
 
         beg_date_str = request.form.get('beg_validity_date')
         end_date_str = request.form.get('end_validity_date')
 
         if not beg_date_str or not end_date_str:
             return render_template('error_p10.html',
-                                error="Please specify both start and end validity dates"), 400
+                                error="Please enter both start and end validity dates"), 400
 
         try:
             beg_validity_date = datetime.strptime(beg_date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
@@ -398,26 +458,23 @@ def create_certificate_p10():
         certsAsn1 = app.config[CERTSASN1]
 
         rdn_template = RDNTemplate()
-        # TODO заполнить поля rdn_template на основе файла-шаблона от пользователя (если файл не поступил, то поля не трогаем)
-        #rdn_template.surname = rdn_template.givenName = rdn_template.streetAddress = False
+        if template:
+            template_file = f"./cert_templates/{template}.txt"
+            if not os.path.exists(template_file):
+                error_msg = f"Certificate template file '{template}' not found"
+                logger.error(error_msg)
+                return render_template('error_p10.html', error=error_msg), 404
 
-        template_file = f"./cert_templates/{template}.txt"
-        if not os.path.exists(template_file):
-            error_msg = f"Certificate template file '{template}' not found"
-            logger.error(error_msg)
-            return render_template('error_p10.html', error=error_msg), 404
+            temp_dir = file_to_dict(template_file)
 
-        temp_dir = file_to_dict(template_file)
-        # logger.info(f"{temp_dir}")
+            value_0 = [key for key, value in temp_dir.items() if value == '0']
+            for values in value_0:
+                setattr(rdn_template, values, False)
+            value_1 = [key for key, value in temp_dir.items() if value == '1']
+            for values in value_1:
+                setattr(rdn_template, values, True)
 
-        value_0 = [key for key, value in temp_dir.items() if value == '0']
-        for values in value_0:
-            setattr(rdn_template, values, False)
-        value_1 = [key for key, value in temp_dir.items() if value == '1']
-        for values in value_1:
-            setattr(rdn_template, values, True)
-
-        cert_template = CertTemplate(rdn_template)  # пока не трогаем
+        cert_template = CertTemplate(rdn_template)  
 
         serial_num = db_manager.find_serial_number(generate_serial_num())
 
@@ -429,7 +486,7 @@ def create_certificate_p10():
                                        pem_csr=pem_csr)
         except ErrNoRootCert as e:
             return render_template('error_p10.html',
-                            error=f"{str(e)}"), 400
+                            error=f"{str(e)}"), 404
         except ErrParamsTemplate as e:
             return render_template('error_p10.html',
                             error=f"{str(e)}"), 400
@@ -477,18 +534,25 @@ def certificate_created_p10():
 def download_certificate_p10():
     res_filename = os.path.join(CREATED_FILES_FOLDER, "res.pem")
 
-    # Проверяем существование файла
     if not os.path.exists(res_filename):
         return redirect(url_for('upload_p10_form'))
 
     try:
         # Отправляем файл для скачивания
+        # return send_file(
+        #     res_filename,  # Путь к файлу
+        #     mimetype='application/x-pem-file',  # MIME-тип для PEM-файлов
+        #     as_attachment=True,  # Принудительное скачивание
+        #     download_name='certificate.pem'  # Имя файла при скачивании
+        # )
+
         return send_file(
-            res_filename,  # Путь к файлу
-            mimetype='application/x-pem-file',  # MIME-тип для PEM-файлов
-            as_attachment=True,  # Принудительное скачивание
-            download_name='certificate.pem'  # Имя файла при скачивании
+            res_filename,  # Путь к файлу (PEM внутри)
+            mimetype='application/x-x509-ca-cert',  
+            as_attachment=True, 
+            download_name='certificate.cer'  
         )
+
         # return send_file(
         #     res_filename,
         #     mimetype='application/x-x509-ca-cert', # указывает тип содержимого
@@ -517,32 +581,48 @@ def download_crl():
                         thisUpdate=datetime.now(tz=timezone.utc),
                         nextUpdate=datetime.now(tz=timezone.utc) + timedelta(days=10))
         logger.info("crl created")
-        res_filename = os.path.join(CREATED_FILES_FOLDER, "crl.der")
-        logger.info(f"saving to: {res_filename}")
-        with open(res_filename, 'w') as f:
-            f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL"))
+        
+        #res_filename = os.path.join(CREATED_FILES_FOLDER, "crl.der")
+        # with open(res_filename, 'w') as f:
+        #     f.write(bytes_to_pem(crl_bytes, pem_type="X509 CRL"))
 
+        # return send_file(
+        #     res_filename,
+        #     mimetype='application/x-x509-ca-cert', 
+        #     as_attachment=True,  
+        #     # download_name=f'certificate_{cert_data["serial_num"]}.der'
+        #     download_name="crl.der"
+        # )
+
+
+
+        # формат .crl
+        res_filename = os.path.join(CREATED_FILES_FOLDER, "crl.crl")  
+        with open(res_filename, 'wb') as f:  
+            f.write(crl_bytes) 
+
+        
         return send_file(
             res_filename,
-            mimetype='application/x-x509-ca-cert', # указывает тип содержимого
-            as_attachment=True,  # указание браузеру, что файл должен быть скачан (а не открыт в браузере)
-            # download_name=f'certificate_{cert_data["serial_num"]}.der'
-            download_name="crl.der"
+            mimetype='application/pkix-crl',  
+            as_attachment=True,
+            download_name="revocation_list.crl" 
         )
 
     except Exception as e:
         logger.error(f"Error create crl: {str(e)}")
 
-        # return redirect(url_for('index'))
         return render_template('error.html',
                             error=f"Error create crl: {str(e)}"), 500
 
-'''-------------------------------------------------------------------------------'''
+
+'''----------------------------------------------------------------------------------------------'''
 def create_app_folders():
     folders = [
         UPLOAD_FOLDER,
         CREATED_FILES_FOLDER,
-        ROOT_CERT_FOLDER
+        ROOT_CERT_FOLDER,
+        ROOT_CERT_DAEMON
     ]
 
     for folder in folders:

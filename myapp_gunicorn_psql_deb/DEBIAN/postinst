@@ -397,4 +397,5 @@ echo "============================"
 tput sc
 tput cup $(tput lines) 0
 echo -ne "$(tput el)"
-tput rc
+
+tput rс
