@@ -65,6 +65,12 @@ def create_selfsigned_cert_test() -> CertsAsn1:
     extentions.basicConstraints = True
     extentions.basicConstraints_subject_is_CA = True
     extentions.basicConstraints_max_depth_certs = 3
+
+    extentions.keyUsage = True
+    extentions.keyUsage_critical = True
+    extentions.keyUsage_cRLSign = True
+
+    extentions.subjectKeyIdentifier = True
     p = ParamsSelfSignedCert(alg_type=AlgTypes.a, 
                              beg_validity_date=datetime(2025, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
                              end_validity_date=datetime(2026, 6, 7, 0, 0, 0, tzinfo=timezone.utc),
